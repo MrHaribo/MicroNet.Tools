@@ -1,6 +1,6 @@
 import micronet.activemq.AMQPeer;
 import micronet.network.Request;
-import micronet.service.Context;
+import micronet.network.Context;
 
 ${additional_imports}
 
