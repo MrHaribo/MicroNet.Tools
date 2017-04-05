@@ -159,7 +159,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		log(description.getService(), "Generating Service implementation: " + description.getService().getSimpleName());
 
 		String additionalImports = "import " + description.getService().toString() + ";\n\n";
-		String serviceClassName = description.getName() + "Impl";
+		String serviceClassName = "ServiceImpl";
 		
 		String startCode = generateStartCode(description);
 		String stopCode = generateStopCode(description);
@@ -218,7 +218,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		code.append("System.out.println(\"" + description.getName() +  " stopped...\");\n");
 		
 		for (Element method : description.getStopMethods()) {
-			code.append(description.getServiceVariable() + "." + method.getSimpleName() + "();\n");
+			code.append(description.getServiceVariable() + "." + method.getSimpleName() + "(context);\n");
 		}
 		
 		return code.toString();
@@ -230,7 +230,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		code.append("System.out.println(\"" + description.getName() +  " started...\");\n");
 		
 		for (Element method : description.getStartMethods()) {
-			code.append(description.getServiceVariable() + "." + method.getSimpleName() + "();\n");
+			code.append(description.getServiceVariable() + "." + method.getSimpleName() + "(context);\n");
 		}
 		
 		return code.toString();
