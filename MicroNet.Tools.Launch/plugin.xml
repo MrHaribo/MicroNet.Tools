@@ -21,6 +21,26 @@
 	        </contextualLaunch>
 	    </shortcut>
 	</extension>
+	
+	<extension point="org.eclipse.debug.ui.launchShortcuts">
+	    <shortcut
+	        class="micronet.tools.launch.ServiceBuildShortcut"
+	        icon="icons/micronet_icon.png"
+	        id="micronet.tools.launch.ServiceBuildShortcut"
+	        label="MicroNet Service Build"
+	        modes="run, debug">
+	        <contextualLaunch>
+	            <enablement>
+	                <with 
+	                	variable="selection">
+	                    <count 
+	                    	value="+">
+                    	</count>
+	                </with>
+	            </enablement>
+	        </contextualLaunch>
+	    </shortcut>
+	</extension>
 
 
 </plugin>
