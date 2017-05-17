@@ -1,6 +1,6 @@
 package micronet.tools.launch;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
@@ -22,16 +22,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IEditorPart;
 
-import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.DockerCertificateException;
-import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.DockerClient.ListContainersParam;
-import com.spotify.docker.client.DockerException;
-import com.spotify.docker.client.messages.Container;
-
 public class ServiceBuildShortcut implements ILaunchShortcut {
 
-	
 	@Override
 	public void launch(ISelection selection, String mode) {
 		System.out.println("Build selection: " + mode);
@@ -39,10 +31,9 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 		if (selection instanceof TreeSelection) {
 			TreeSelection treeSelection = (TreeSelection) selection;
 			for (Object selectedObject : treeSelection.toList()) {
-				
+
 				if (selectedObject instanceof IProject) {
 					IProject project = (IProject) selectedObject;
-					System.out.println("Building: " + project.getName());
 					buildProject(project, mode);
 				} else if (selectedObject instanceof IJavaProject) {
 					IJavaProject javaProject = (IJavaProject) selectedObject;
@@ -52,91 +43,75 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 			}
 		}
 	}
-	
+
 	@Override
 	public void launch(IEditorPart arg0, String arg1) {
 		System.out.println("Not implemented");
 	}
-	
+
 	private void buildProject(IProject project, String mode) {
 		String buildName = getBuildName(project);
-		
-		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
-		
-		for (ILaunch launch : launchMan.getLaunches()) {
-			if (!launch.getLaunchConfiguration().getName().equals(buildName)) 
-				continue;
-			
-			if (!launch.isTerminated()) {
-				System.out.println("Launch is already there");
-				showWarningMessageBox(buildName + " is currently building.", "Wait for build to end or terminate build");
-				return;
-			}
+		System.out.println("Building: " + buildName);
+
+		if (isLaunchRunning(buildName)) {
+			System.out.println("Launch is already there");
+			showWarningMessageBox(buildName + " is currently building.", "Wait for build to end or terminate build");
+			return;
 		}
 		
-		launchMan.addLaunchListener(new ILaunchesListener2()
-		{
-			@Override
-			public void launchesAdded(ILaunch[] arg0) { }
-
-			@Override
-			public void launchesChanged(ILaunch[] arg0) { }
-
-			@Override
-			public void launchesRemoved(ILaunch[] arg0) { }
-
-			@Override
-			public void launchesTerminated(ILaunch[] arg0) {
-				for (ILaunch launch : arg0) {
-					System.out.println("Launch terminated: " + launch.getLaunchConfiguration().getName());
-					if (launch.getLaunchConfiguration().getName().equals(buildName)) {
-						System.out.println("Start next build step");
-						launchMan.removeLaunchListener(this);
-					}
-				}
-			}
+		waitForLaunchTermination(buildName, launch -> {
+			System.out.println("Maven build launch terminated: " + launch.getLaunchConfiguration().getName());
+			System.out.println("Start next build step");
+			buildContainer(project, mode);
 		});
 		
-		
-		ILaunchConfiguration buildConfig = getBuildConfig(project);
+		ILaunchConfiguration buildConfig = getMavenBuildConfig(project);
 		DebugUITools.launch(buildConfig, mode);
+	}
+	
+	private void buildContainer(IProject project, String mode) {
+		String containerBuildName = getBuildContainerName(project);
+		System.out.println("Building: " + containerBuildName);
 		
-		//buildContainer();
+		ILaunchConfiguration buildConfig = getContainerBuildConfig(project, mode);
+		DebugUITools.launch(buildConfig, mode);
 	}
 	
-	private void showWarningMessageBox(String text, String message) {
-		MessageBox dialog = new MessageBox(Display.getCurrent().getActiveShell(), SWT.ICON_WARNING | SWT.OK);
-		dialog.setText(text);
-		dialog.setMessage(message);
-		dialog.open();
-	}
-	
-	private void buildContainer() {
+
+
+	private ILaunchConfiguration getContainerBuildConfig(IProject project, String mode) {
+		String containerBuildName = getBuildContainerName(project);
+		
 		try {
-			// Create a client based on DOCKER_HOST and DOCKER_CERT_PATH env vars
-			final DockerClient docker = DefaultDockerClient.fromEnv().build();
+			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+			ILaunchConfigurationType type = manager.getLaunchConfigurationType("org.eclipse.linuxtools.docker.ui.buildDockerImageLaunchConfigurationType");
+			ILaunchConfiguration[] configurations = manager.getLaunchConfigurations(type);
+
+			for (ILaunchConfiguration iLaunchConfiguration : configurations) {
+				if (iLaunchConfiguration.getName().equals(containerBuildName))
+					return iLaunchConfiguration;
+			}
 			
-			// List all containers. Only running containers are shown by default.
-			final List<Container> containers = docker.listContainers(ListContainersParam.allContainers());
+			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, containerBuildName);
+			workingCopy.setAttribute("dockerConnection", "http://127.0.0.1:2375");
+			workingCopy.setAttribute("repoName", project.getName().toLowerCase());
+			workingCopy.setAttribute("sourcePathLocation", "/" + project.getName());
+			workingCopy.setAttribute("sourcePathWorkspaceRelativeLocation", true);
 			
-			System.out.println(containers.size());
-		} catch (DockerCertificateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (DockerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+			ILaunchConfiguration config = workingCopy.doSave();
+			return config;
+		} catch (CoreException e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 
-	private ILaunchConfiguration getBuildConfig(IProject project) {
+	private ILaunchConfiguration getMavenBuildConfig(IProject project) {
 		String buildName = getBuildName(project);
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			ILaunchConfigurationType type = manager.getLaunchConfigurationType(MavenLaunchConstants.LAUNCH_CONFIGURATION_TYPE_ID);
+			ILaunchConfigurationType type = manager
+					.getLaunchConfigurationType(MavenLaunchConstants.LAUNCH_CONFIGURATION_TYPE_ID);
 			ILaunchConfiguration[] configurations = manager.getLaunchConfigurations(type);
 
 			for (ILaunchConfiguration iLaunchConfiguration : configurations) {
@@ -156,8 +131,54 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 		}
 		return null;
 	}
+	
+	private void waitForLaunchTermination(String launchName, Consumer<ILaunch> callback) {
+		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
+		launchMan.addLaunchListener(new ILaunchesListener2() {
+
+			public void launchesAdded(ILaunch[] arg0) {	}
+			public void launchesChanged(ILaunch[] arg0) { }
+			public void launchesRemoved(ILaunch[] arg0) { }
+
+			@Override
+			public void launchesTerminated(ILaunch[] arg0) {
+				for (ILaunch launch : arg0) {
+					if (launch.getLaunchConfiguration().getName().equals(launchName)) {
+						launchMan.removeLaunchListener(this);
+						ILaunch launchCaptcha = launch;
+						callback.accept(launchCaptcha);
+					}
+				}
+			}
+		});
+	}
+	
+	private boolean isLaunchRunning(String name) {
+		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
+
+		for (ILaunch launch : launchMan.getLaunches()) {
+			if (!launch.getLaunchConfiguration().getName().equals(name))
+				continue;
+			if (!launch.isTerminated())
+				return true;
+		}
+		return false;
+	}
 
 	private String getBuildName(IProject project) {
 		return project.getName() + "Build";
+	}
+	
+	private String getBuildContainerName(IProject project) {
+		return project.getName() + "ContainerBuild";
+	}
+	
+	private void showWarningMessageBox(String text, String message) {
+		if (Display.getCurrent() == null || Display.getCurrent().getActiveShell() == null)
+			return;
+		MessageBox dialog = new MessageBox(Display.getCurrent().getActiveShell(), SWT.ICON_WARNING | SWT.OK);
+		dialog.setText(text);
+		dialog.setMessage(message);
+		dialog.open();
 	}
 }

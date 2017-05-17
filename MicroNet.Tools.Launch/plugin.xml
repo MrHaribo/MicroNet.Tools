@@ -28,7 +28,7 @@
 	        icon="icons/micronet_icon.png"
 	        id="micronet.tools.launch.ServiceBuildShortcut"
 	        label="MicroNet Service Build"
-	        modes="run, debug">
+	        modes="run">
 	        <contextualLaunch>
 	            <enablement>
 	                <with 
@@ -41,6 +41,4 @@
 	        </contextualLaunch>
 	    </shortcut>
 	</extension>
-
-
 </plugin>
