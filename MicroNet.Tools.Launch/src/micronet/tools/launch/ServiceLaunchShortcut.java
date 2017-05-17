@@ -41,7 +41,7 @@ public class ServiceLaunchShortcut implements ILaunchShortcut {
 	
 					String projectName = javaProject.getElementName();
 					System.out.println("Launching: " + projectName);
-	
+					
 					ILaunchConfiguration launchConfig = getLaunchConfiguration(javaProject);
 					DebugUITools.launch(launchConfig, mode);
 				}

@@ -1,21 +1,25 @@
 package micronet.tools.launch;
 
-import java.io.File;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.debug.core.ILaunchesListener2;
+import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.ILaunchShortcut;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.m2e.actions.MavenLaunchConstants;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.ui.IEditorPart;
 
 import com.spotify.docker.client.DefaultDockerClient;
@@ -33,21 +37,17 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 		System.out.println("Build selection: " + mode);
 
 		if (selection instanceof TreeSelection) {
-
 			TreeSelection treeSelection = (TreeSelection) selection;
-
 			for (Object selectedObject : treeSelection.toList()) {
+				
 				if (selectedObject instanceof IProject) {
 					IProject project = (IProject) selectedObject;
-
-					String projectName = project.getName();
-					System.out.println("Building: " + projectName);
-
-					//ILaunchConfiguration buildConfig = getBuildConfig(project);
-					//DebugUITools.launch(buildConfig, mode);
-					
-					
-					buildContainer();
+					System.out.println("Building: " + project.getName());
+					buildProject(project, mode);
+				} else if (selectedObject instanceof IJavaProject) {
+					IJavaProject javaProject = (IJavaProject) selectedObject;
+					IProject project = javaProject.getProject();
+					buildProject(project, mode);
 				}
 			}
 		}
@@ -56,6 +56,59 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 	@Override
 	public void launch(IEditorPart arg0, String arg1) {
 		System.out.println("Not implemented");
+	}
+	
+	private void buildProject(IProject project, String mode) {
+		String buildName = getBuildName(project);
+		
+		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
+		
+		for (ILaunch launch : launchMan.getLaunches()) {
+			if (!launch.getLaunchConfiguration().getName().equals(buildName)) 
+				continue;
+			
+			if (!launch.isTerminated()) {
+				System.out.println("Launch is already there");
+				showWarningMessageBox(buildName + " is currently building.", "Wait for build to end or terminate build");
+				return;
+			}
+		}
+		
+		launchMan.addLaunchListener(new ILaunchesListener2()
+		{
+			@Override
+			public void launchesAdded(ILaunch[] arg0) { }
+
+			@Override
+			public void launchesChanged(ILaunch[] arg0) { }
+
+			@Override
+			public void launchesRemoved(ILaunch[] arg0) { }
+
+			@Override
+			public void launchesTerminated(ILaunch[] arg0) {
+				for (ILaunch launch : arg0) {
+					System.out.println("Launch terminated: " + launch.getLaunchConfiguration().getName());
+					if (launch.getLaunchConfiguration().getName().equals(buildName)) {
+						System.out.println("Start next build step");
+						launchMan.removeLaunchListener(this);
+					}
+				}
+			}
+		});
+		
+		
+		ILaunchConfiguration buildConfig = getBuildConfig(project);
+		DebugUITools.launch(buildConfig, mode);
+		
+		//buildContainer();
+	}
+	
+	private void showWarningMessageBox(String text, String message) {
+		MessageBox dialog = new MessageBox(Display.getCurrent().getActiveShell(), SWT.ICON_WARNING | SWT.OK);
+		dialog.setText(text);
+		dialog.setMessage(message);
+		dialog.open();
 	}
 	
 	private void buildContainer() {
@@ -80,7 +133,7 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 	}
 
 	private ILaunchConfiguration getBuildConfig(IProject project) {
-		String buildName = project.getName() + "Build";
+		String buildName = getBuildName(project);
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
 			ILaunchConfigurationType type = manager.getLaunchConfigurationType(MavenLaunchConstants.LAUNCH_CONFIGURATION_TYPE_ID);
@@ -104,5 +157,7 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 		return null;
 	}
 
-
+	private String getBuildName(IProject project) {
+		return project.getName() + "Build";
+	}
 }
