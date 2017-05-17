@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -72,6 +73,18 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 	private void buildContainer(IProject project, String mode) {
 		String containerBuildName = getBuildContainerName(project);
 		System.out.println("Building: " + containerBuildName);
+		
+		ILaunch launch = getLaunch(containerBuildName);
+		if (launch != null) {
+			try {
+				System.out.println("Launch is already there");
+				launch.terminate();
+				ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+				manager.removeLaunch(launch);
+			} catch (DebugException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		ILaunchConfiguration buildConfig = getContainerBuildConfig(project, mode);
 		DebugUITools.launch(buildConfig, mode);
@@ -163,6 +176,17 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 				return true;
 		}
 		return false;
+	}
+	
+	private ILaunch getLaunch(String name) {
+		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
+
+		for (ILaunch launch : launchMan.getLaunches()) {
+			if (!launch.getLaunchConfiguration().getName().equals(name))
+				continue;
+			return launch;
+		}
+		return null;
 	}
 
 	private String getBuildName(IProject project) {
