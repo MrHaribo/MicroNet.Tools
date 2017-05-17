@@ -98,13 +98,7 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
 			ILaunchConfigurationType type = manager.getLaunchConfigurationType("org.eclipse.linuxtools.docker.ui.buildDockerImageLaunchConfigurationType");
-			ILaunchConfiguration[] configurations = manager.getLaunchConfigurations(type);
 
-			for (ILaunchConfiguration iLaunchConfiguration : configurations) {
-				if (iLaunchConfiguration.getName().equals(containerBuildName))
-					return iLaunchConfiguration;
-			}
-			
 			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, containerBuildName);
 			workingCopy.setAttribute("dockerConnection", "http://127.0.0.1:2375");
 			workingCopy.setAttribute("repoName", project.getName().toLowerCase());
