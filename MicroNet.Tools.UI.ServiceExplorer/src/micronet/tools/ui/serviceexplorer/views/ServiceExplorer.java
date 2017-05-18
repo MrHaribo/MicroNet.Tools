@@ -27,6 +27,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
@@ -39,7 +40,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import micronet.tools.ui.serviceexplorer.ModelProvider;
-import micronet.tools.ui.serviceexplorer.Person;
+import micronet.tools.ui.serviceexplorer.ServiceProject;
 
 
 /**
@@ -105,6 +106,14 @@ public class ServiceExplorer extends ViewPart {
         final Text searchText = new Text(parent, SWT.BORDER | SWT.SEARCH);
         searchText.setLayoutData(new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
         createViewer(parent);
+        
+		// Create the help context id for the viewer's control
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "MicroNet.Tools.UI.ServiceExplorer.viewer");
+		getSite().setSelectionProvider(viewer);
+		makeActions();
+		hookContextMenu();
+		hookDoubleClickAction();
+		contributeToActionBars();
     }
 	
 	private void createViewer(Composite parent) {
@@ -117,11 +126,17 @@ public class ServiceExplorer extends ViewPart {
         viewer.setContentProvider(new ArrayContentProvider());
         // get the content for the viewer, setInput will call getElements in the
         // contentProvider
-        viewer.setInput(ModelProvider.INSTANCE.getPersons());
+        viewer.setInput(ModelProvider.INSTANCE.getServiceProjects());
         // make the selection available to other views
         getSite().setSelectionProvider(viewer);
-        // set the sorter for the table
-
+        
+		ModelProvider.INSTANCE.registerServicesChangedListener(() -> {
+			Display.getDefault().asyncExec(() -> {
+				viewer.setInput(ModelProvider.INSTANCE.getServiceProjects());
+				viewer.refresh();
+			});
+		});
+        
         // define layout for the viewer
         GridData gridData = new GridData();
         gridData.verticalAlignment = GridData.FILL;
@@ -138,41 +153,12 @@ public class ServiceExplorer extends ViewPart {
 	
 	// create the columns for the table
     private void createColumns(final Composite parent, final TableViewer viewer) {
-        String[] titles = { "First name", "Last name", "Gender", "Married" };
-        int[] bounds = { 100, 100, 100, 100 };
+        String[] titles = { "Enabled", "Service Name", "Version", "Lanuch" };
+        int[] bounds = { 60, 200, 100, 60 };
 
-        // first column is for the first name
+        
+        // the status enabled
         TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0);
-        col.setLabelProvider(new ColumnLabelProvider() {
-            @Override
-            public String getText(Object element) {
-                Person p = (Person) element;
-                return p.getFirstName();
-            }
-        });
-
-        // second column is for the last name
-        col = createTableViewerColumn(titles[1], bounds[1], 1);
-        col.setLabelProvider(new ColumnLabelProvider() {
-            @Override
-            public String getText(Object element) {
-                Person p = (Person) element;
-                return p.getLastName();
-            }
-        });
-
-        // now the gender
-        col = createTableViewerColumn(titles[2], bounds[2], 2);
-        col.setLabelProvider(new ColumnLabelProvider() {
-            @Override
-            public String getText(Object element) {
-                Person p = (Person) element;
-                return p.getGender();
-            }
-        });
-
-        // now the status married
-        col = createTableViewerColumn(titles[3], bounds[3], 3);
         col.setLabelProvider(new ColumnLabelProvider() {
             @Override
             public String getText(Object element) {
@@ -181,11 +167,33 @@ public class ServiceExplorer extends ViewPart {
 
             @Override
             public Image getImage(Object element) {
-                if (((Person) element).isMarried()) {
+                if (((ServiceProject) element).isEnabled()) {
                     return CHECKED;
                 } else {
                     return UNCHECKED;
                 }
+            }
+        });
+        col.setEditingSupport(new ServiceEnablingSupport(viewer));
+        
+        
+        // first column is for the service name
+        col = createTableViewerColumn(titles[1], bounds[1], 1);
+        col.setLabelProvider(new ColumnLabelProvider() {
+            @Override
+            public String getText(Object element) {
+                ServiceProject p = (ServiceProject) element;
+                return p.getName();
+            }
+        });
+
+        // second column is for the version
+        col = createTableViewerColumn(titles[2], bounds[2], 2);
+        col.setLabelProvider(new ColumnLabelProvider() {
+            @Override
+            public String getText(Object element) {
+                ServiceProject p = (ServiceProject) element;
+                return p.getVersion();
             }
         });
 
@@ -240,7 +248,7 @@ public class ServiceExplorer extends ViewPart {
 		fillLocalPullDown(bars.getMenuManager());
 		fillLocalToolBar(bars.getToolBarManager());
 	}
-
+	
 	private void fillLocalPullDown(IMenuManager manager) {
 		manager.add(action1);
 		manager.add(new Separator());
@@ -267,8 +275,8 @@ public class ServiceExplorer extends ViewPart {
 		};
 		action1.setText("Action 1");
 		action1.setToolTipText("Action 1 tooltip");
-		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
 		
 		action2 = new Action() {
 			public void run() {
@@ -277,8 +285,9 @@ public class ServiceExplorer extends ViewPart {
 		};
 		action2.setText("Action 2");
 		action2.setToolTipText("Action 2 tooltip");
-		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-				getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		
 		doubleClickAction = new Action() {
 			public void run() {
 				ISelection selection = viewer.getSelection();
