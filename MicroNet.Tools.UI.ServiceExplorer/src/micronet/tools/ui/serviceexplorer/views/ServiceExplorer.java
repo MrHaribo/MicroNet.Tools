@@ -153,8 +153,8 @@ public class ServiceExplorer extends ViewPart {
 	
 	// create the columns for the table
     private void createColumns(final Composite parent, final TableViewer viewer) {
-        String[] titles = { "Enabled", "Service Name", "Version", "Lanuch" };
-        int[] bounds = { 60, 200, 100, 60 };
+        String[] titles = { "Enabled", "Service Name", "Version", };
+        int[] bounds = { 60, 200, 100, };
 
         
         // the status enabled
@@ -200,7 +200,10 @@ public class ServiceExplorer extends ViewPart {
     }
     
     private TableViewerColumn createTableViewerColumn(String title, int bound, final int colNumber) {
-        final TableViewerColumn viewerColumn = new TableViewerColumn(viewer, SWT.NONE);
+    	return createTableViewerColumn(title, bound, colNumber, SWT.NONE);
+    }
+    private TableViewerColumn createTableViewerColumn(String title, int bound, final int colNumber, int style) {
+        final TableViewerColumn viewerColumn = new TableViewerColumn(viewer, style);
         final TableColumn column = viewerColumn.getColumn();
         column.setText(title);
         column.setWidth(bound);
