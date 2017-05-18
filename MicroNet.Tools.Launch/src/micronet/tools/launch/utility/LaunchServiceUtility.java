@@ -1,5 +1,6 @@
 package micronet.tools.launch.utility;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -8,18 +9,32 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
 public final class LaunchServiceUtility {
 	private LaunchServiceUtility() {
 	}
 	
+	public static void launchNative(IProject project, String mode) {
+		try {
+			if (!project.hasNature(JavaCore.NATURE_ID))
+				return;
+			IJavaProject javaProject = JavaCore.create(project);
+			launchNative(javaProject, mode);
+		} catch (CoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
 	public static void launchNative(IJavaProject javaProject, String mode) {
 		ILaunchConfiguration launchConfig = getNativeLaunchConfiguration(javaProject);
 		DebugUITools.launch(launchConfig, mode);
 	}
 
-	private static ILaunchConfiguration getNativeLaunchConfiguration(IJavaProject project) {
+	public static ILaunchConfiguration getNativeLaunchConfiguration(IJavaProject project) {
 		String projectName = project.getElementName();
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();

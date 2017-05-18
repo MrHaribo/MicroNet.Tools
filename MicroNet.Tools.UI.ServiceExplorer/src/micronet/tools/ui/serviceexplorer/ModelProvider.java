@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.maven.project.MavenProject;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -101,10 +100,6 @@ public enum ModelProvider {
 			return true; // visit the children
 		}
 	}
-
-	public List<ServiceProject> getServiceProjects() {
-		return new ArrayList<ServiceProject>(serviceProjects.values());
-	}
 	
 	private void refreshServiceProjects() {
 		serviceProjects.clear();
@@ -129,6 +124,19 @@ public enum ModelProvider {
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public List<ServiceProject> getServiceProjects() {
+		return new ArrayList<ServiceProject>(serviceProjects.values());
+	}
+	
+	public List<IProject> getEnabledServiceProjects() {
+		List<IProject> result = new ArrayList<IProject>();
+		for (ServiceProject project : serviceProjects.values()) {
+			if (project.isEnabled())
+				result.add(project.getProject());
+		}
+		return result;
 	}
 
 	public interface ServicesChangedListener {

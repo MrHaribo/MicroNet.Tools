@@ -1,6 +1,9 @@
 package micronet.tools.ui.serviceexplorer.views;
 
 
+import java.util.List;
+
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -8,14 +11,8 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.resource.LocalResourceManager;
-import org.eclipse.jface.resource.ResourceManager;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -39,6 +36,9 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import micronet.tools.launch.utility.BuildUtility;
+import micronet.tools.launch.utility.LaunchServiceGroupUtility;
+import micronet.tools.launch.utility.LaunchServiceUtility;
 import micronet.tools.ui.serviceexplorer.ModelProvider;
 import micronet.tools.ui.serviceexplorer.ServiceProject;
 
@@ -69,9 +69,22 @@ public class ServiceExplorer extends ViewPart {
 	public static final String ID = "micronet.tools.ui.serviceexplorer.views.ServiceExplorer";
 
 	private TableViewer viewer;
-	private Action action1;
-	private Action action2;
-	private Action doubleClickAction;
+	
+	private Action debugService;
+	private Action runService;
+	private Action buildService;
+	
+	private Action nativeDebugEnabledServices;
+	private Action nativeRunEnabledServices;
+
+	private Action generateGamePom;
+	private Action generateGameCompose;
+
+	private Action buildGamePom;
+	private Action buildGameCompose;
+	
+	private Action localRunGameCompose;
+	private Action localRunGameSwarm;
 	
 	// fields for your class
 	// assumes that you have these two icons
@@ -112,7 +125,6 @@ public class ServiceExplorer extends ViewPart {
 		getSite().setSelectionProvider(viewer);
 		makeActions();
 		hookContextMenu();
-		hookDoubleClickAction();
 		contributeToActionBars();
     }
 	
@@ -153,12 +165,12 @@ public class ServiceExplorer extends ViewPart {
 	
 	// create the columns for the table
     private void createColumns(final Composite parent, final TableViewer viewer) {
-        String[] titles = { "Enabled", "Service Name", "Version", };
-        int[] bounds = { 60, 200, 100, };
+        String[] titles = { "Enabled", "Service Name", "Version", "Type" };
+        int[] bounds = { 60, 200, 150, 100 };
 
         
         // the status enabled
-        TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0);
+        TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0, SWT.CENTER);
         col.setLabelProvider(new ColumnLabelProvider() {
             @Override
             public String getText(Object element) {
@@ -212,27 +224,6 @@ public class ServiceExplorer extends ViewPart {
         return viewerColumn;
     }
 
-	public void createPartControlOld(Composite parent) {
-		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		
-		viewer.setContentProvider(ArrayContentProvider.getInstance());
-		viewer.setInput(new String[] { "One", "Two", "Three" });
-		viewer.setLabelProvider(new ViewLabelProvider());
-		
-		// make lines and header visible
-		final Table table = viewer.getTable();
-		table.setHeaderVisible(true);
-		table.setLinesVisible(true);
-		
-		// Create the help context id for the viewer's control
-//		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "MicroNet.Tools.UI.ServiceExplorer.viewer");
-//		getSite().setSelectionProvider(viewer);
-//		makeActions();
-//		hookContextMenu();
-//		hookDoubleClickAction();
-//		contributeToActionBars();
-	}
-
 	private void hookContextMenu() {
 		MenuManager menuMgr = new MenuManager("#PopupMenu");
 		menuMgr.setRemoveAllWhenShown(true);
@@ -253,60 +244,152 @@ public class ServiceExplorer extends ViewPart {
 	}
 	
 	private void fillLocalPullDown(IMenuManager manager) {
-		manager.add(action1);
+		manager.add(nativeDebugEnabledServices);
+		manager.add(nativeRunEnabledServices);
 		manager.add(new Separator());
-		manager.add(action2);
+		manager.add(generateGamePom);
+		manager.add(generateGameCompose);
+		manager.add(new Separator());
+		manager.add(buildGamePom);
+		manager.add(buildGameCompose);
+		manager.add(new Separator());
+		manager.add(localRunGameCompose);
+		manager.add(localRunGameSwarm);
+		// Other plug-ins can contribute there actions here
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
-		manager.add(action1);
-		manager.add(action2);
+		manager.add(debugService);
+		manager.add(runService);
+		manager.add(buildService);
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
 	
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(action1);
-		manager.add(action2);
+		manager.add(nativeDebugEnabledServices);
+		manager.add(nativeRunEnabledServices);
 	}
 
 	private void makeActions() {
-		action1 = new Action() {
+		buildService = new Action() {
 			public void run() {
-				showMessage("Action 1 executed");
+				showMessage("Build Service executed: " + getSelectedObject());
+				ServiceProject serviceProject = (ServiceProject)getSelectedObject();
+				BuildUtility.fullBuild(serviceProject.getProject(), "run");
 			}
 		};
-		action1.setText("Action 1");
-		action1.setToolTipText("Action 1 tooltip");
-		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		buildService.setText("Build Service");
+		buildService.setToolTipText("Builds the selected service using Maven and Docker.");
+		buildService.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
 		
-		
-		action2 = new Action() {
+		runService = new Action() {
 			public void run() {
-				showMessage("Action 2 executed");
+				showMessage("Run Service executed: " + getSelectedObject());
+				ServiceProject serviceProject = (ServiceProject)getSelectedObject();
+				LaunchServiceUtility.launchNative(serviceProject.getProject(), "run");
 			}
 		};
-		action2.setText("Action 2");
-		action2.setToolTipText("Action 2 tooltip");
-		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		runService.setText("Run Service Native");
+		runService.setToolTipText("Runs the selected service as native Java application");
+		runService.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
 		
-		
-		doubleClickAction = new Action() {
+		debugService = new Action() {
 			public void run() {
-				ISelection selection = viewer.getSelection();
-				Object obj = ((IStructuredSelection)selection).getFirstElement();
-				showMessage("Double-click detected on "+obj.toString());
+				showMessage("Debug Service executed: " + getSelectedObject());
+				ServiceProject serviceProject = (ServiceProject)getSelectedObject();
+				LaunchServiceUtility.launchNative(serviceProject.getProject(), "debug");
 			}
 		};
+		debugService.setText("Debug Service Native");
+		debugService.setToolTipText("Debugs the selected service as native Java application");
+		debugService.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		
+		nativeDebugEnabledServices = new Action() {
+			public void run() {
+				showMessage("Debug Enabled Services executed");
+				List<IProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
+				LaunchServiceGroupUtility.launchNativeGroup(enabledProjects, "debug");
+			}
+		};
+		nativeDebugEnabledServices.setText("Debug Enabled Services Native");
+		nativeDebugEnabledServices.setToolTipText("Debugs the enabled services as native Java applications.");
+		nativeDebugEnabledServices.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+
+		nativeRunEnabledServices = new Action() {
+			public void run() {
+				showMessage("Run Enabled Services executed");
+				List<IProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
+				LaunchServiceGroupUtility.launchNativeGroup(enabledProjects, "run");
+			}
+		};
+		nativeRunEnabledServices.setText("Run Enabled Services Native");
+		nativeRunEnabledServices.setToolTipText("Runs the enabled services as native Java applications.");
+		nativeRunEnabledServices.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+
+		generateGamePom = new Action() {
+			public void run() {
+				showMessage("Generate Game Pom from Enabled Services executed");
+			}
+		};
+		generateGamePom.setText("Generate Game Pom");
+		generateGamePom.setToolTipText("Generates (or updates) the Game Pom File (pom.xml) from the enabled services.");
+		generateGamePom.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		generateGameCompose = new Action() {
+			public void run() {
+				showMessage("Generate Game Compose from Enabled Services executed");
+			}
+		};
+		generateGameCompose.setText("Generate Game Compose");
+		generateGameCompose.setToolTipText("Generates (or updates) the Game Compose File (docker-compose.xml) from the enabled services.");
+		generateGameCompose.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		buildGamePom = new Action() {
+			public void run() {
+				showMessage("Building the Game Pom File using Maven.");
+			}
+		};
+		buildGamePom.setText("Build Game Pom");
+		buildGamePom.setToolTipText("Builds the Game Pom File using Maven.");
+		buildGamePom.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		buildGameCompose = new Action() {
+			public void run() {
+				showMessage("Building the Game Pom File using compose.");
+			}
+		};
+		buildGameCompose.setText("Build Game Compose");
+		buildGameCompose.setToolTipText("Builds the Game Compose File using the \"docker-compose build\" command.");
+		buildGameCompose.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		localRunGameCompose = new Action() {
+			public void run() {
+				showMessage("Run the Game Compose File as a local compose application.");
+			}
+		};
+		localRunGameCompose.setText("Run Game Local Compose");
+		localRunGameCompose.setToolTipText("Runs the Game Compose File (docker-compose.xml) as a local compose application.");
+		localRunGameCompose.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		
+		localRunGameSwarm = new Action() {
+			public void run() {
+				showMessage("Run Game Compose File as a local swarm deployment.");
+			}
+		};
+		localRunGameSwarm.setText("Run Game Local Swarm");
+		localRunGameSwarm.setToolTipText("Deploys the Game Compose File (docker-compose.xml) in the local docker swarm. Swarm mode must be enabled.");
+		localRunGameSwarm.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+
+	}
+	
+	private Object getSelectedObject() {
+		ISelection selection = viewer.getSelection();
+		return ((IStructuredSelection)selection).getFirstElement();
 	}
 
-	private void hookDoubleClickAction() {
-		viewer.addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				doubleClickAction.run();
-			}
-		});
-	}
 	private void showMessage(String message) {
 		MessageDialog.openInformation(
 			viewer.getControl().getShell(),
