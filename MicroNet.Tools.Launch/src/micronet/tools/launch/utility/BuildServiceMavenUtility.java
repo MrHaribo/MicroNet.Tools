@@ -13,6 +13,7 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.m2e.actions.MavenLaunchConstants;
 
+@SuppressWarnings("restriction")
 public final class BuildServiceMavenUtility {
 	private BuildServiceMavenUtility() {
 

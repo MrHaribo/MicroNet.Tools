@@ -18,6 +18,8 @@ import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 
+import micronet.launch.script.SyncPom;
+
 public enum ModelProvider {
 	INSTANCE;
 
@@ -108,6 +110,12 @@ public enum ModelProvider {
 			if(!project.isOpen())
 				continue;
 			addProject(project);
+		}
+		
+		List<String> enabledServices = SyncPom.getServicesFromGamePom();
+		for (ServiceProject project : serviceProjects.values()) {
+			boolean projectEnabled = enabledServices.contains(project.getName());
+			project.setEnabled(projectEnabled);
 		}
 	}
 	

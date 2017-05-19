@@ -1,9 +1,14 @@
 package micronet.tools.ui.serviceexplorer.views;
 
 
+import java.net.URL;
 import java.util.List;
 
+import javax.swing.text.View;
+
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -11,6 +16,7 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ISelection;
@@ -35,7 +41,11 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
+import micronet.launch.script.SyncPom;
+import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildUtility;
 import micronet.tools.launch.utility.LaunchServiceGroupUtility;
 import micronet.tools.launch.utility.LaunchServiceUtility;
@@ -89,8 +99,17 @@ public class ServiceExplorer extends ViewPart {
 	// fields for your class
 	// assumes that you have these two icons
 	// in the "icons" folder
-	private final Image CHECKED = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_DND_STACK_SOURCE);
-	private final Image UNCHECKED = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_DEC_FIELD_WARNING);
+	private final ImageDescriptor IMG_CHECKED = getImageDescriptor("checked.png");
+	private final ImageDescriptor IMG_UNCHECKED = getImageDescriptor("unchecked.png");
+	
+	private final ImageDescriptor IMG_DEBUG = getImageDescriptor("debug.png");
+	private final ImageDescriptor IMG_RUN = getImageDescriptor("run.png");
+	
+	private final ImageDescriptor IMG_LAUNCH_GROUP = getImageDescriptor("launch_group.png");
+	private final ImageDescriptor IMG_DOCKER = getImageDescriptor("docker.png");
+	private final ImageDescriptor IMG_MAVEN = getImageDescriptor("maven.png");
+	private final ImageDescriptor IMG_NATIVE_JAVA = getImageDescriptor("native_java.png");
+	private final ImageDescriptor IMG_MICRO_NET = getImageDescriptor("micronet_icon.png");
 	 
 	//SWT.CHECK
 	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
@@ -180,9 +199,9 @@ public class ServiceExplorer extends ViewPart {
             @Override
             public Image getImage(Object element) {
                 if (((ServiceProject) element).isEnabled()) {
-                    return CHECKED;
+                    return IMG_CHECKED.createImage();
                 } else {
-                    return UNCHECKED;
+                    return IMG_UNCHECKED.createImage();
                 }
             }
         });
@@ -275,68 +294,70 @@ public class ServiceExplorer extends ViewPart {
 	private void makeActions() {
 		buildService = new Action() {
 			public void run() {
-				showMessage("Build Service executed: " + getSelectedObject());
+				//showMessage("Build Service executed: " + getSelectedObject());
 				ServiceProject serviceProject = (ServiceProject)getSelectedObject();
 				BuildUtility.fullBuild(serviceProject.getProject(), "run");
 			}
 		};
 		buildService.setText("Build Service");
 		buildService.setToolTipText("Builds the selected service using Maven and Docker.");
-		buildService.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		buildService.setImageDescriptor(IMG_MICRO_NET);
 		
 		runService = new Action() {
 			public void run() {
-				showMessage("Run Service executed: " + getSelectedObject());
+				//showMessage("Run Service executed: " + getSelectedObject());
 				ServiceProject serviceProject = (ServiceProject)getSelectedObject();
 				LaunchServiceUtility.launchNative(serviceProject.getProject(), "run");
 			}
 		};
 		runService.setText("Run Service Native");
 		runService.setToolTipText("Runs the selected service as native Java application");
-		runService.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		runService.setImageDescriptor(IMG_RUN);
 		
 		debugService = new Action() {
 			public void run() {
-				showMessage("Debug Service executed: " + getSelectedObject());
+				//showMessage("Debug Service executed: " + getSelectedObject());
 				ServiceProject serviceProject = (ServiceProject)getSelectedObject();
 				LaunchServiceUtility.launchNative(serviceProject.getProject(), "debug");
 			}
 		};
 		debugService.setText("Debug Service Native");
 		debugService.setToolTipText("Debugs the selected service as native Java application");
-		debugService.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		debugService.setImageDescriptor(IMG_DEBUG);
 		
 		
 		nativeDebugEnabledServices = new Action() {
 			public void run() {
-				showMessage("Debug Enabled Services executed");
+				//showMessage("Debug Enabled Services executed");
 				List<IProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
 				LaunchServiceGroupUtility.launchNativeGroup(enabledProjects, "debug");
 			}
 		};
 		nativeDebugEnabledServices.setText("Debug Enabled Services Native");
 		nativeDebugEnabledServices.setToolTipText("Debugs the enabled services as native Java applications.");
-		nativeDebugEnabledServices.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		nativeDebugEnabledServices.setImageDescriptor(IMG_DEBUG);
 
 		nativeRunEnabledServices = new Action() {
 			public void run() {
-				showMessage("Run Enabled Services executed");
+				//showMessage("Run Enabled Services executed");
 				List<IProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
 				LaunchServiceGroupUtility.launchNativeGroup(enabledProjects, "run");
 			}
 		};
 		nativeRunEnabledServices.setText("Run Enabled Services Native");
 		nativeRunEnabledServices.setToolTipText("Runs the enabled services as native Java applications.");
-		nativeRunEnabledServices.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		nativeRunEnabledServices.setImageDescriptor(IMG_RUN);
 
 		generateGamePom = new Action() {
 			public void run() {
-				showMessage("Generate Game Pom from Enabled Services executed");
+				List<IProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
+				SyncPom.updateGamePom(enabledProjects);
+				showMessage("Game Pom has been generated from Enabled Services.");
 			}
 		};
 		generateGamePom.setText("Generate Game Pom");
 		generateGamePom.setToolTipText("Generates (or updates) the Game Pom File (pom.xml) from the enabled services.");
-		generateGamePom.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		generateGamePom.setImageDescriptor(IMG_MAVEN);
 		
 		generateGameCompose = new Action() {
 			public void run() {
@@ -345,25 +366,29 @@ public class ServiceExplorer extends ViewPart {
 		};
 		generateGameCompose.setText("Generate Game Compose");
 		generateGameCompose.setToolTipText("Generates (or updates) the Game Compose File (docker-compose.xml) from the enabled services.");
-		generateGameCompose.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		generateGameCompose.setImageDescriptor(IMG_DOCKER);
 		
 		buildGamePom = new Action() {
 			public void run() {
-				showMessage("Building the Game Pom File using Maven.");
+				
+				if (promptQuestion("Update Game Pom", "So you want to update the Game Pom before executing the build?"))
+					generateGamePom.run();
+				BuildGameMavenUtility.buildGame();
 			}
 		};
 		buildGamePom.setText("Build Game Pom");
 		buildGamePom.setToolTipText("Builds the Game Pom File using Maven.");
-		buildGamePom.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		buildGamePom.setImageDescriptor(IMG_MAVEN);
 		
 		buildGameCompose = new Action() {
 			public void run() {
-				showMessage("Building the Game Pom File using compose.");
+				//showMessage("Building the Game Pom File using compose.");
+				//SyncPom.getServicesFromGamePom();
 			}
 		};
 		buildGameCompose.setText("Build Game Compose");
 		buildGameCompose.setToolTipText("Builds the Game Compose File using the \"docker-compose build\" command.");
-		buildGameCompose.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		buildGameCompose.setImageDescriptor(IMG_DOCKER);
 		
 		localRunGameCompose = new Action() {
 			public void run() {
@@ -372,7 +397,7 @@ public class ServiceExplorer extends ViewPart {
 		};
 		localRunGameCompose.setText("Run Game Local Compose");
 		localRunGameCompose.setToolTipText("Runs the Game Compose File (docker-compose.xml) as a local compose application.");
-		localRunGameCompose.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		localRunGameCompose.setImageDescriptor(IMG_DOCKER);
 		
 		localRunGameSwarm = new Action() {
 			public void run() {
@@ -381,7 +406,7 @@ public class ServiceExplorer extends ViewPart {
 		};
 		localRunGameSwarm.setText("Run Game Local Swarm");
 		localRunGameSwarm.setToolTipText("Deploys the Game Compose File (docker-compose.xml) in the local docker swarm. Swarm mode must be enabled.");
-		localRunGameSwarm.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		localRunGameSwarm.setImageDescriptor(IMG_DOCKER);
 
 	}
 	
@@ -395,6 +420,20 @@ public class ServiceExplorer extends ViewPart {
 			viewer.getControl().getShell(),
 			"Service Explorer",
 			message);
+	}
+	
+	private boolean promptQuestion(String title, String message) {
+		return MessageDialog.openQuestion(
+			viewer.getControl().getShell(),
+			title,
+			message);
+	}
+	
+	private static ImageDescriptor getImageDescriptor(String file) {
+	    // assume that the current class is called View.java
+	    Bundle bundle = FrameworkUtil.getBundle(ServiceExplorer.class);
+	    URL url = FileLocator.find(bundle, new Path("icons/" + file), null);
+	    return ImageDescriptor.createFromURL(url);
 	}
 
 	/**

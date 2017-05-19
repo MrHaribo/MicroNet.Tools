@@ -11,8 +11,10 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.core;bundle-version="3.12.3",
  org.eclipse.jdt.launching;bundle-version="3.8.101",
  com.spotify.docker.client;bundle-version="3.4.0",
- org.eclipse.m2e.launching;bundle-version="1.7.0"
+ org.eclipse.m2e.launching;bundle-version="1.7.0",
+ org.eclipse.core.resources
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
-Export-Package: micronet.tools.launch.utility
+Export-Package: micronet.launch.script,
+ micronet.tools.launch.utility
