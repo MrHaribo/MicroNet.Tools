@@ -44,13 +44,13 @@ import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
-import micronet.launch.script.SyncPom;
+import micronet.tools.core.ModelProvider;
+import micronet.tools.core.ServiceProject;
+import micronet.tools.core.SyncPom;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildUtility;
 import micronet.tools.launch.utility.LaunchServiceGroupUtility;
 import micronet.tools.launch.utility.LaunchServiceUtility;
-import micronet.tools.ui.serviceexplorer.ModelProvider;
-import micronet.tools.ui.serviceexplorer.ServiceProject;
 
 
 /**

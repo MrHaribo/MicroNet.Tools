@@ -1,4 +1,4 @@
-package micronet.launch.script;
+package micronet.tools.core;
 
 import java.io.File;
 import java.io.FileOutputStream;

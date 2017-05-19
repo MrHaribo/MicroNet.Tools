@@ -16,5 +16,4 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
-Export-Package: micronet.launch.script,
- micronet.tools.launch.utility
+Export-Package: micronet.tools.launch.utility

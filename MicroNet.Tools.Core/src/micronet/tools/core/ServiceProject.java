@@ -1,4 +1,4 @@
-package micronet.tools.ui.serviceexplorer;
+package micronet.tools.core;
 
 import org.eclipse.core.resources.IProject;
 

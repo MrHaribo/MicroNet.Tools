@@ -1,4 +1,4 @@
-package micronet.tools.ui.serviceexplorer;
+package micronet.tools.core;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,8 +17,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
-
-import micronet.launch.script.SyncPom;
 
 public enum ModelProvider {
 	INSTANCE;

@@ -6,7 +6,7 @@ import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 
-import micronet.tools.ui.serviceexplorer.ServiceProject;
+import micronet.tools.core.ServiceProject;
 
 
 public class ServiceEnablingSupport extends EditingSupport {
