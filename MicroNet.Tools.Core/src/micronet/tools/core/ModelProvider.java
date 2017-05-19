@@ -1,5 +1,6 @@
 package micronet.tools.core;
 
+import java.security.Provider.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,10 +19,12 @@ import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 
+import micronet.tools.core.ServiceProject.Nature;
+
 public enum ModelProvider {
 	INSTANCE;
 
-	Map<IProject, ServiceProject> serviceProjects = new HashMap<>();
+	Map<String, ServiceProject> serviceProjects = new HashMap<>();
 	
 	private List<ServicesChangedListener> servicesChangedListeners = new ArrayList<>();
 	
@@ -36,14 +39,14 @@ public enum ModelProvider {
 					case IResourceChangeEvent.PRE_CLOSE:
 						if (res instanceof IProject) {
 							System.out.println("Project is about to close: " + res.getFullPath());
-							serviceProjects.remove((IProject)res);
+							serviceProjects.remove(((IProject)res).getName());
 							notifyServicesChangedListeners();
 						}
 						break;
 		            case IResourceChangeEvent.PRE_DELETE:
 		            	if (res instanceof IProject) {
 							System.out.println("Project is about to be deleted: " + res.getFullPath());
-							serviceProjects.remove((IProject)res);
+							serviceProjects.remove(((IProject)res).getName());
 							notifyServicesChangedListeners();
 		            	}
 		            	break;
@@ -84,7 +87,7 @@ public enum ModelProvider {
 			case IResourceDelta.REMOVED:
 				if (res instanceof IProject) {
 					System.out.println("Project was removed: " + res.getFullPath());
-					serviceProjects.remove((IProject)res);
+					serviceProjects.remove(((IProject)res).getName());
 					notifyServicesChangedListeners();
 				}
 				break;
@@ -118,14 +121,29 @@ public enum ModelProvider {
 	}
 	
 	private void addProject(IProject project) {
+		if (project.getName().equals("External Plug-in Libraries"))
+			return;
 		try {
+			ServiceProject serviceProject = null;
 			if (project.hasNature("org.eclipse.m2e.core.maven2Nature")) {
 				IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
 				IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project);
 				String version = mavenProjectFacade.getArtifactKey().getVersion();
-				serviceProjects.put(project, new ServiceProject(project, version));
+				serviceProject = new ServiceProject(project, version, Nature.JAVA, Nature.MAVEN);
 			} else if (project.hasNature(JavaCore.NATURE_ID)) {
-				serviceProjects.put(project, new ServiceProject(project, null));
+				serviceProject = new ServiceProject(project, null, Nature.JAVA);
+			} 
+			
+			if (project.getFile("Dockerfile").exists()) {
+				if (serviceProject == null) {
+					serviceProject = new ServiceProject(project, null, Nature.DOCKER);
+				} else {
+					serviceProject.addNature(Nature.DOCKER);
+				}
+			}
+			
+			if (serviceProject != null) {
+				serviceProjects.put(project.getName(), serviceProject);
 			}
 		} catch (CoreException e) {
 			e.printStackTrace();

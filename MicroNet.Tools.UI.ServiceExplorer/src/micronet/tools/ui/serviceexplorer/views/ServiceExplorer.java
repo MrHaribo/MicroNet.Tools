@@ -184,8 +184,8 @@ public class ServiceExplorer extends ViewPart {
 	
 	// create the columns for the table
     private void createColumns(final Composite parent, final TableViewer viewer) {
-        String[] titles = { "Enabled", "Service Name", "Version", "Type" };
-        int[] bounds = { 60, 200, 150, 100 };
+        String[] titles = { "Enabled", "Service Name", "Version", "Nature" };
+        int[] bounds = { 60, 200, 150, 150 };
 
         
         // the status enabled
@@ -228,6 +228,15 @@ public class ServiceExplorer extends ViewPart {
             }
         });
 
+        // second column is for the version
+        col = createTableViewerColumn(titles[3], bounds[3], 3);
+        col.setLabelProvider(new ColumnLabelProvider() {
+            @Override
+            public String getText(Object element) {
+                ServiceProject p = (ServiceProject) element;
+                return p.getNatureString();
+            }
+        });
     }
     
     private TableViewerColumn createTableViewerColumn(String title, int bound, final int colNumber) {
