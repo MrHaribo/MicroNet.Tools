@@ -5,6 +5,9 @@ import java.util.Set;
 import java.util.StringJoiner;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ProjectScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.osgi.service.prefs.BackingStoreException;
 
 public class ServiceProject {
 	
@@ -16,8 +19,6 @@ public class ServiceProject {
 	
 	private IProject project;
 	private String version;
-	private boolean enabled;
-	private boolean isInGamePom;
 	private boolean isInGameCompose;
     private Set<Nature> natures = new HashSet<>();
 
@@ -40,26 +41,32 @@ public class ServiceProject {
 	public String getVersion() {
 		return version;
 	}
-
-	public boolean isEnabled() {
-		return enabled;
-	}
-
+	
 	public void setVersion(String version) {
 		this.version = version;
 	}
+	
+	public boolean isEnabled() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		return preferences.getBoolean("enabled", false);
+	}
 
 	public void setEnabled(boolean isEnabled) {
-		this.enabled = isEnabled;
+		try {
+			ProjectScope projectScope = new ProjectScope(project);
+			IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+			preferences.putBoolean("enabled", isEnabled);
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public boolean isInGamePom() {
-		return isInGamePom;
+		return SyncPom.getServicesFromGamePom().contains(project.getName());
 	}
 
-	public void setInGamePom(boolean isInGamePom) {
-		this.isInGamePom = isInGamePom;
-	}
 
 	public boolean isInGameCompose() {
 		return isInGameCompose;

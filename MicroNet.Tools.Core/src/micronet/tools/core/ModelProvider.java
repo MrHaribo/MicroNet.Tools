@@ -111,12 +111,6 @@ public enum ModelProvider {
 				continue;
 			addProject(project);
 		}
-		
-		List<String> enabledServices = SyncPom.getServicesFromGamePom();
-		for (ServiceProject project : serviceProjects.values()) {
-			boolean projectEnabled = enabledServices.contains(project.getName());
-			project.setEnabled(projectEnabled);
-		}
 		notifyServicesChangedListeners();
 	}
 	
@@ -143,8 +137,6 @@ public enum ModelProvider {
 			}
 			
 			if (serviceProject != null) {
-				boolean isInGamePom = SyncPom.getServicesFromGamePom().contains(project.getName());
-				serviceProject.setInGamePom(isInGamePom);
 				serviceProjects.put(project.getName(), serviceProject);
 			}
 		} catch (CoreException e) {
