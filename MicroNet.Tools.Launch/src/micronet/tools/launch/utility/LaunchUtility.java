@@ -2,6 +2,7 @@ package micronet.tools.launch.utility;
 
 import java.util.function.Consumer;
 
+import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchManager;
@@ -58,6 +59,27 @@ public final class LaunchUtility {
 		return null;
 	}
 
+	public static void removeLaunch(ILaunch launch) {
+		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
+		launchMan.removeLaunch(launch);
+	}
+	
+	public static void removeLaunch(String name) {
+		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
+		for (ILaunch launch : launchMan.getLaunches()) {
+			if (launch.getLaunchConfiguration().getName().equals(name)) {
+				try {
+					launch.terminate();
+				} catch (DebugException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				launchMan.removeLaunch(launch);
+				return;
+			}
+		}
+	}
+	
 	public static void showWarningMessageBox(String text, String message) {
 		if (Display.getCurrent() == null || Display.getCurrent().getActiveShell() == null)
 			return;

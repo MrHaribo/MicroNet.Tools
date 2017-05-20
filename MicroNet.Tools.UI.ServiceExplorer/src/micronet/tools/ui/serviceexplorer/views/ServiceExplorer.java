@@ -11,6 +11,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -20,6 +21,7 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.ViewerCell;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -44,10 +46,11 @@ import org.osgi.framework.FrameworkUtil;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
-import micronet.tools.core.SyncPom;
 import micronet.tools.core.ServiceProject.Nature;
+import micronet.tools.core.SyncPom;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildUtility;
+import micronet.tools.launch.utility.LaunchDependencyUtility;
 import micronet.tools.launch.utility.LaunchServiceGroupUtility;
 import micronet.tools.launch.utility.LaunchServiceUtility;
 
@@ -74,6 +77,12 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	public static final String ID = "micronet.tools.ui.serviceexplorer.views.ServiceExplorer";
 
 	private TableViewer viewer;
+
+	private Action dependencyCreateActiveMQ;
+	private Action dependencyCreateCouchbase;
+	private Action dependencyCreatePostgres;
+	private Action dependencyRunActiveMQ;
+	private Action dependencyRunCouchbase;
 
 	private Action debugService;
 	private Action runService;
@@ -105,7 +114,10 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private final ImageDescriptor IMG_MAVEN = getImageDescriptor("maven.png");
 	private final ImageDescriptor IMG_NATIVE_JAVA = getImageDescriptor("native_java.png");
 	private final ImageDescriptor IMG_MICRO_NET = getImageDescriptor("micronet_icon.png");
-	
+	private final ImageDescriptor IMG_COUCHBASE = getImageDescriptor("couchbase.png");
+	private final ImageDescriptor IMG_ACTIVEMQ = getImageDescriptor("activemq.png");
+	private final ImageDescriptor IMG_POSTGRESQL = getImageDescriptor("postgreesql.png");
+
 	private ServiceProject selectedProject = null;
 
 	// SWT.CHECK
@@ -237,7 +249,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 				return p.getNatureString();
 			}
 		});
-		
+
 		// second column is for the version
 		col = createTableViewerColumn(titles[4], bounds[4], 4);
 		col.setLabelProvider(new ColumnLabelProvider() {
@@ -250,7 +262,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 				}
 			}
 		});
-		
+
 		// second column is for the version
 		col = createTableViewerColumn(titles[5], bounds[5], 5);
 		col.setLabelProvider(new ColumnLabelProvider() {
@@ -284,7 +296,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
-				ServiceExplorer.this.fillContextMenu(manager);
+				if (selectedProject != null) {
+					ServiceExplorer.this.fillContextMenu(manager);
+				}
 			}
 		});
 		Menu menu = menuMgr.createContextMenu(viewer.getControl());
@@ -310,6 +324,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(localRunGameCompose);
 		manager.add(localRunGameSwarm);
+		manager.add(new Separator());
+		
+        MenuManager subMenu = new MenuManager("Dependencies", null);
+        subMenu.add(dependencyCreateActiveMQ);
+        subMenu.add(dependencyCreateCouchbase);
+        subMenu.add(dependencyCreatePostgres);
+        manager.add(subMenu);
+		
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
@@ -325,9 +347,69 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void fillLocalToolBar(IToolBarManager manager) {
 		manager.add(nativeDebugEnabledServices);
 		manager.add(nativeRunEnabledServices);
+		manager.add(dependencyRunActiveMQ);
+		manager.add(dependencyRunCouchbase);
 	}
 
 	private void makeActions() {
+		createDependencyActions();
+		createNativeActions();
+		createLanuchGroupActions();
+		createGenerateGameActions();
+		createBuildGameActions();
+		createRunGameActions();
+
+	}
+
+	private void createDependencyActions() {
+		dependencyCreateActiveMQ = new Action() {
+			public void run() {
+				showMessage("Add AMQ");
+			}
+		};
+		dependencyCreateActiveMQ.setText("Add ActiveMQ");
+		dependencyCreateActiveMQ.setToolTipText("Adds the ActiveMQ dependency to the workspace.");
+		dependencyCreateActiveMQ.setImageDescriptor(IMG_ACTIVEMQ);
+		
+		dependencyCreateCouchbase = new Action() {
+			public void run() {
+				showMessage("Add Couchbase");
+			}
+		};
+		dependencyCreateCouchbase.setText("Add Couchbase");
+		dependencyCreateCouchbase.setToolTipText("Adds the Couchbase dependency to the workspace.");
+		dependencyCreateCouchbase.setImageDescriptor(IMG_COUCHBASE);
+		
+		dependencyCreatePostgres = new Action() {
+			public void run() {
+				showMessage("Add Postgres");
+			}
+		};
+		dependencyCreatePostgres.setText("Add PostgreSQL Service");
+		dependencyCreatePostgres.setToolTipText("Adds a PostgreSQL instance to the workspace.");
+		dependencyCreatePostgres.setImageDescriptor(IMG_POSTGRESQL);
+		
+		dependencyRunActiveMQ = new Action() {
+			public void run() {
+				showMessage("Run ActiveMQ");
+			}
+		};
+		dependencyRunActiveMQ.setText("Run ActiveMQ as a service");
+		dependencyRunActiveMQ.setToolTipText("Run ActiveMQ as a service in a docker container.");
+		dependencyRunActiveMQ.setImageDescriptor(IMG_ACTIVEMQ);
+		
+		dependencyRunCouchbase = new Action() {
+			public void run() {
+				LaunchDependencyUtility.launchCouchbase();
+				showMessage("Couchbase docker container started");
+			}
+		};
+		dependencyRunCouchbase.setText("Run Couchbase as a service");
+		dependencyRunCouchbase.setToolTipText("Run Couchbase as a service in a docker container.");
+		dependencyRunCouchbase.setImageDescriptor(IMG_COUCHBASE);
+	}
+
+	private void createNativeActions() {
 		buildService = new Action() {
 			public void run() {
 				if (selectedProject != null) {
@@ -366,7 +448,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		debugService.setText("Debug Service Native");
 		debugService.setToolTipText("Debugs the selected service as native Java application");
 		debugService.setImageDescriptor(IMG_DEBUG);
+	}
 
+	private void createLanuchGroupActions() {
 		nativeDebugEnabledServices = new Action() {
 			public void run() {
 				// showMessage("Debug Enabled Services executed");
@@ -388,7 +472,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		nativeRunEnabledServices.setText("Run Enabled Services Native");
 		nativeRunEnabledServices.setToolTipText("Runs the enabled services as native Java applications.");
 		nativeRunEnabledServices.setImageDescriptor(IMG_RUN);
+	}
 
+	private void createGenerateGameActions() {
 		generateGamePom = new Action() {
 			public void run() {
 				List<ServiceProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
@@ -410,7 +496,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		generateGameCompose.setToolTipText(
 				"Generates (or updates) the Game Compose File (docker-compose.xml) from the enabled services.");
 		generateGameCompose.setImageDescriptor(IMG_DOCKER);
+	}
 
+	private void createBuildGameActions() {
 		buildGamePom = new Action() {
 			public void run() {
 
@@ -432,7 +520,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		buildGameCompose.setText("Build Game Compose");
 		buildGameCompose.setToolTipText("Builds the Game Compose File using the \"docker-compose build\" command.");
 		buildGameCompose.setImageDescriptor(IMG_DOCKER);
+	}
 
+	private void createRunGameActions() {
 		localRunGameCompose = new Action() {
 			public void run() {
 				showMessage("Run the Game Compose File as a local compose application.");
@@ -452,7 +542,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		localRunGameSwarm.setToolTipText(
 				"Deploys the Game Compose File (docker-compose.xml) in the local docker swarm. Swarm mode must be enabled.");
 		localRunGameSwarm.setImageDescriptor(IMG_DOCKER);
-
 	}
 
 	@Override
@@ -463,7 +552,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		Point point = Display.getDefault().map(null, table, new Point(event.x, event.y));
 		ViewerCell cell = viewer.getCell(point);
 		if (cell != null) {
-			selectedProject = (ServiceProject)cell.getElement();
+			selectedProject = (ServiceProject) cell.getElement();
 		} else {
 			selectedProject = null;
 		}
@@ -475,6 +564,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	private boolean promptQuestion(String title, String message) {
 		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
+	}
+
+	private String promptName(String title, String message) {
+		InputDialog dlg = new InputDialog(Display.getCurrent().getActiveShell(), title, message, "YourDatabaseName", null);
+		if (dlg.open() == Window.OK) {
+			return dlg.getValue();
+		}
+		return null;
 	}
 
 	private static ImageDescriptor getImageDescriptor(String file) {

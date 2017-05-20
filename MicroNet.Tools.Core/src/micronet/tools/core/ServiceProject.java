@@ -14,7 +14,8 @@ public class ServiceProject {
 	public enum Nature {
 		MAVEN,
 	    DOCKER, 
-	    JAVA;
+	    JAVA,
+	    DEPENDENCY;
 	}
 	
 	private IProject project;

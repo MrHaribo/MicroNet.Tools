@@ -76,7 +76,7 @@ public final class SyncPom {
 			File pom = new File(pomFilepath);
 
 			if (!pom.exists()) {
-				Bundle bundle = Platform.getBundle("MicroNet.Tools.Launch");
+				Bundle bundle = Platform.getBundle("MicroNet.Tools.Core");
 				InputStream stream = FileLocator.openStream(bundle, new Path("resources/reference-pom.xml"), false);
 
 				byte[] buffer = new byte[stream.available()];
