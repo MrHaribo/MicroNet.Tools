@@ -13,17 +13,25 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.m2e.actions.MavenLaunchConstants;
 
+import micronet.tools.core.ServiceProject;
+import micronet.tools.core.ServiceProject.Nature;
+
 @SuppressWarnings("restriction")
 public final class BuildServiceMavenUtility {
 	private BuildServiceMavenUtility() {
 
 	}
 
-	public static void buildMavenProject(IProject project, String mode) {
-		buildMavenProject(project, mode, launch -> { });
+	public static void buildMavenProject(ServiceProject serviceProject, String mode) {
+		buildMavenProject(serviceProject, mode, launch -> { });
 	}
 
-	public static void buildMavenProject(IProject project, String mode, Consumer<ILaunch> endCallback) {
+	public static void buildMavenProject(ServiceProject serviceProject, String mode, Consumer<ILaunch> endCallback) {
+		
+		if (!serviceProject.hasNature(Nature.MAVEN))
+			return;
+		
+		IProject project = serviceProject.getProject();
 		String buildName = getBuildName(project);
 		System.out.println("Building: " + buildName);
 

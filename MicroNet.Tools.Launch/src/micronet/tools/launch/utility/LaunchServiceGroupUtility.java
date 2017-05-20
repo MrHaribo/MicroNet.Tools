@@ -3,7 +3,6 @@ package micronet.tools.launch.utility;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -14,6 +13,9 @@ import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
+import micronet.tools.core.ServiceProject;
+import micronet.tools.core.ServiceProject.Nature;
+
 public final class LaunchServiceGroupUtility {
 	
 	private final static String launchName = "ServiceGroupLaunch";
@@ -21,18 +23,13 @@ public final class LaunchServiceGroupUtility {
 	private LaunchServiceGroupUtility() {
 	}
 	
-	public static void launchNativeGroup(List<IProject> projects, String mode) {
+	public static void launchNativeGroup(List<ServiceProject> projects, String mode) {
 		List<IJavaProject> javaProjects = new ArrayList<>();
-		for (IProject project : projects) {
-			try {
-				if (!project.hasNature(JavaCore.NATURE_ID))
-					continue;
-				IJavaProject javaProject = JavaCore.create(project);
-				javaProjects.add(javaProject);
-			} catch (CoreException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		for (ServiceProject serviceProject : projects) {
+			if (!serviceProject.hasNature(Nature.JAVA))
+				continue;
+			IJavaProject javaProject = JavaCore.create(serviceProject.getProject());
+			javaProjects.add(javaProject);
 		}
 		launchNativeJavaGroup(javaProjects, mode);
 	}
@@ -49,7 +46,7 @@ public final class LaunchServiceGroupUtility {
 		DebugUITools.launch(launchConfig, mode);
 	}
 
-	private static ILaunchConfiguration getNativeLaunchGroupConfiguration(List<IJavaProject> javaProjects, String mode) {
+	public static ILaunchConfiguration getNativeLaunchGroupConfiguration(List<IJavaProject> javaProjects, String mode) {
 
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();

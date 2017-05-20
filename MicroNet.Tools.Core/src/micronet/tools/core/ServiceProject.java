@@ -17,6 +17,8 @@ public class ServiceProject {
 	private IProject project;
 	private String version;
 	private boolean enabled;
+	private boolean isInGamePom;
+	private boolean isInGameCompose;
     private Set<Nature> natures = new HashSet<>();
 
 	public ServiceProject(IProject project, String version) {
@@ -51,6 +53,22 @@ public class ServiceProject {
 		this.enabled = isEnabled;
 	}
 
+	public boolean isInGamePom() {
+		return isInGamePom;
+	}
+
+	public void setInGamePom(boolean isInGamePom) {
+		this.isInGamePom = isInGamePom;
+	}
+
+	public boolean isInGameCompose() {
+		return isInGameCompose;
+	}
+
+	public void setInGameCompose(boolean isInGameCompose) {
+		this.isInGameCompose = isInGameCompose;
+	}
+
 	@Override
 	public String toString() {
 		return getName() + " " + version;
@@ -76,7 +94,7 @@ public class ServiceProject {
     	natures.remove(nature);
     }
     
-    public void hasNature(Nature nature) {
-    	natures.contains(nature);
+    public boolean hasNature(Nature nature) {
+    	return natures.contains(nature);
     }
 }

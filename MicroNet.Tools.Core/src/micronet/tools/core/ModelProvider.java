@@ -1,6 +1,5 @@
 package micronet.tools.core;
 
-import java.security.Provider.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +103,7 @@ public enum ModelProvider {
 		}
 	}
 	
-	private void refreshServiceProjects() {
+	public void refreshServiceProjects() {
 		serviceProjects.clear();
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		for (IProject project : workspaceRoot.getProjects()) {
@@ -118,6 +117,7 @@ public enum ModelProvider {
 			boolean projectEnabled = enabledServices.contains(project.getName());
 			project.setEnabled(projectEnabled);
 		}
+		notifyServicesChangedListeners();
 	}
 	
 	private void addProject(IProject project) {
@@ -143,6 +143,8 @@ public enum ModelProvider {
 			}
 			
 			if (serviceProject != null) {
+				boolean isInGamePom = SyncPom.getServicesFromGamePom().contains(project.getName());
+				serviceProject.setInGamePom(isInGamePom);
 				serviceProjects.put(project.getName(), serviceProject);
 			}
 		} catch (CoreException e) {
@@ -154,11 +156,15 @@ public enum ModelProvider {
 		return new ArrayList<ServiceProject>(serviceProjects.values());
 	}
 	
-	public List<IProject> getEnabledServiceProjects() {
-		List<IProject> result = new ArrayList<IProject>();
+	public ServiceProject getServiceProject(String name) {
+		return serviceProjects.get(name);
+	}
+	
+	public List<ServiceProject> getEnabledServiceProjects() {
+		List<ServiceProject> result = new ArrayList<>();
 		for (ServiceProject project : serviceProjects.values()) {
 			if (project.isEnabled())
-				result.add(project.getProject());
+				result.add(project);
 		}
 		return result;
 	}

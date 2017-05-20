@@ -11,12 +11,20 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 
+import micronet.tools.core.ServiceProject;
+import micronet.tools.core.ServiceProject.Nature;
+
 public final class BuildServiceContainerUtility {
 
 	private BuildServiceContainerUtility() {
 	}
 	
-	public static void buildContainer(IProject project, String mode) {
+	public static void buildContainer(ServiceProject serviceProject, String mode) {
+		
+		if (!serviceProject.hasNature(Nature.DOCKER))
+			return;
+		
+		IProject project = serviceProject.getProject();
 		String containerBuildName = getBuildContainerName(project);
 		System.out.println("Building: " + containerBuildName);
 		

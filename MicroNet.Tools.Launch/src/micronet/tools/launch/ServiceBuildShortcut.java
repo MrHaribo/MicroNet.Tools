@@ -7,6 +7,8 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.ui.IEditorPart;
 
+import micronet.tools.core.ModelProvider;
+import micronet.tools.core.ServiceProject;
 import micronet.tools.launch.utility.BuildUtility;
 
 public class ServiceBuildShortcut implements ILaunchShortcut {
@@ -19,13 +21,19 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 			TreeSelection treeSelection = (TreeSelection) selection;
 			for (Object selectedObject : treeSelection.toList()) {
 
+				ServiceProject serviceProject = null;
 				if (selectedObject instanceof IProject) {
 					IProject project = (IProject) selectedObject;
-					BuildUtility.fullBuild(project, mode);
+					serviceProject = ModelProvider.INSTANCE.getServiceProject(project.getName());
+					BuildUtility.fullBuild(serviceProject, mode);
 				} else if (selectedObject instanceof IJavaProject) {
 					IJavaProject javaProject = (IJavaProject) selectedObject;
 					IProject project = javaProject.getProject();
-					BuildUtility.fullBuild(project, mode);
+					serviceProject = ModelProvider.INSTANCE.getServiceProject(project.getName());
+				}
+				
+				if (serviceProject != null) {
+					BuildUtility.fullBuild(serviceProject, mode);
 				}
 			}
 		}

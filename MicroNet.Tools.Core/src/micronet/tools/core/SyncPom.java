@@ -18,21 +18,20 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
+
+import micronet.tools.core.ServiceProject.Nature;
 
 public final class SyncPom {
 	private SyncPom() {
@@ -69,7 +68,7 @@ public final class SyncPom {
 		return new ArrayList<>();
 	}
 
-	public static void updateGamePom(List<IProject> projects) {
+	public static void updateGamePom(List<ServiceProject> projects) {
 		try {
 
 			IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
@@ -94,7 +93,10 @@ public final class SyncPom {
 
 			Element newModulesNode = doc.createElement("modules");
 
-			for (IProject project : projects) {
+			for (ServiceProject project : projects) {
+				if (!project.hasNature(Nature.MAVEN))
+					continue;
+				
 				Element nameNode = doc.createElement("module");
 				newModulesNode.appendChild(nameNode);
 				Text moduleNameNode = doc.createTextNode(project.getName());
