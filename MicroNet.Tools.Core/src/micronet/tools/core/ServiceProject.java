@@ -127,7 +127,7 @@ public class ServiceProject {
 		for (String link : links) {
 			if (link.equals(""))
 				continue;
-		    joiner.add(link);
+		    joiner.add(link.toLowerCase());
 		}
 		
 		try {
@@ -138,19 +138,36 @@ public class ServiceProject {
 		}
 	}
 
+	public String getPortsRaw() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		String portString = preferences.get("ports", "");
+		return portString;
+	}
+	
 	public List<String> getPorts() {
-		return ports;
+		String portString = getPortsRaw();
+		List<String> result = new ArrayList<>(Arrays.asList(portString.split(",")));
+		result.remove("");
+		return result;
 	}
 
 	public void setPorts(List<String> ports) {
-		this.ports = ports;
-	}
-	
-	public void addPort(String port) {
-		this.ports.add(port);
-	}
-	
-	public void removePort(String port) {
-		this.ports.remove(port);
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		
+		StringJoiner joiner = new StringJoiner(",");
+		for (String port : ports) {
+			if (port.equals(""))
+				continue;
+		    joiner.add(port);
+		}
+		
+		try {
+			preferences.put("ports", joiner.toString());
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
 	}
 }

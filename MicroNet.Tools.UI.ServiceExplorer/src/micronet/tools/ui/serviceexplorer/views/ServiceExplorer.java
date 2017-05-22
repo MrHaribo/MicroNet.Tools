@@ -205,8 +205,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	// create the columns for the table
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose", "Links" };
-		int[] bounds = { 60, 200, 150, 150, 80, 80, 120 };
+		String[] titles = { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose", "Links", "Ports" };
+		int[] bounds = { 60, 200, 150, 150, 80, 80, 120, 120 };
 
 		// the status enabled
 		TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0, SWT.CENTER);
@@ -290,6 +290,16 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			public String getText(Object element) {
 				ServiceProject p = (ServiceProject) element;
 				return p.getLinksRaw();
+			}
+		});
+		
+		// second column is for the version
+		col = createTableViewerColumn(titles[7], bounds[7], 7);
+		col.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public String getText(Object element) {
+				ServiceProject p = (ServiceProject) element;
+				return p.getPortsRaw();
 			}
 		});
 	}
@@ -398,15 +408,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		
 		addPorts = new Action() {
 			public void run() {
-				ListSelectionDialog dlg = new ListSelectionDialog(
-						Display.getCurrent().getActiveShell(),
-						new String[] { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose" },
-			       		new BaseWorkbenchContentProvider(),
-			       		new WorkbenchLabelProvider(),
-						"Select the resources to save:");
-		        //dlg.setInitialSelections(null);
-		        dlg.setTitle("Save Resources");
-		        dlg.open();
+				if (selectedProject != null) {
+					showPortSelectionDialog(selectedProject);
+				}
 			}
 		};
 		addPorts.setText("Add Ports...");
@@ -632,6 +636,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
         // get the new values from the dialog
         if (dialog.open() == Window.OK) {
         	serviceProject.setLinks(dialog.getCurrentLinks());
+        }
+	}
+	
+	private void showPortSelectionDialog(ServiceProject serviceProject) {
+		AddPortsDialog dialog = new AddPortsDialog(viewer.getControl().getShell(), serviceProject);
+        // get the new values from the dialog
+        if (dialog.open() == Window.OK) {
+        	serviceProject.setPorts(dialog.getPorts());
         }
 	}
 

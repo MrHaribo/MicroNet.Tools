@@ -18,6 +18,13 @@ public class SyncCompose {
 			ComposeService composeService = new ComposeService();
 			composeService.setImage(serviceProject.getName().toLowerCase());
 			composeService.setBuild("./" + serviceProject.getName());
+			
+			if (serviceProject.getLinks().size() > 0)
+				composeService.setLinks((String[]) serviceProject.getLinks().toArray(new String[serviceProject.getLinks().size()]));
+			
+			if (serviceProject.getPorts().size() > 0)
+				composeService.setPorts((String[]) serviceProject.getPorts().toArray(new String[serviceProject.getPorts().size()]));
+			
 			composeServices.put(serviceProject.getName().toLowerCase(), composeService);
 		}
 		ComposeFile composeFile = new ComposeFile("3");
