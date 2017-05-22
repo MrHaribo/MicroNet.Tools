@@ -52,6 +52,7 @@ import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
 import micronet.tools.core.SyncCompose;
 import micronet.tools.core.SyncPom;
+import micronet.tools.launch.utility.AddDependencyUtility;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildUtility;
 import micronet.tools.launch.utility.LaunchDependencyUtility;
@@ -184,6 +185,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 		ModelProvider.INSTANCE.registerServicesChangedListener(() -> {
 			Display.getDefault().asyncExec(() -> {
+				if (viewer.getControl().isDisposed())
+					return;
 				viewer.setInput(ModelProvider.INSTANCE.getServiceProjects());
 				viewer.refresh();
 			});
@@ -430,7 +433,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		
 		dependencyCreateCouchbase = new Action() {
 			public void run() {
-				showMessage("Add Couchbase");
+				AddDependencyUtility.addCouchbase();
+				showMessage("Couchbase Dependency added");
 			}
 		};
 		dependencyCreateCouchbase.setText("Add Couchbase");

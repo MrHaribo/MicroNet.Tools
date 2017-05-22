@@ -115,7 +115,7 @@ public enum ModelProvider {
 	}
 	
 	private void addProject(IProject project) {
-		if (project.getName().equals("External Plug-in Libraries"))
+		if (!project.isOpen() || project.getName().equals("External Plug-in Libraries"))
 			return;
 		try {
 			ServiceProject serviceProject = null;
