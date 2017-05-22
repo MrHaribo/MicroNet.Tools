@@ -40,6 +40,9 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.ListSelectionDialog;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -47,6 +50,7 @@ import org.osgi.framework.FrameworkUtil;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
+import micronet.tools.core.SyncCompose;
 import micronet.tools.core.SyncPom;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildUtility;
@@ -84,6 +88,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private Action dependencyRunActiveMQ;
 	private Action dependencyRunCouchbase;
 
+	private Action addLinks;
+	private Action addPorts;
+	
 	private Action debugService;
 	private Action runService;
 	private Action buildService;
@@ -198,8 +205,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	// create the columns for the table
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose" };
-		int[] bounds = { 60, 200, 150, 150, 80, 80 };
+		String[] titles = { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose", "Links" };
+		int[] bounds = { 60, 200, 150, 150, 80, 80, 120 };
 
 		// the status enabled
 		TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0, SWT.CENTER);
@@ -275,6 +282,16 @@ public class ServiceExplorer extends ViewPart implements Listener {
 				}
 			}
 		});
+		
+		// second column is for the version
+		col = createTableViewerColumn(titles[6], bounds[6], 6);
+		col.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public String getText(Object element) {
+				ServiceProject p = (ServiceProject) element;
+				return p.getLinksRaw();
+			}
+		});
 	}
 
 	private TableViewerColumn createTableViewerColumn(String title, int bound, final int colNumber) {
@@ -317,9 +334,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(nativeRunEnabledServices);
 		manager.add(new Separator());
 		manager.add(generateGamePom);
-		manager.add(generateGameCompose);
-		manager.add(new Separator());
 		manager.add(buildGamePom);
+		manager.add(new Separator());
+		manager.add(generateGameCompose);
 		manager.add(buildGameCompose);
 		manager.add(new Separator());
 		manager.add(localRunGameCompose);
@@ -340,6 +357,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(debugService);
 		manager.add(runService);
 		manager.add(buildService);
+		manager.add(new Separator());
+		manager.add(addLinks);
+		manager.add(addPorts);
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
@@ -353,12 +373,45 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	private void makeActions() {
 		createDependencyActions();
+		createServiceActions();
 		createNativeActions();
 		createLanuchGroupActions();
 		createGenerateGameActions();
 		createBuildGameActions();
 		createRunGameActions();
 
+	}
+
+	
+	private void createServiceActions() {
+		addLinks = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					showLinkSelectionDialog(selectedProject);
+				}
+				
+			}
+		};
+		addLinks.setText("Add Links...");
+		addLinks.setToolTipText("Adds Links to other services to the service.");
+		addLinks.setImageDescriptor(IMG_DOCKER);
+		
+		addPorts = new Action() {
+			public void run() {
+				ListSelectionDialog dlg = new ListSelectionDialog(
+						Display.getCurrent().getActiveShell(),
+						new String[] { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose" },
+			       		new BaseWorkbenchContentProvider(),
+			       		new WorkbenchLabelProvider(),
+						"Select the resources to save:");
+		        //dlg.setInitialSelections(null);
+		        dlg.setTitle("Save Resources");
+		        dlg.open();
+			}
+		};
+		addPorts.setText("Add Ports...");
+		addPorts.setToolTipText("Specifies exposed ports of the service.");
+		addPorts.setImageDescriptor(IMG_DOCKER);
 	}
 
 	private void createDependencyActions() {
@@ -489,6 +542,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 		generateGameCompose = new Action() {
 			public void run() {
+				List<ServiceProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
+				SyncCompose.updateGameCompose(enabledProjects);
+				ModelProvider.INSTANCE.refreshServiceProjects();
 				showMessage("Generate Game Compose from Enabled Services executed");
 			}
 		};
@@ -513,8 +569,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 		buildGameCompose = new Action() {
 			public void run() {
-				// showMessage("Building the Game Pom File using compose.");
-				// SyncPom.getServicesFromGamePom();
+				showMessage("Building the Game Pom File using compose (Shortcut Not yet implemented, launch from command line in workspace directory: docker-compose build).");
 			}
 		};
 		buildGameCompose.setText("Build Game Compose");
@@ -525,22 +580,20 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void createRunGameActions() {
 		localRunGameCompose = new Action() {
 			public void run() {
-				showMessage("Run the Game Compose File as a local compose application.");
+				showMessage("Game Compose File started as a local compose application.");
 			}
 		};
 		localRunGameCompose.setText("Run Game Local Compose");
-		localRunGameCompose
-				.setToolTipText("Runs the Game Compose File (docker-compose.xml) as a local compose application.");
+		localRunGameCompose.setToolTipText("Runs the Game Compose File (docker-compose.xml) as a local compose application.");
 		localRunGameCompose.setImageDescriptor(IMG_DOCKER);
 
 		localRunGameSwarm = new Action() {
 			public void run() {
-				showMessage("Run Game Compose File as a local swarm deployment.");
+				showMessage("Run Game Compose File as a local swarm deployment (Shortcut Not yet implemented, launch from command line in workspace directory: docker stack deploy).");
 			}
 		};
 		localRunGameSwarm.setText("Run Game Local Swarm");
-		localRunGameSwarm.setToolTipText(
-				"Deploys the Game Compose File (docker-compose.xml) in the local docker swarm. Swarm mode must be enabled.");
+		localRunGameSwarm.setToolTipText("Deploys the Game Compose File (docker-compose.xml) in the local docker swarm. Swarm mode must be enabled.");
 		localRunGameSwarm.setImageDescriptor(IMG_DOCKER);
 	}
 
@@ -572,6 +625,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			return dlg.getValue();
 		}
 		return null;
+	}
+	
+	private void showLinkSelectionDialog(ServiceProject serviceProject) {
+		AddLinksDialog dialog = new AddLinksDialog(viewer.getControl().getShell(), serviceProject);
+        // get the new values from the dialog
+        if (dialog.open() == Window.OK) {
+        	serviceProject.setLinks(dialog.getCurrentLinks());
+        }
 	}
 
 	private static ImageDescriptor getImageDescriptor(String file) {

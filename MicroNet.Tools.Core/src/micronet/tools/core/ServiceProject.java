@@ -1,6 +1,9 @@
 package micronet.tools.core;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 
@@ -20,8 +23,8 @@ public class ServiceProject {
 	
 	private IProject project;
 	private String version;
-	private boolean isInGameCompose;
     private Set<Nature> natures = new HashSet<>();
+    private List<String> ports = new ArrayList<>();
 
 	public ServiceProject(IProject project, String version) {
 		this.project = project;
@@ -70,11 +73,7 @@ public class ServiceProject {
 
 
 	public boolean isInGameCompose() {
-		return isInGameCompose;
-	}
-
-	public void setInGameCompose(boolean isInGameCompose) {
-		this.isInGameCompose = isInGameCompose;
+		return SyncCompose.isServiceInCompose(this);
 	}
 
 	@Override
@@ -105,4 +104,53 @@ public class ServiceProject {
     public boolean hasNature(Nature nature) {
     	return natures.contains(nature);
     }
+
+	public String getLinksRaw() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		String linkString = preferences.get("links", "");
+		return linkString;
+	}
+    
+	public List<String> getLinks() {
+		String linkString = getLinksRaw();
+		List<String> result = new ArrayList<>(Arrays.asList(linkString.split(",")));
+		result.remove("");
+		return result;
+	}
+
+	public void setLinks(List<String> links) {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		
+		StringJoiner joiner = new StringJoiner(",");
+		for (String link : links) {
+			if (link.equals(""))
+				continue;
+		    joiner.add(link);
+		}
+		
+		try {
+			preferences.put("links", joiner.toString());
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public List<String> getPorts() {
+		return ports;
+	}
+
+	public void setPorts(List<String> ports) {
+		this.ports = ports;
+	}
+	
+	public void addPort(String port) {
+		this.ports.add(port);
+	}
+	
+	public void removePort(String port) {
+		this.ports.remove(port);
+	}
 }

@@ -11,6 +11,7 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: lib/micronet-0.0.1-SNAPSHOT-jar-with-dependencies.jar,
+ lib/tools.yaml.utility-0.0.1-SNAPSHOT-jar-with-dependencies.jar,
  .
 Export-Package: micronet.activemq,
  micronet.annotation,
@@ -21,4 +22,5 @@ Export-Package: micronet.activemq,
  micronet.serialization,
  micronet.service,
  micronet.tools.core,
+ micronet.tools.yaml.utility,
  micronet.type
