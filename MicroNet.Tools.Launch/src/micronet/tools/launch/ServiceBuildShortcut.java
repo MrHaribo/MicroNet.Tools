@@ -25,7 +25,7 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 				if (selectedObject instanceof IProject) {
 					IProject project = (IProject) selectedObject;
 					serviceProject = ModelProvider.INSTANCE.getServiceProject(project.getName());
-					BuildUtility.fullBuild(serviceProject, mode);
+					BuildUtility.buildFull(serviceProject, mode);
 				} else if (selectedObject instanceof IJavaProject) {
 					IJavaProject javaProject = (IJavaProject) selectedObject;
 					IProject project = javaProject.getProject();
@@ -33,7 +33,7 @@ public class ServiceBuildShortcut implements ILaunchShortcut {
 				}
 				
 				if (serviceProject != null) {
-					BuildUtility.fullBuild(serviceProject, mode);
+					BuildUtility.buildFull(serviceProject, mode);
 				}
 			}
 		}

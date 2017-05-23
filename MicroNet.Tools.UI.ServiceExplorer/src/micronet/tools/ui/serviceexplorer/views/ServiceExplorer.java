@@ -40,9 +40,6 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.ListSelectionDialog;
-import org.eclipse.ui.model.BaseWorkbenchContentProvider;
-import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
@@ -94,7 +91,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	
 	private Action debugService;
 	private Action runService;
-	private Action buildService;
+	private Action buildServiceFull;
+	private Action buildServiceMaven;
+	private Action buildServiceContainer;
 
 	private Action nativeDebugEnabledServices;
 	private Action nativeRunEnabledServices;
@@ -117,10 +116,10 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private final ImageDescriptor IMG_DEBUG = getImageDescriptor("debug.png");
 	private final ImageDescriptor IMG_RUN = getImageDescriptor("run.png");
 
-	private final ImageDescriptor IMG_LAUNCH_GROUP = getImageDescriptor("launch_group.png");
+	//private final ImageDescriptor IMG_LAUNCH_GROUP = getImageDescriptor("launch_group.png");
+	//private final ImageDescriptor IMG_NATIVE_JAVA = getImageDescriptor("native_java.png");
 	private final ImageDescriptor IMG_DOCKER = getImageDescriptor("docker.png");
 	private final ImageDescriptor IMG_MAVEN = getImageDescriptor("maven.png");
-	private final ImageDescriptor IMG_NATIVE_JAVA = getImageDescriptor("native_java.png");
 	private final ImageDescriptor IMG_MICRO_NET = getImageDescriptor("micronet_icon.png");
 	private final ImageDescriptor IMG_COUCHBASE = getImageDescriptor("couchbase.png");
 	private final ImageDescriptor IMG_ACTIVEMQ = getImageDescriptor("activemq.png");
@@ -367,9 +366,12 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
+		manager.add(buildServiceFull);
+		manager.add(buildServiceMaven);
+		manager.add(buildServiceContainer);
+		manager.add(new Separator());
 		manager.add(debugService);
 		manager.add(runService);
-		manager.add(buildService);
 		manager.add(new Separator());
 		manager.add(addLinks);
 		manager.add(addPorts);
@@ -387,7 +389,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void makeActions() {
 		createDependencyActions();
 		createServiceActions();
-		createNativeActions();
 		createLanuchGroupActions();
 		createGenerateGameActions();
 		createBuildGameActions();
@@ -397,6 +398,67 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	
 	private void createServiceActions() {
+		buildServiceFull = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					BuildUtility.buildFull(selectedProject, "run");
+				}
+			}
+		};
+		buildServiceFull.setText("Build Maven and Docker");
+		buildServiceFull.setToolTipText("Builds the selected service using Maven and Docker.");
+		buildServiceFull.setImageDescriptor(IMG_MICRO_NET);
+		
+		buildServiceMaven = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					BuildUtility.buildMaven(selectedProject, "run");
+				}
+			}
+		};
+		buildServiceMaven.setText("Build Maven");
+		buildServiceMaven.setToolTipText("Builds the selected service using Maven.");
+		buildServiceMaven.setImageDescriptor(IMG_MAVEN);
+		
+		buildServiceContainer = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					BuildUtility.buildContainer(selectedProject, "run");
+				}
+			}
+		};
+		buildServiceContainer.setText("Build Docker");
+		buildServiceContainer.setToolTipText("Builds the selected service using Docker.");
+		buildServiceContainer.setImageDescriptor(IMG_DOCKER);
+
+		runService = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					if (!selectedProject.hasNature(Nature.JAVA))
+						showMessage(selectedProject.getName() + " is not a Java Project.");
+					else
+						LaunchServiceUtility.launchNative(selectedProject, "run");
+				}
+			}
+		};
+		runService.setText("Run Service Native");
+		runService.setToolTipText("Runs the selected service as native Java application");
+		runService.setImageDescriptor(IMG_RUN);
+
+		debugService = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					if (!selectedProject.hasNature(Nature.JAVA))
+						showMessage(selectedProject.getName() + " is not a Java Project.");
+					else
+						LaunchServiceUtility.launchNative(selectedProject, "debug");
+				}
+			}
+		};
+		debugService.setText("Debug Service Native");
+		debugService.setToolTipText("Debugs the selected service as native Java application");
+		debugService.setImageDescriptor(IMG_DEBUG);
+		
 		addLinks = new Action() {
 			public void run() {
 				if (selectedProject != null) {
@@ -470,47 +532,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		dependencyRunCouchbase.setText("Run Couchbase as a service");
 		dependencyRunCouchbase.setToolTipText("Run Couchbase as a service in a docker container.");
 		dependencyRunCouchbase.setImageDescriptor(IMG_COUCHBASE);
-	}
-
-	private void createNativeActions() {
-		buildService = new Action() {
-			public void run() {
-				if (selectedProject != null) {
-					BuildUtility.fullBuild(selectedProject, "run");
-				}
-			}
-		};
-		buildService.setText("Build Service");
-		buildService.setToolTipText("Builds the selected service using Maven and Docker.");
-		buildService.setImageDescriptor(IMG_MICRO_NET);
-
-		runService = new Action() {
-			public void run() {
-				if (selectedProject != null) {
-					if (!selectedProject.hasNature(Nature.JAVA))
-						showMessage(selectedProject.getName() + " is not a Java Project.");
-					else
-						LaunchServiceUtility.launchNative(selectedProject, "run");
-				}
-			}
-		};
-		runService.setText("Run Service Native");
-		runService.setToolTipText("Runs the selected service as native Java application");
-		runService.setImageDescriptor(IMG_RUN);
-
-		debugService = new Action() {
-			public void run() {
-				if (selectedProject != null) {
-					if (!selectedProject.hasNature(Nature.JAVA))
-						showMessage(selectedProject.getName() + " is not a Java Project.");
-					else
-						LaunchServiceUtility.launchNative(selectedProject, "debug");
-				}
-			}
-		};
-		debugService.setText("Debug Service Native");
-		debugService.setToolTipText("Debugs the selected service as native Java application");
-		debugService.setImageDescriptor(IMG_DEBUG);
 	}
 
 	private void createLanuchGroupActions() {
