@@ -8,36 +8,56 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 
-import micronet.tools.core.ServiceProject;
-import micronet.tools.core.ServiceProject.Nature;
+import micronet.tools.core.DependencyType;
 
 public final class LaunchDependencyUtility {
 	private LaunchDependencyUtility() {
 	}
 	
-	public static void launchNative(ServiceProject project, String mode) {
-		if (!project.hasNature(Nature.DEPENDENCY))
-			return;
-		//TODO: not yet implemented
+	public static void launchActiveMQ() {
+		launchDependeny(DependencyType.activemq);
 	}
 	
 	public static void launchCouchbase() {
-		ILaunchConfiguration launchConfig = getCouchbaseLaunchConfiguration();
+		launchDependeny(DependencyType.couchbase);
+	}
+	
+	public static void launchDependeny(DependencyType type) {
+		ILaunchConfiguration launchConfig = getDependencyLaunchConfiguration(type);
 		DebugUITools.launch(launchConfig, "run");
 	}
 
+	public static ILaunchConfiguration getDependencyLaunchConfiguration(DependencyType type) {
+		try {
+
+			IProject project = AddDependencyUtility.getDependencyServiceProject(type);
+			if (project == null)
+				project = AddDependencyUtility.addDependencyServiceProject(type);
+			
+			if (!project.isOpen())
+				project.open(null);
+
+			IFile launchConfigFile = project.getFile(type.toString() + ".launch");
+			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+			return manager.getLaunchConfiguration(launchConfigFile);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public static ILaunchConfiguration getCouchbaseLaunchConfiguration() {
 		try {
 
-			IProject couchbaseProject = AddDependencyUtility.getCouchbaseServiceProject();
-			if (couchbaseProject == null)
-				couchbaseProject = AddDependencyUtility.addCouchbaseServiceProject();
+			IProject project = AddDependencyUtility.getCouchbaseServiceProject();
+			if (project == null)
+				project = AddDependencyUtility.addCouchbaseServiceProject();
 			
-			if (!couchbaseProject.isOpen())
-				couchbaseProject.open(null);
+			if (!project.isOpen())
+				project.open(null);
 
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			IFile launchConfigFile = couchbaseProject.getFile("couchbase.launch");
+			IFile launchConfigFile = project.getFile("couchbase.launch");
 			return manager.getLaunchConfiguration(launchConfigFile);
 		} catch (CoreException e) {
 			e.printStackTrace();

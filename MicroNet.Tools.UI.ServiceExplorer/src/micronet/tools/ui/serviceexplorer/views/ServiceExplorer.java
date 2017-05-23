@@ -424,7 +424,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void createDependencyActions() {
 		dependencyCreateActiveMQ = new Action() {
 			public void run() {
-				showMessage("Add AMQ");
+				AddDependencyUtility.addActiveMQ();
+				showMessage("ActiveMQ Dependency added");
 			}
 		};
 		dependencyCreateActiveMQ.setText("Add ActiveMQ");
@@ -452,7 +453,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		
 		dependencyRunActiveMQ = new Action() {
 			public void run() {
-				showMessage("Run ActiveMQ");
+				LaunchDependencyUtility.launchActiveMQ();
+				showMessage("ActiveMQ docker container started");
 			}
 		};
 		dependencyRunActiveMQ.setText("Run ActiveMQ as a service");
