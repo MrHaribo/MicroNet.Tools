@@ -25,6 +25,9 @@ public class SyncCompose {
 			if (serviceProject.getPorts().size() > 0)
 				composeService.setPorts((String[]) serviceProject.getPorts().toArray(new String[serviceProject.getPorts().size()]));
 			
+			if (serviceProject.getNetworkMode() != null)
+				composeService.setNetwork_mode(serviceProject.getNetworkMode());
+			
 			composeServices.put(serviceProject.getName().toLowerCase(), composeService);
 		}
 		ComposeFile composeFile = new ComposeFile("3");

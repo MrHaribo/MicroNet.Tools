@@ -52,6 +52,10 @@ public final class LaunchUtility {
 		final ILaunchManager launchMan = DebugPlugin.getDefault().getLaunchManager();
 
 		for (ILaunch launch : launchMan.getLaunches()) {
+			
+			if (launch.getLaunchConfiguration() == null)
+				continue;
+			
 			if (!launch.getLaunchConfiguration().getName().equals(name))
 				continue;
 			return launch;

@@ -3,6 +3,7 @@ package micronet.tools.core;
 public class ComposeService {
 	private String image;
 	private String build;
+	private String network_mode;
 	private String[] links;
 	private String[] ports;
 
@@ -36,5 +37,13 @@ public class ComposeService {
 
 	public void setPorts(String[] ports) {
 		this.ports = ports;
+	}
+
+	public String getNetwork_mode() {
+		return network_mode;
+	}
+
+	public void setNetwork_mode(String network_mode) {
+		this.network_mode = network_mode;
 	}
 }

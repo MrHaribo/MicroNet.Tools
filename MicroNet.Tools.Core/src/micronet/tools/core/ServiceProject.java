@@ -23,7 +23,6 @@ public class ServiceProject {
 	private IProject project;
 	private String version;
     private Set<Nature> natures = new HashSet<>();
-    private List<String> ports = new ArrayList<>();
 
 	public ServiceProject(IProject project, String version) {
 		this.project = project;
@@ -65,11 +64,27 @@ public class ServiceProject {
 			e.printStackTrace();
 		}
 	}
+	
+	public String getNetworkMode() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		return preferences.get("network_mode", null);
+	}
+
+	public void setNetworkMode(String networkMode) {
+		try {
+			ProjectScope projectScope = new ProjectScope(project);
+			IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+			preferences.put("network_mode", networkMode);
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public boolean isInGamePom() {
 		return SyncPom.getServicesFromGamePom().contains(project.getName());
 	}
-
 
 	public boolean isInGameCompose() {
 		return SyncCompose.isServiceInCompose(this);
