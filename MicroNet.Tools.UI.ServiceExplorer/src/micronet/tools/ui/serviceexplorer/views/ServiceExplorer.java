@@ -53,6 +53,8 @@ import micronet.tools.launch.utility.AddDependencyUtility;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildUtility;
 import micronet.tools.launch.utility.LaunchDependencyUtility;
+import micronet.tools.launch.utility.LaunchGameComposeUtility;
+import micronet.tools.launch.utility.LaunchServiceContainerUtility;
 import micronet.tools.launch.utility.LaunchServiceGroupUtility;
 import micronet.tools.launch.utility.LaunchServiceUtility;
 
@@ -91,6 +93,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	
 	private Action debugService;
 	private Action runService;
+	private Action runServiceContainer;
 	private Action buildServiceFull;
 	private Action buildServiceMaven;
 	private Action buildServiceContainer;
@@ -372,6 +375,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(debugService);
 		manager.add(runService);
+		//manager.add(runServiceContainer);
 		manager.add(new Separator());
 		manager.add(addLinks);
 		manager.add(addPorts);
@@ -458,6 +462,20 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		debugService.setText("Debug Service Native");
 		debugService.setToolTipText("Debugs the selected service as native Java application");
 		debugService.setImageDescriptor(IMG_DEBUG);
+		
+		runServiceContainer = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					if (!selectedProject.hasNature(Nature.DOCKER))
+						showMessage(selectedProject.getName() + " does not have the Docker Nature.");
+					else
+						LaunchServiceContainerUtility.launchContainer(selectedProject, "run");
+				}
+			}
+		};
+		runServiceContainer.setText("Run Service Container");
+		runServiceContainer.setToolTipText("Runs the selected service as a Docker Container");
+		runServiceContainer.setImageDescriptor(IMG_DOCKER);
 		
 		addLinks = new Action() {
 			public void run() {
@@ -611,6 +629,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void createRunGameActions() {
 		localRunGameCompose = new Action() {
 			public void run() {
+				LaunchGameComposeUtility.launchGame();
 				showMessage("Game Compose File started as a local compose application.");
 			}
 		};

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.linuxtools.docker.ui.runDockerImageLaunchConfigurationType">
 <booleanAttribute key="allocatePseudoTTY" value="false"/>
-<booleanAttribute key="autoRemove" value="false"/>
+<booleanAttribute key="autoRemove" value="true"/>
 <stringAttribute key="command" value="/app/run.sh "/>
 <stringAttribute key="connectionName" value="http://127.0.0.1:2375"/>
 <stringAttribute key="creationDate" value="2017-05-08 16:31:13"/>
