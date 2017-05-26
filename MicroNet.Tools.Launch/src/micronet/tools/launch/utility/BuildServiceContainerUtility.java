@@ -1,15 +1,12 @@
 package micronet.tools.launch.utility;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.ILaunch;
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.ILaunchConfigurationType;
-import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
-import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.debug.ui.DebugUITools;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.core.runtime.IPath;
 
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
@@ -19,53 +16,36 @@ public final class BuildServiceContainerUtility {
 	private BuildServiceContainerUtility() {
 	}
 	
-	public static void buildContainer(ServiceProject serviceProject, String mode) {
+	public static InputStream buildContainer(ServiceProject serviceProject, String ... args) {
 		
 		if (!serviceProject.hasNature(Nature.DOCKER))
-			return;
+			return null;
+
+		IPath projectLocation = serviceProject.getProject().getLocation();
+		String projectPath = projectLocation.toOSString();
+
+		List<String> argArray = new ArrayList<>();
+		argArray.add("docker");
+		argArray.add("build");	
+		argArray.add("-t");
+		argArray.add(serviceProject.getName().toLowerCase());
 		
-		IProject project = serviceProject.getProject();
-		String containerBuildName = getBuildContainerName(project);
-		System.out.println("Building: " + containerBuildName);
-		
-		ILaunch launch = LaunchUtility.getLaunch(containerBuildName);
-		if (launch != null) {
-			try {
-				System.out.println("Launch is already there");
-				launch.terminate();
-				ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-				manager.removeLaunch(launch);
-			} catch (DebugException e) {
-				e.printStackTrace();
-			}
+		for (String arg : args) {
+			argArray.add(arg);
 		}
 		
-		ILaunchConfiguration buildConfig = getContainerBuildConfig(project, mode);
-		DebugUITools.launch(buildConfig, mode);
-	}
-	
-	private static ILaunchConfiguration getContainerBuildConfig(IProject project, String mode) {
-		String containerBuildName = getBuildContainerName(project);
+		argArray.add(".");
 		
+		ProcessBuilder builder = new ProcessBuilder(argArray);
+		builder.directory(new File(projectPath));
+		builder.redirectErrorStream(true);
+
 		try {
-			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			ILaunchConfigurationType type = manager.getLaunchConfigurationType("org.eclipse.linuxtools.docker.ui.buildDockerImageLaunchConfigurationType");
-
-			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, containerBuildName);
-			workingCopy.setAttribute("dockerConnection", "http://127.0.0.1:2375");
-			workingCopy.setAttribute("repoName", project.getName().toLowerCase());
-			workingCopy.setAttribute("sourcePathLocation", "/" + project.getName());
-			workingCopy.setAttribute("sourcePathWorkspaceRelativeLocation", true);
-			
-			ILaunchConfiguration config = workingCopy.doSave();
-			return config;
-		} catch (CoreException e) {
+			Process process = builder.start();
+			return process.getInputStream();
+		} catch (IOException e) {
 			e.printStackTrace();
+			return null;
 		}
-		return null;
-	}
-
-	private static String getBuildContainerName(IProject project) {
-		return project.getName() + "ContainerBuild";
 	}
 }

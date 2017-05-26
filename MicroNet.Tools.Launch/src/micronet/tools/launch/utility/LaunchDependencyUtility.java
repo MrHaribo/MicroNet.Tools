@@ -28,40 +28,22 @@ public final class LaunchDependencyUtility {
 	}
 
 	public static ILaunchConfiguration getDependencyLaunchConfiguration(DependencyType type) {
-		try {
-
-			IProject project = AddDependencyUtility.getDependencyServiceProject(type);
-			if (project == null)
-				project = AddDependencyUtility.addDependencyServiceProject(type);
-			
-			if (!project.isOpen())
-				project.open(null);
-
-			IFile launchConfigFile = project.getFile(type.toString() + ".launch");
-			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			return manager.getLaunchConfiguration(launchConfigFile);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
+//		try {
+//
+//			IProject project = AddDependencyUtility.getDependencyServiceProject(type);
+//			if (project == null)
+//				project = AddDependencyUtility.addDependencyServiceProject(type);
+//			
+//			if (!project.isOpen())
+//				project.open(null);
+//
+//			IFile launchConfigFile = project.getFile(type.toString() + ".launch");
+//			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+//			return manager.getLaunchConfiguration(launchConfigFile);
+//		} catch (CoreException e) {
+//			e.printStackTrace();
+//		}
 		return null;
 	}
 	
-	public static ILaunchConfiguration getCouchbaseLaunchConfiguration() {
-		try {
-
-			IProject project = AddDependencyUtility.getCouchbaseServiceProject();
-			if (project == null)
-				project = AddDependencyUtility.addCouchbaseServiceProject();
-			
-			if (!project.isOpen())
-				project.open(null);
-
-			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			IFile launchConfigFile = project.getFile("couchbase.launch");
-			return manager.getLaunchConfiguration(launchConfigFile);
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
 }

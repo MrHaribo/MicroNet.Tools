@@ -2,6 +2,8 @@ package micronet.tools.launch.utility;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -18,23 +20,27 @@ import org.osgi.framework.Bundle;
 import micronet.tools.core.DependencyType;
 
 public class AddDependencyUtility {
-	private final static String couchbaseServiceName = "couchbase";
-	//private final static String activemqServiceName = "activemq";
-	
+
 	public static void addActiveMQ() {
-		addDependency(DependencyType.activemq);
+		Map<String, String> files = new HashMap<>();
+		files.put("Dockerfile", "Dockerfile");
+		addDependency(DependencyType.activemq, files);
 	}
-	
+
 	public static void addCouchbase() {
-		addDependency(DependencyType.couchbase);
+		Map<String, String> files = new HashMap<>();
+		files.put("Dockerfile", "Dockerfile");
+		files.put("init_couchbase.sh", "init_couchbase.sh");
+		files.put("start_couchbase.sh", "start_couchbase.sh");
+		addDependency(DependencyType.couchbase, files);
 	}
-	
-	public static void addDependency(DependencyType type) {
+
+	public static void addDependency(DependencyType type, Map<String, String> additionalFiles) {
 		if (getDependencyServiceProject(type) != null)
 			return;
-		addDependencyServiceProject(type);
+		addDependencyServiceProject(type, additionalFiles);
 	}
-	
+
 	public static IProject getDependencyServiceProject(DependencyType type) {
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		for (IProject project : workspaceRoot.getProjects()) {
@@ -43,69 +49,39 @@ public class AddDependencyUtility {
 		}
 		return null;
 	}
-	
-	public static IProject addDependencyServiceProject(DependencyType type) {
-		try {	
+
+	public static IProject addDependencyServiceProject(DependencyType type, Map<String, String> files) {
+		try {
 			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 			IProject project = root.getProject(type.toString());
 			project.create(null);
 			project.open(null);
-						
+
 			Bundle bundle = Platform.getBundle("MicroNet.Tools.Core");
 			IPath resourcePath = new Path("resources").append(type.toString());
-			
-			String launchName = type.toString() + ".launch";
-			copyFile(bundle, project, resourcePath.append(launchName), launchName);
-			copyFile(bundle, project, resourcePath.append("Dockerfile"), "Dockerfile");
-			
+
+			for (Map.Entry<String, String> file : files.entrySet()) {
+				copyFile(bundle, project, resourcePath.append(file.getKey()), file.getValue());
+			}
+
 			IFolder settingsFolder = project.getFolder(".settings");
 			settingsFolder.create(false, true, null);
-			copyFile(bundle, project, resourcePath.append("com.github.mrharibo.micronet.preferences.prefs"), ".settings/com.github.mrharibo.micronet.preferences.prefs");
-			
+			copyFile(bundle, project, resourcePath.append(
+					"com.github.mrharibo.micronet.preferences.prefs"),
+					".settings/com.github.mrharibo.micronet.preferences.prefs");
+
 			return project;
 		} catch (CoreException e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
-	
-	public static IProject addCouchbaseServiceProject() {
-		try {	
-			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-			IProject project = root.getProject(couchbaseServiceName);
-			project.create(null);
-			project.open(null);
-						
-			Bundle bundle = Platform.getBundle("MicroNet.Tools.Core");
-			
-			copyFile(bundle, project, new Path("resources/couchbase/reference-couchbase.launch"), "couchbase.launch");
-			copyFile(bundle, project, new Path("resources/couchbase/reference-Dockerfile"), "Dockerfile");
-			
-			IFolder settingsFolder = project.getFolder(".settings");
-			settingsFolder.create(false, true, null);
-			copyFile(bundle, project, new Path("resources/couchbase/com.github.mrharibo.micronet.preferences.prefs"), ".settings/com.github.mrharibo.micronet.preferences.prefs");
-			
-			return project;
-		} catch (CoreException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	public static IProject getCouchbaseServiceProject() {
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		for (IProject project : workspaceRoot.getProjects()) {
-			if (project.getName().toLowerCase().equals(couchbaseServiceName))
-				return project;
-		}
-		return null;
-	}
-	
+
 	private static void copyFile(Bundle bundle, IProject project, IPath sourcePath, String destinationPath) {
 		try {
 			InputStream stream = FileLocator.openStream(bundle, sourcePath, false);
 			IFile launchConfigFile = project.getFile(destinationPath);
-			launchConfigFile.create( stream, true, null );
+			launchConfigFile.create(stream, true, null);
 			stream.close();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -1,5 +1,7 @@
 package micronet.tools.ui.serviceexplorer.views;
 
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.List;
 
@@ -39,6 +41,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
@@ -50,7 +53,9 @@ import micronet.tools.core.ServiceProject.Nature;
 import micronet.tools.core.SyncCompose;
 import micronet.tools.core.SyncPom;
 import micronet.tools.launch.utility.AddDependencyUtility;
+import micronet.tools.launch.utility.BuildGameComposeUtility;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
+import micronet.tools.launch.utility.BuildServiceContainerUtility;
 import micronet.tools.launch.utility.BuildUtility;
 import micronet.tools.launch.utility.LaunchDependencyUtility;
 import micronet.tools.launch.utility.LaunchGameComposeUtility;
@@ -375,7 +380,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(debugService);
 		manager.add(runService);
-		//manager.add(runServiceContainer);
+		manager.add(runServiceContainer);
 		manager.add(new Separator());
 		manager.add(addLinks);
 		manager.add(addPorts);
@@ -427,7 +432,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		buildServiceContainer = new Action() {
 			public void run() {
 				if (selectedProject != null) {
-					BuildUtility.buildContainer(selectedProject, "run");
+					InputStream containerStream = BuildServiceContainerUtility.buildContainer(selectedProject);
+					PrintStream consoleStream = Console.getConsole(selectedProject.getName());
+					if (containerStream == null)
+						showMessage("Error starting container: " + selectedProject.getName());
+					
+					IWorkbenchPage page = getSite().getPage();
+					Console.showConsole(selectedProject.getName(), page);
+					Console.printStream(containerStream, consoleStream);
 				}
 			}
 		};
@@ -466,10 +478,18 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		runServiceContainer = new Action() {
 			public void run() {
 				if (selectedProject != null) {
-					if (!selectedProject.hasNature(Nature.DOCKER))
+					if (!selectedProject.hasNature(Nature.DOCKER)) {
 						showMessage(selectedProject.getName() + " does not have the Docker Nature.");
-					else
-						LaunchServiceContainerUtility.launchContainer(selectedProject, "run");
+					} else {
+						PrintStream consoleStream = Console.getConsole(selectedProject.getName());
+						InputStream containerStream = LaunchServiceContainerUtility.launchContainer(selectedProject);
+						if (containerStream == null)
+							showMessage("Error starting container: " + selectedProject.getName());
+						
+						IWorkbenchPage page = getSite().getPage();
+						Console.showConsole(selectedProject.getName(), page);
+						Console.printStream(containerStream, consoleStream);
+					}
 				}
 			}
 		};
@@ -618,7 +638,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 		buildGameCompose = new Action() {
 			public void run() {
-				showMessage("Building the Game Pom File using compose (Shortcut Not yet implemented, launch from command line in workspace directory: docker-compose build).");
+				PrintStream consoleStream = Console.getConsole("game-compose-build");
+				InputStream buildStream = BuildGameComposeUtility.buildGame();
+				if (buildStream == null)
+					showMessage("Error starting game-compose-build");
+				
+				IWorkbenchPage page = getSite().getPage();
+				Console.showConsole("game-compose-build", page);
+				Console.printStream(buildStream, consoleStream);
 			}
 		};
 		buildGameCompose.setText("Build Game Compose");
