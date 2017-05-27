@@ -7,7 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -106,12 +110,13 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		serviceApi.setServiceUri(description.getURI());
 		
 		int listenerCount = description.getMessageListeners().size();
-		Element[] listenerElements = description.getMessageListeners().toArray(new Element[listenerCount]);
+		List<? extends Element> listenerElements = sortListeners(description);
+		
 		ListenerAPI[] listeners = new ListenerAPI[listenerCount];
 		for (int i = 0; i < listeners.length; i++) {
 			ListenerAPI listener = new ListenerAPI();
 			
-			MessageListener listenerAnnotation = listenerElements[i].getAnnotation(MessageListener.class);
+			MessageListener listenerAnnotation = listenerElements.get(i).getAnnotation(MessageListener.class);
 			
 			listener.setListenerUri(listenerAnnotation.uri());
 			listener.setRequestDataType(getRequestDataTypeName(listenerAnnotation));
@@ -204,7 +209,9 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 				
 		StringBuilder code = new StringBuilder();
 		
-		for (Element method : description.getMessageListeners()) {
+		List<? extends Element> sortedElements = sortListeners(description);
+		
+		for (Element method : sortedElements) {
 			MessageListener annotation = method.getAnnotation(MessageListener.class);
 			code.append(description.getPeerVariable() + ".listen(\"" + annotation.uri() + "\", (Request request) -> ");
 			code.append(description.getServiceVariable() + "." + method.getSimpleName() + "(context, request));\n");
@@ -270,6 +277,17 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		param.setType(parameterAnnotation.type());
 		param.setValueType(getParameterTypeName(parameterAnnotation));
 		return param;
+	}
+	
+	private List<? extends Element> sortListeners(ServiceDescription description) {
+		List<? extends Element> sortedElements = new ArrayList<>(description.getMessageListeners());
+		Collections.sort(sortedElements, new Comparator<Element>() {
+			@Override
+			public int compare(Element o1, Element o2) {
+				return o1.getSimpleName().toString().compareTo(o2.getSimpleName().toString());
+			}
+		});
+		return sortedElements;
 	}
 	
 	private void log(Element e, String msg) {

@@ -57,7 +57,6 @@ import micronet.tools.launch.utility.BuildGameComposeUtility;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildServiceContainerUtility;
 import micronet.tools.launch.utility.BuildUtility;
-import micronet.tools.launch.utility.LaunchDependencyUtility;
 import micronet.tools.launch.utility.LaunchGameComposeUtility;
 import micronet.tools.launch.utility.LaunchServiceContainerUtility;
 import micronet.tools.launch.utility.LaunchServiceGroupUtility;
@@ -90,8 +89,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private Action dependencyCreateActiveMQ;
 	private Action dependencyCreateCouchbase;
 	private Action dependencyCreatePostgres;
-	private Action dependencyRunActiveMQ;
-	private Action dependencyRunCouchbase;
 
 	private Action addLinks;
 	private Action addPorts;
@@ -391,8 +388,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void fillLocalToolBar(IToolBarManager manager) {
 		manager.add(nativeDebugEnabledServices);
 		manager.add(nativeRunEnabledServices);
-		manager.add(dependencyRunActiveMQ);
-		manager.add(dependencyRunCouchbase);
 	}
 
 	private void makeActions() {
@@ -544,32 +539,12 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		
 		dependencyCreatePostgres = new Action() {
 			public void run() {
-				showMessage("Add Postgres");
+				showMessage("Add Postgres (not implemented yet)");
 			}
 		};
 		dependencyCreatePostgres.setText("Add PostgreSQL Service");
 		dependencyCreatePostgres.setToolTipText("Adds a PostgreSQL instance to the workspace.");
 		dependencyCreatePostgres.setImageDescriptor(IMG_POSTGRESQL);
-		
-		dependencyRunActiveMQ = new Action() {
-			public void run() {
-				LaunchDependencyUtility.launchActiveMQ();
-				showMessage("ActiveMQ docker container started");
-			}
-		};
-		dependencyRunActiveMQ.setText("Run ActiveMQ as a service");
-		dependencyRunActiveMQ.setToolTipText("Run ActiveMQ as a service in a docker container.");
-		dependencyRunActiveMQ.setImageDescriptor(IMG_ACTIVEMQ);
-		
-		dependencyRunCouchbase = new Action() {
-			public void run() {
-				LaunchDependencyUtility.launchCouchbase();
-				showMessage("Couchbase docker container started");
-			}
-		};
-		dependencyRunCouchbase.setText("Run Couchbase as a service");
-		dependencyRunCouchbase.setToolTipText("Run Couchbase as a service in a docker container.");
-		dependencyRunCouchbase.setImageDescriptor(IMG_COUCHBASE);
 	}
 
 	private void createLanuchGroupActions() {
