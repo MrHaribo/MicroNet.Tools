@@ -55,18 +55,11 @@ public final class BuildServiceMavenUtility {
 		String buildName = getBuildName(project);
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			ILaunchConfigurationType type = manager
-					.getLaunchConfigurationType(MavenLaunchConstants.LAUNCH_CONFIGURATION_TYPE_ID);
-			ILaunchConfiguration[] configurations = manager.getLaunchConfigurations(type);
-
-			for (ILaunchConfiguration iLaunchConfiguration : configurations) {
-				if (iLaunchConfiguration.getName().equals(buildName))
-					return iLaunchConfiguration;
-			}
+			ILaunchConfigurationType type = manager.getLaunchConfigurationType(MavenLaunchConstants.LAUNCH_CONFIGURATION_TYPE_ID);
 
 			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, buildName);
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_POM_DIR, "${project_loc:" + project.getName() + "}");
-			workingCopy.setAttribute(MavenLaunchConstants.ATTR_GOALS, "install");
+			workingCopy.setAttribute(MavenLaunchConstants.ATTR_GOALS, "clean install");
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_UPDATE_SNAPSHOTS, true);
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_RUNTIME, "EMBEDDED");
 			ILaunchConfiguration config = workingCopy.doSave();

@@ -15,11 +15,8 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
-		
-		
-		String workspacePath = "D:\\Workspace\\runtime-EclipseApplication";
-		
-		
+		String workspacePath = processingEnv.getOptions().get("workspace_path");
+		System.out.println("Workspace path: " + workspacePath);
 		context = new ServiceAnnotationProcessorContext(processingEnv, workspacePath);
 	}
 

@@ -19,7 +19,10 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.6.1</version>
 					<configuration>
-						<compilerArgument>-proc:none</compilerArgument>
+						<compilerArgs>
+							<arg>-proc:none</arg>
+						</compilerArgs>
+
 					</configuration>
 				</plugin>
 			</plugins>

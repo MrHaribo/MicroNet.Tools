@@ -42,7 +42,7 @@ public final class BuildGameMavenUtility {
 			
 			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, buildName);
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_POM_DIR, pomFilepath);
-			workingCopy.setAttribute(MavenLaunchConstants.ATTR_GOALS, "install");
+			workingCopy.setAttribute(MavenLaunchConstants.ATTR_GOALS, "clean install");
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_UPDATE_SNAPSHOTS, true);
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_RUNTIME, "EMBEDDED");
 			ILaunchConfiguration config = workingCopy.doSave();

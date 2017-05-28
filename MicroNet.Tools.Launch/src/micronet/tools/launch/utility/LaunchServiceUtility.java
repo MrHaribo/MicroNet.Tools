@@ -34,14 +34,7 @@ public final class LaunchServiceUtility {
 		String projectName = project.getElementName();
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			ILaunchConfigurationType type = manager
-					.getLaunchConfigurationType(IJavaLaunchConfigurationConstants.ID_JAVA_APPLICATION);
-			ILaunchConfiguration[] configurations = manager.getLaunchConfigurations(type);
-
-			for (ILaunchConfiguration iLaunchConfiguration : configurations) {
-				if (iLaunchConfiguration.getName().equals(project))
-					return iLaunchConfiguration;
-			}
+			ILaunchConfigurationType type = manager.getLaunchConfigurationType(IJavaLaunchConfigurationConstants.ID_JAVA_APPLICATION);
 
 			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, projectName);
 			workingCopy.setAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, project.getElementName());
