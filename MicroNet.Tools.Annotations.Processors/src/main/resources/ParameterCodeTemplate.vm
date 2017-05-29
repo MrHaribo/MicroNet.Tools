@@ -1,0 +1,7 @@
+
+public enum ${name}ParameterCode {
+#foreach($entry in $entries)
+     ${entry}#if( $foreach.hasNext ),#{else};#end
+     
+#end
+}

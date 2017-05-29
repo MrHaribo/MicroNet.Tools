@@ -55,5 +55,12 @@
 			<version>0.0.2-SNAPSHOT</version>
 			<type>pom</type>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.velocity/velocity -->
+		<dependency>
+			<groupId>org.apache.velocity</groupId>
+			<artifactId>velocity</artifactId>
+			<version>1.7</version>
+		</dependency>
+
 	</dependencies>
 </project>

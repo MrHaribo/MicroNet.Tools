@@ -1,42 +1,61 @@
 package micronet.tools.annotation;
 
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.lang.model.element.Element;
 
 import micronet.annotation.MessageService;
 
-class ServiceDescription {
+public class ServiceDescription {
 	Element service;
-	Set<? extends Element> messageListeners;
-	Set<? extends Element> startMethods;
-	Set<? extends Element> stopMethods;
-	
+
+	Comparator<Element> elementComperator = new Comparator<Element>() {
+		public int compare(Element u1, Element u2) {
+			return u1.getSimpleName().toString().compareTo(u2.getSimpleName().toString());
+		}
+	};
+
+	Set<Element> messageListeners = new TreeSet<Element>(elementComperator);
+	Set<Element> startMethods = new TreeSet<Element>(elementComperator);
+	Set<Element> stopMethods = new TreeSet<Element>(elementComperator);
+
 	public Element getService() {
 		return service;
 	}
+
 	public void setService(Element service) {
 		this.service = service;
 	}
+
 	public Set<? extends Element> getMessageListeners() {
 		return messageListeners;
 	}
+
 	public void setMessageListeners(Set<? extends Element> messageListeners) {
-		this.messageListeners = messageListeners;
+		this.messageListeners.clear();
+		this.messageListeners.addAll(messageListeners);
 	}
+
 	public Set<? extends Element> getStartMethods() {
 		return startMethods;
 	}
+
 	public void setStartMethods(Set<? extends Element> startMethods) {
-		this.startMethods = startMethods;
+		this.startMethods.clear();
+		this.startMethods.addAll(startMethods);
 	}
+
 	public Set<? extends Element> getStopMethods() {
 		return stopMethods;
 	}
+
 	public void setStopMethods(Set<? extends Element> stopMethods) {
-		this.stopMethods = stopMethods;
+		this.stopMethods.clear();
+		this.stopMethods.addAll(stopMethods);
 	}
-	
+
 	public String getName() {
 		if (service == null)
 			return null;
@@ -46,10 +65,11 @@ class ServiceDescription {
 	public String getServiceVariable() {
 		return "service";
 	}
-	
+
 	public String getPeerVariable() {
 		return "peer";
 	}
+
 	public String getURI() {
 		if (service == null)
 			return null;
