@@ -17,6 +17,7 @@ import micronet.annotation.MessageListener;
 import micronet.annotation.MessageService;
 import micronet.annotation.OnStart;
 import micronet.annotation.OnStop;
+import micronet.tools.annotation.codegen.ParameterCodesGenerator;
 import micronet.tools.annotation.codegen.ServiceAPIGenerator;
 import micronet.tools.annotation.codegen.ServiceImplGenerator;
 
@@ -46,20 +47,26 @@ public class ServiceAnnotationProcessorContext {
 		return SourceVersion.latestSupported();
 	}
 
-	public boolean processServiceAnnotations(RoundEnvironment roundEnv) {
-		ServiceDescription description = new ServiceDescription();
+	public ServiceDescription processServiceAnnotations(RoundEnvironment roundEnv) {
 
-		description.setMessageListeners(roundEnv.getElementsAnnotatedWith(MessageListener.class));
-		description.setStartMethods(roundEnv.getElementsAnnotatedWith(OnStart.class));
-		description.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
-
+		ServiceDescription description = null;
 		for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(MessageService.class)) {
+
+			description = new ServiceDescription();
+
+			description.setMessageListeners(roundEnv.getElementsAnnotatedWith(MessageListener.class));
+			description.setStartMethods(roundEnv.getElementsAnnotatedWith(OnStart.class));
+			description.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
+			
 			// Check if a class has been annotated with @Factory
 			if (annotatedElement.getKind() != ElementKind.CLASS) {
 				error(annotatedElement, "Only classes can be annotated with @%s", MessageService.class.getSimpleName());
-				return true; // Exit processing
+				return null; // Exit processing
 			}
 			description.setService(annotatedElement);
+			
+			ParameterCodesGenerator parameterCodesGenerator = new ParameterCodesGenerator(filer);
+			parameterCodesGenerator.generateParameterCodeEnum(description, workspacePath);
 			
 			ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
 			implGenerator.generateServiceImplementation(description);
@@ -69,7 +76,7 @@ public class ServiceAnnotationProcessorContext {
 			break;
 		}
 
-		return true;
+		return description;
 	}
 
 	private void error(Element e, String msg, Object... args) {

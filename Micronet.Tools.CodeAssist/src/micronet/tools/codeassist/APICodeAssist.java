@@ -22,9 +22,9 @@ import org.eclipse.jface.text.contentassist.ContextInformation;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 
-import micronet.api.ListenerAPI;
-import micronet.api.ServiceAPI;
 import micronet.serialization.Serialization;
+import micronet.tools.annotation.api.ListenerAPI;
+import micronet.tools.annotation.api.ServiceAPI;
 
 
 public class APICodeAssist implements IJavaCompletionProposalComputer {
@@ -39,7 +39,7 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 		try {
 			IDynamicVariable var = VariablesPlugin.getDefault().getStringVariableManager().getDynamicVariable("workspace_loc");
 			String workspacePath = var.getValue(null);
-			File dir = new File(workspacePath + "/shared_api");
+			File dir = new File(workspacePath + "/shared/api");
 			File[] directoryListing = dir.listFiles();
 
 			fullAPI = new ArrayList<>();

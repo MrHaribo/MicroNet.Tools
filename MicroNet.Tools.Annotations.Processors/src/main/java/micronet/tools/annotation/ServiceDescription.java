@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.PackageElement;
 
 import micronet.annotation.MessageService;
 
@@ -37,6 +38,10 @@ public class ServiceDescription {
 		this.messageListeners.clear();
 		this.messageListeners.addAll(messageListeners);
 	}
+	
+	public void addMessageListeners(Set<? extends Element> messageListeners) {
+		this.messageListeners.addAll(messageListeners);
+	}
 
 	public Set<? extends Element> getStartMethods() {
 		return startMethods;
@@ -60,6 +65,16 @@ public class ServiceDescription {
 		if (service == null)
 			return null;
 		return service.getSimpleName().toString();
+	}
+	
+	public String getPackage() {
+		if (service == null || service.getEnclosingElement() == null)
+			return null;
+		
+		if (service.getEnclosingElement() instanceof PackageElement) {
+			return ((PackageElement)service.getEnclosingElement()).getQualifiedName().toString();
+		}
+		return service.getEnclosingElement().getSimpleName().toString();
 	}
 
 	public String getServiceVariable() {
