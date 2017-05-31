@@ -67,6 +67,10 @@ public class ServiceDescription {
 		return service.getSimpleName().toString();
 	}
 	
+	public String getTypename() {
+		return getPackage() + "." + getName();
+	}
+	
 	public String getPackage() {
 		if (service == null || service.getEnclosingElement() == null)
 			return null;

@@ -11,8 +11,14 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 
 import micronet.tools.annotation.codegen.ServiceAPIGenerator;
 
@@ -22,6 +28,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 	
 	ServiceAnnotationProcessorContext context;
 	private String sharedDir;
+	private String projectDir;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -29,11 +36,9 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 		
 		elementUtils = processingEnv.getElementUtils();
 		
-		processingEnv.getOptions();
-
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		sharedDir = workspaceRoot.getLocation().toOSString() + "/shared/";
-
+		
 		context = new ServiceAnnotationProcessorContext(processingEnv, sharedDir);
 		context.addObserver(this);
 	}
@@ -60,5 +65,31 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 		ServiceDescription serviceDescription = (ServiceDescription) arg;
 		ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);
 		apiGenerator.generateAPIDescription(serviceDescription, sharedDir);
+		
+		projectDir = findProjectDir(serviceDescription);
+		System.out.println("generated: " + projectDir);
+	}
+
+	private String findProjectDir(ServiceDescription serviceDescription) {
+		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		for (IProject project : workspaceRoot.getProjects()) {
+			if(!project.isOpen())
+				continue;
+			
+			try {
+				if (!project.hasNature(JavaCore.NATURE_ID))
+					continue;
+				IJavaProject javaProject = JavaCore.create(project.getProject());
+				
+				if (javaProject.findType(serviceDescription.getTypename()) != null) {
+					return project.getLocation().toOSString();
+				}
+				
+			} catch (CoreException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return projectDir;
 	}
 }
