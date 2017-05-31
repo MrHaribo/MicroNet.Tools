@@ -10,6 +10,8 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
 
@@ -17,24 +19,30 @@ import micronet.annotation.MessageListener;
 import micronet.annotation.MessageService;
 import micronet.annotation.OnStart;
 import micronet.annotation.OnStop;
+import micronet.tools.annotation.codegen.AnnotationGenerator;
 import micronet.tools.annotation.codegen.ParameterCodesGenerator;
 import micronet.tools.annotation.codegen.ServiceAPIGenerator;
 import micronet.tools.annotation.codegen.ServiceImplGenerator;
 
 public class ServiceAnnotationProcessorContext {
 	private Types typeUtils;
-	//private Elements elementUtils;
+	private Elements elementUtils;
 	private Filer filer;
 	private Messager messager;
 
-	private String workspacePath;
+	private String projectDir;
+	private String sharedDir;
 
-	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String workspacePath) {
+	private ServiceDescription serviceDescription;
+
+	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String projectDir, String sharedDir) {
 		typeUtils = processingEnv.getTypeUtils();
-		//elementUtils = processingEnv.getElementUtils();
+		elementUtils = processingEnv.getElementUtils();
 		filer = processingEnv.getFiler();
 		messager = processingEnv.getMessager();
-		this.workspacePath = workspacePath;
+
+		this.projectDir = projectDir;
+		this.sharedDir = sharedDir;
 	}
 
 	public Set<String> getSupportedAnnotationTypes() {
@@ -47,40 +55,49 @@ public class ServiceAnnotationProcessorContext {
 		return SourceVersion.latestSupported();
 	}
 
-	public ServiceDescription processServiceAnnotations(RoundEnvironment roundEnv) {
+	public boolean process(RoundEnvironment roundEnv) {
 
-		ServiceDescription description = null;
-		for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(MessageService.class)) {
-
-			description = new ServiceDescription();
-
-			description.setMessageListeners(roundEnv.getElementsAnnotatedWith(MessageListener.class));
-			description.setStartMethods(roundEnv.getElementsAnnotatedWith(OnStart.class));
-			description.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
-			
-			// Check if a class has been annotated with @Factory
-			if (annotatedElement.getKind() != ElementKind.CLASS) {
-				error(annotatedElement, "Only classes can be annotated with @%s", MessageService.class.getSimpleName());
-				return null; // Exit processing
+		try {
+			for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(MessageService.class)) {
+				processRound1(annotatedElement, roundEnv);
+				return true;
 			}
-			description.setService(annotatedElement);
-			
-			ParameterCodesGenerator parameterCodesGenerator = new ParameterCodesGenerator(filer);
-			parameterCodesGenerator.generateParameterCodeEnum(description, workspacePath);
-			
-			ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
-			implGenerator.generateServiceImplementation(description);
 
-			ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(typeUtils);
-			apiGenerator.generateAPIDescription(description, workspacePath);
-			break;
+			if (serviceDescription != null) {
+				processRound2(roundEnv);
+				serviceDescription = null;
+				return true;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
-		return description;
+		return true;
 	}
 
-	private void error(Element e, String msg, Object... args) {
-		messager.printMessage(Kind.ERROR, String.format(msg, args), e);
+	private void processRound1(Element serviceElement, RoundEnvironment roundEnv) {
+		serviceDescription = new ServiceDescription();
+
+		serviceDescription.setMessageListeners(roundEnv.getElementsAnnotatedWith(MessageListener.class));
+		serviceDescription.setStartMethods(roundEnv.getElementsAnnotatedWith(OnStart.class));
+		serviceDescription.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
+		serviceDescription.setService(serviceElement);
+
+		// TODO: read Parameter codes from project properties -> add to global
+		// list
+		ParameterCodesGenerator parameterCodesGenerator = new ParameterCodesGenerator(filer);
+		parameterCodesGenerator.generateParameterCodeEnum(serviceDescription, sharedDir);
+
+		AnnotationGenerator annotationGenerator = new AnnotationGenerator(filer);
+		annotationGenerator.generateMessageParameterAnnotation(serviceDescription);
+		annotationGenerator.generateParametersAnnotations(serviceDescription);
 	}
 
+	private void processRound2(RoundEnvironment roundEnv) {
+		ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
+		implGenerator.generateServiceImplementation(serviceDescription);
+		
+		ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);
+		apiGenerator.generateAPIDescription(serviceDescription, sharedDir);
+	}
 }

@@ -16,8 +16,9 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
 		String workspacePath = processingEnv.getOptions().get("workspace_path");
+		String sharedDir = workspacePath + "/shared/";
 		System.out.println("Workspace path: " + workspacePath);
-		context = new ServiceAnnotationProcessorContext(processingEnv, workspacePath);
+		context = new ServiceAnnotationProcessorContext(processingEnv, null, sharedDir);
 	}
 
 	@Override
@@ -32,7 +33,6 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		context.processServiceAnnotations(roundEnv);
-		return true;
+		return context.process(roundEnv);
 	}
 }

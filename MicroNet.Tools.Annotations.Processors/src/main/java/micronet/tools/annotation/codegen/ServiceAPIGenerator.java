@@ -1,29 +1,38 @@
 package micronet.tools.annotation.codegen;
 
+import static micronet.tools.annotation.codegen.CodegenConstants.REQUEST_PARAMETERS;
+import static micronet.tools.annotation.codegen.CodegenConstants.RESPONSE_PARAMETERS;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Types;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Elements;
 
 import micronet.annotation.MessageListener;
 import micronet.serialization.Serialization;
 import micronet.tools.annotation.ServiceDescription;
 import micronet.tools.annotation.api.ListenerAPI;
+import micronet.tools.annotation.api.ParameterAPI;
 import micronet.tools.annotation.api.ServiceAPI;
 
 public class ServiceAPIGenerator {
 	
-	private Types typeUtils;
+	private Elements elementUtils;
 	
-	public ServiceAPIGenerator(Types typeUtils) {
-		this.typeUtils = typeUtils;
+	public ServiceAPIGenerator(Elements elementUtils) {
+		this.elementUtils = elementUtils;
 	}
 
-	public void generateAPIDescription(ServiceDescription description, String workspacePath) {
+	public void generateAPIDescription(ServiceDescription description, String sharedDir) {
 		
 		ServiceAPI serviceApi = new ServiceAPI();
 		serviceApi.setServiceName(description.getName());
@@ -38,20 +47,27 @@ public class ServiceAPIGenerator {
 			MessageListener listenerAnnotation = listenerElements.get(i).getAnnotation(MessageListener.class);
 			listener.setListenerUri(listenerAnnotation.uri());
 			
-			// Not Possible: The generated annotation cannot be resolved at compile time (Read Listeners)
-//			ParameterAPI[] requestParameters = new ParameterAPI[listenerAnnotation.requestParameters().length];
-//			for (int j = 0; j < requestParameters.length; j++) { 
-//				MessageParameter parameterAnnotation = listenerAnnotation.requestParameters()[j];
-//				requestParameters[j] = parseParameterAnnotation(parameterAnnotation);
-//			}
-//			listener.setRequestParameters(requestParameters);
-//			
-//			ParameterAPI[] responseParameters = new ParameterAPI[listenerAnnotation.responseParameters().length];
-//			for (int j = 0; j < responseParameters.length; j++) { 
-//				MessageParameter parameterAnnotation = listenerAnnotation.responseParameters()[j];
-//				responseParameters[j] = parseParameterAnnotation(parameterAnnotation);
-//			}
-//			listener.setResponseParameters(responseParameters);
+			System.out.println("Listener: " + listenerElements.get(i).getSimpleName().toString());
+			
+			for (AnnotationMirror annotationMirror : listenerElements.get(i).getAnnotationMirrors()) {
+				System.out.println(annotationMirror.getAnnotationType().toString());
+			}
+			
+			List<String> requestParameterList = readParameterList(REQUEST_PARAMETERS, listenerElements.get(i), description);
+			ParameterAPI[] requestParameters = new ParameterAPI[requestParameterList.size()];
+			for (int j = 0; j < requestParameters.length; j++) {
+				requestParameters[j] = new ParameterAPI();
+				requestParameters[j].setType(requestParameterList.get(j));
+			}
+			listener.setRequestParameters(requestParameters);
+			
+			List<String> responseParameterList = readParameterList(RESPONSE_PARAMETERS, listenerElements.get(i), description);
+			ParameterAPI[] responseParameters = new ParameterAPI[responseParameterList.size()];
+			for (int j = 0; j < responseParameters.length; j++) { 
+				responseParameters[j] = new ParameterAPI();
+				responseParameters[j].setType(responseParameterList.get(j));
+			}
+			listener.setResponseParameters(responseParameters);
 			
 			listeners[i] = listener;
 		}
@@ -62,7 +78,7 @@ public class ServiceAPIGenerator {
 			String apiData = Serialization.serializePretty(serviceApi);
 			String apiFileName = description.getName() + "API";
 						
-			String path = workspacePath + "/shared/api/" + apiFileName;
+			String path = sharedDir + "api/" + apiFileName;
 			System.out.println("Api Path:" + path);
 			BufferedWriter out = new BufferedWriter(new FileWriter(path));
 		    out.write(apiData);
@@ -70,6 +86,50 @@ public class ServiceAPIGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	private List<String> readParameterList(String parameterType, Element listenerElement, ServiceDescription description) {
+		List<String> parameterList = new ArrayList<>();
+		TypeElement parameterTypeElement = elementUtils.getTypeElement(description.getPackage() + "." + parameterType);
+		
+		AnnotationMirror parameterListMirror = getAnnotationMirrorFromElementByName(listenerElement, parameterTypeElement.toString());
+		if (parameterListMirror == null)
+			return parameterList;
+		
+		AnnotationValue value = getFieldFromAnnotationMirror(parameterListMirror, "value");
+		List<AnnotationValue> paramList = (List<AnnotationValue>) value.getValue();
+
+		for (AnnotationValue param : paramList) {
+			AnnotationMirror paramMiror = (AnnotationMirror) param.getValue();
+			AnnotationValue paramValue = getFieldFromAnnotationMirror(paramMiror, "value");
+			parameterList.add(paramValue.getValue().toString());
+		}
+		return parameterList;
+	}
+	
+	private AnnotationMirror getAnnotationMirrorFromElementByName(Element elem, String name) {
+		for (AnnotationMirror annotationMirror : elem.getAnnotationMirrors()) {
+			if (!annotationMirror.getAnnotationType().toString().contains(name))
+				continue;
+			return annotationMirror;
+		}
+		return null;
+	}
+
+	private AnnotationValue getFieldFromAnnotationMirror(AnnotationMirror mirror, String fieldName) {
+		Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues = mirror.getElementValues();
+		
+		System.out.println("Checking Field: " + mirror.getAnnotationType().toString() + ":" + fieldName + " > " + mirror.getElementValues().size());
+		
+		for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : elementValues.entrySet()) {
+			System.out.println("Checking Field: " + entry.getKey().toString());
+			
+			if (entry.getKey().getSimpleName().toString().equals(fieldName)) {
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 	
 //	private String getTypeElementName(TypeMirror mirror) {

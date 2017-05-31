@@ -22,23 +22,23 @@ public class ParameterCodesGenerator {
 		this.filer = filer;
 	}
 
-	public void generateParameterCodeEnum(ServiceDescription description, String workspacePath) {
+	public void generateParameterCodeEnum(ServiceDescription description, String sharedDir) {
 
 		try {
-			Scanner scanner = new Scanner(new File(workspacePath + "/shared/ParameterCodes"));
+			Scanner scanner = new Scanner(new File(sharedDir + CodegenConstants.PARAMETER_CODE));
 			String text = scanner.useDelimiter("\\A").next();
 			scanner.close(); // Put this call in a finally block
 			String[] entries = Serialization.deserialize(text, String[].class);
 			
 			
-			TypeSpec.Builder builder = TypeSpec.enumBuilder("ParameterCode").addModifiers(Modifier.PUBLIC);
+			TypeSpec.Builder builder = TypeSpec.enumBuilder(CodegenConstants.PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
 			for (String entry : entries) {
 			    builder.addEnumConstant(entry);
 			}
 			TypeSpec typeSpec = builder.build();
 			JavaFile javaFile = JavaFile.builder(description.getPackage(), typeSpec).build();
 			
-			JavaFileObject file = filer.createSourceFile(description.getPackage() + ".ParameterCode", description.getService());
+			JavaFileObject file = filer.createSourceFile(description.getPackage() + "." + CodegenConstants.PARAMETER_CODE, description.getService());
 			Writer writer = file.openWriter();
 			
 			javaFile.writeTo(writer);
