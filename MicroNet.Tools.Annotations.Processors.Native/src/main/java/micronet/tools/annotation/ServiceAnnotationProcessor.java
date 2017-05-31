@@ -18,7 +18,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		String workspacePath = processingEnv.getOptions().get("workspace_path");
 		String sharedDir = workspacePath + "/shared/";
 		System.out.println("Workspace path: " + workspacePath);
-		context = new ServiceAnnotationProcessorContext(processingEnv, null, sharedDir);
+		context = new ServiceAnnotationProcessorContext(processingEnv, sharedDir);
 	}
 
 	@Override

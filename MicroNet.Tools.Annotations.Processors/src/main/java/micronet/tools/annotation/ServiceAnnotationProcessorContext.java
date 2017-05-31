@@ -1,6 +1,7 @@
 package micronet.tools.annotation;
 
 import java.util.LinkedHashSet;
+import java.util.Observable;
 import java.util.Set;
 
 import javax.annotation.processing.Filer;
@@ -9,11 +10,8 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic.Kind;
 
 import micronet.annotation.MessageListener;
 import micronet.annotation.MessageService;
@@ -21,27 +19,24 @@ import micronet.annotation.OnStart;
 import micronet.annotation.OnStop;
 import micronet.tools.annotation.codegen.AnnotationGenerator;
 import micronet.tools.annotation.codegen.ParameterCodesGenerator;
-import micronet.tools.annotation.codegen.ServiceAPIGenerator;
 import micronet.tools.annotation.codegen.ServiceImplGenerator;
 
-public class ServiceAnnotationProcessorContext {
+public class ServiceAnnotationProcessorContext extends Observable {
 	private Types typeUtils;
 	private Elements elementUtils;
 	private Filer filer;
 	private Messager messager;
 
-	private String projectDir;
 	private String sharedDir;
 
 	private ServiceDescription serviceDescription;
 
-	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String projectDir, String sharedDir) {
+	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String sharedDir) {
 		typeUtils = processingEnv.getTypeUtils();
 		elementUtils = processingEnv.getElementUtils();
 		filer = processingEnv.getFiler();
 		messager = processingEnv.getMessager();
 
-		this.projectDir = projectDir;
 		this.sharedDir = sharedDir;
 	}
 
@@ -97,7 +92,7 @@ public class ServiceAnnotationProcessorContext {
 		ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
 		implGenerator.generateServiceImplementation(serviceDescription);
 		
-		ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);
-		apiGenerator.generateAPIDescription(serviceDescription, sharedDir);
+		setChanged();
+		notifyObservers(serviceDescription);
 	}
 }
