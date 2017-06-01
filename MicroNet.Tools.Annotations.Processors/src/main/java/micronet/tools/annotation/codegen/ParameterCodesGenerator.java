@@ -15,6 +15,8 @@ import com.squareup.javapoet.TypeSpec;
 import micronet.serialization.Serialization;
 import micronet.tools.annotation.ServiceDescription;
 
+import static micronet.tools.annotation.codegen.CodegenConstants.*;
+
 public class ParameterCodesGenerator {
 	private Filer filer;
 
@@ -25,20 +27,20 @@ public class ParameterCodesGenerator {
 	public void generateParameterCodeEnum(ServiceDescription description, String sharedDir) {
 
 		try {
-			Scanner scanner = new Scanner(new File(sharedDir + CodegenConstants.PARAMETER_CODE));
+			Scanner scanner = new Scanner(new File(sharedDir + PARAMETER_CODE));
 			String text = scanner.useDelimiter("\\A").next();
 			scanner.close(); // Put this call in a finally block
 			String[] entries = Serialization.deserialize(text, String[].class);
 			
 			
-			TypeSpec.Builder builder = TypeSpec.enumBuilder(CodegenConstants.PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
+			TypeSpec.Builder builder = TypeSpec.enumBuilder(PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
 			for (String entry : entries) {
 			    builder.addEnumConstant(entry);
 			}
 			TypeSpec typeSpec = builder.build();
 			JavaFile javaFile = JavaFile.builder(description.getPackage(), typeSpec).build();
 			
-			JavaFileObject file = filer.createSourceFile(description.getPackage() + "." + CodegenConstants.PARAMETER_CODE, description.getService());
+			JavaFileObject file = filer.createSourceFile(description.getPackage() + "." + PARAMETER_CODE, description.getService());
 			Writer writer = file.openWriter();
 			
 			javaFile.writeTo(writer);

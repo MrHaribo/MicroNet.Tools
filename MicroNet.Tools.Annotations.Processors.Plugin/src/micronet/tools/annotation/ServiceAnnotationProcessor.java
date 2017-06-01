@@ -40,6 +40,7 @@ import micronet.tools.annotation.codegen.CodegenConstants;
 import micronet.tools.annotation.codegen.ServiceAPIGenerator;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
+import micronet.tools.core.SyncParameterCodes;
 
 public class ServiceAnnotationProcessor extends AbstractProcessor implements Observer {
 
@@ -87,7 +88,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 
 		switch ((ProcessingState) arg) {
 		case SERVICE_FOUND:
-			contributeParameters(serviceProject);
+			SyncParameterCodes.contributeParameters(serviceProject);
 			break;
 		case PROCESSING_COMPLETE:
 			ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);

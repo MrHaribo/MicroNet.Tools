@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="MicroNet"
+            id="MicroNet.Tools.UI.ParameterCodeView">
+      </category>
+      <view
+            name="ParameterCode Editor"
+            icon="icons/micronet_icon.png"
+            category="MicroNet.Tools.UI.ParameterCodeView"
+            class="micronet.tools.ui.parametercodeview.views.ParameterCodeView"
+            id="micronet.tools.ui.parametercodeview.views.ParameterCodeView">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               ratio="0.5"
+               relative="org.eclipse.ui.views.ProblemView"
+               relationship="right"
+               id="micronet.tools.ui.parametercodeview.views.ParameterCodeView">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.help.contexts">
+      <contexts
+            file="contexts.xml">
+      </contexts>
+   </extension>
+
+</plugin>

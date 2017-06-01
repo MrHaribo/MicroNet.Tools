@@ -1,7 +1,6 @@
 package micronet.tools.annotation.codegen;
 
-import static micronet.tools.annotation.codegen.CodegenConstants.REQUEST_PARAMETERS;
-import static micronet.tools.annotation.codegen.CodegenConstants.RESPONSE_PARAMETERS;
+import static micronet.tools.annotation.codegen.CodegenConstants.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
