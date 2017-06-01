@@ -1,8 +1,19 @@
 package micronet.tools.annotation;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Scanner;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -19,9 +30,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
+import micronet.serialization.Serialization;
+import micronet.tools.annotation.ServiceAnnotationProcessorContext.ProcessingState;
 import micronet.tools.annotation.api.ListenerAPI;
 import micronet.tools.annotation.api.ParameterAPI;
 import micronet.tools.annotation.api.ServiceAPI;
+import micronet.tools.annotation.codegen.CodegenConstants;
 import micronet.tools.annotation.codegen.ServiceAPIGenerator;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
@@ -65,17 +79,67 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 	public void update(Observable o, Object arg) {
 		System.out.println("Annotation Processing ended");
 
-		ServiceDescription serviceDescription = (ServiceDescription) arg;
-		ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);
-		ServiceAPI apiDescription = apiGenerator.generateAPIDescription(serviceDescription, sharedDir);
-
+		ServiceDescription serviceDescription = ((ServiceAnnotationProcessorContext) o).getServiceDescription();
 		IProject project = findProject(serviceDescription);
-		
 		ServiceProject serviceProject = ModelProvider.INSTANCE.getServiceProject(project.getName());
 		System.out.println("generated: " + serviceProject.getPath().toOSString());
 
-		Set<String> requiredParameters = getRequiredParameters(apiDescription);
-		serviceProject.setRequiredParameters(requiredParameters);
+		switch ((ProcessingState) arg) {
+		case SERVICE_FOUND:
+			contributeParameters(serviceProject);
+			break;
+		case PROCESSING_COMPLETE:
+			ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);
+			ServiceAPI apiDescription = apiGenerator.generateAPIDescription(serviceDescription, sharedDir);
+
+			Set<String> requiredParameters = getRequiredParameters(apiDescription);
+			serviceProject.setRequiredParameters(requiredParameters);
+			break;
+		}
+	}
+
+	private void contributeParameters(ServiceProject serviceProject) {
+		File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
+		try (RandomAccessFile file = new RandomAccessFile(parameterCodeFile, "rw")) {
+			FileLock lock = file.getChannel().lock();
+			
+			String data = readFileChannel(file.getChannel());
+			String[] codeArray = Serialization.deserialize(data, String[].class);
+			
+			Set<String> existingParameterCodes = new HashSet<String>(Arrays.asList(codeArray));
+			Set<String> projectParameterCodes = serviceProject.getRequiredParameters();
+
+			existingParameterCodes.addAll(projectParameterCodes);
+			codeArray = existingParameterCodes.toArray(new String[existingParameterCodes.size()]);
+			data = Serialization.serializePretty(codeArray);
+			
+			writeFileChannel(file.getChannel(), data);
+			lock.release();
+		} catch (IOException e) {
+			System.out.println("I/O Error: " + e.getMessage());
+		}
+	}
+	
+	private void writeFileChannel(FileChannel channel, String data)	throws IOException {
+		ByteBuffer buffer = ByteBuffer.wrap(data.getBytes());
+		channel.write(buffer, 0);
+		channel.close();
+	}
+	
+	private String readFileChannel(FileChannel channel) throws IOException {
+		StringBuilder dataString = new StringBuilder();
+		ByteBuffer buffer = ByteBuffer.allocate(20);
+		int noOfBytesRead = channel.read(buffer);
+
+		while (noOfBytesRead != -1) {
+			buffer.flip();
+			while (buffer.hasRemaining()) {
+				dataString.append((char)buffer.get());
+			}
+			buffer.clear();
+			noOfBytesRead = channel.read(buffer);
+		}
+		return dataString.toString();
 	}
 
 	private Set<String> getRequiredParameters(ServiceAPI apiDescription) {
@@ -84,25 +148,28 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 			for (ParameterAPI parameter : listener.getRequestParameters()) {
 				requiredParameters.add(parameter.getType());
 			}
+			for (ParameterAPI parameter : listener.getResponseParameters()) {
+				requiredParameters.add(parameter.getType());
+			}
 		}
 		return requiredParameters;
 	}
-	
+
 	private IProject findProject(ServiceDescription serviceDescription) {
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		for (IProject project : workspaceRoot.getProjects()) {
-			if(!project.isOpen())
+			if (!project.isOpen())
 				continue;
-			
+
 			try {
 				if (!project.hasNature(JavaCore.NATURE_ID))
 					continue;
 				IJavaProject javaProject = JavaCore.create(project.getProject());
-				
+
 				if (javaProject.findType(serviceDescription.getTypename()) != null) {
 					return project;
 				}
-				
+
 			} catch (CoreException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

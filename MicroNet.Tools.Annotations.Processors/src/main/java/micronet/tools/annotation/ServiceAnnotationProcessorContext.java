@@ -30,6 +30,10 @@ public class ServiceAnnotationProcessorContext extends Observable {
 	private String sharedDir;
 
 	private ServiceDescription serviceDescription;
+	
+	public enum ProcessingState {
+		SERVICE_FOUND, PROCESSING_COMPLETE
+	}
 
 	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String sharedDir) {
 		typeUtils = processingEnv.getTypeUtils();
@@ -78,8 +82,9 @@ public class ServiceAnnotationProcessorContext extends Observable {
 		serviceDescription.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
 		serviceDescription.setService(serviceElement);
 
-		// TODO: read Parameter codes from project properties -> add to global
-		// list
+		setChanged();
+		notifyObservers(ProcessingState.SERVICE_FOUND);
+		
 		ParameterCodesGenerator parameterCodesGenerator = new ParameterCodesGenerator(filer);
 		parameterCodesGenerator.generateParameterCodeEnum(serviceDescription, sharedDir);
 
@@ -93,6 +98,10 @@ public class ServiceAnnotationProcessorContext extends Observable {
 		implGenerator.generateServiceImplementation(serviceDescription);
 		
 		setChanged();
-		notifyObservers(serviceDescription);
+		notifyObservers(ProcessingState.PROCESSING_COMPLETE);
+	}
+
+	public ServiceDescription getServiceDescription() {
+		return serviceDescription;
 	}
 }

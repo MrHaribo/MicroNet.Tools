@@ -94,6 +94,8 @@ public class ServiceAPIGenerator {
 	private List<String> readParameterList(String parameterType, Element listenerElement, ServiceDescription description) {
 		List<String> parameterList = new ArrayList<>();
 		TypeElement parameterTypeElement = elementUtils.getTypeElement(description.getPackage() + "." + parameterType);
+		if (parameterTypeElement == null)
+			return parameterList;
 		
 		AnnotationMirror parameterListMirror = getAnnotationMirrorFromElementByName(listenerElement, parameterTypeElement.toString());
 		if (parameterListMirror == null)
