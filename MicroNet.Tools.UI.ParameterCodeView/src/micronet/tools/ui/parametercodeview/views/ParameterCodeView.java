@@ -9,8 +9,8 @@ import org.eclipse.ui.part.*;
 
 import micronet.serialization.Serialization;
 import micronet.tools.annotation.codegen.CodegenConstants;
+import micronet.tools.annotation.filesync.SyncParameterCodes;
 import micronet.tools.core.ModelProvider;
-import micronet.tools.core.SyncParameterCodes;
 import micronet.tools.ui.parametercodeview.WatchDir;
 import micronet.tools.ui.parametercodeview.WatchDir.DirChangedListener;
 
@@ -140,7 +140,10 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	
 	@Override
 	public void dirChanged(String event, Path path) {
-		Set<String> parameterCodes = SyncParameterCodes.readParameters();
+		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		String sharedDir = workspaceRoot.getLocation().toOSString() + "/shared/";
+		
+		Set<String> parameterCodes = SyncParameterCodes.readParameters(sharedDir);
 		String[] codeArray = parameterCodes.toArray(new String[parameterCodes.size()]);
 		
 		Display.getDefault().asyncExec(() -> {

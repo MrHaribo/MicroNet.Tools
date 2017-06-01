@@ -1,19 +1,14 @@
 package micronet.tools.annotation;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -38,9 +33,9 @@ import micronet.tools.annotation.api.ParameterAPI;
 import micronet.tools.annotation.api.ServiceAPI;
 import micronet.tools.annotation.codegen.CodegenConstants;
 import micronet.tools.annotation.codegen.ServiceAPIGenerator;
+import micronet.tools.annotation.filesync.SyncParameterCodes;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
-import micronet.tools.core.SyncParameterCodes;
 
 public class ServiceAnnotationProcessor extends AbstractProcessor implements Observer {
 
@@ -88,7 +83,8 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 
 		switch ((ProcessingState) arg) {
 		case SERVICE_FOUND:
-			SyncParameterCodes.contributeParameters(serviceProject);
+			Set<String> contributedParameters = serviceProject.getRequiredParameters();
+			SyncParameterCodes.contributeParameters(contributedParameters, sharedDir);
 			break;
 		case PROCESSING_COMPLETE:
 			ServiceAPIGenerator apiGenerator = new ServiceAPIGenerator(elementUtils);

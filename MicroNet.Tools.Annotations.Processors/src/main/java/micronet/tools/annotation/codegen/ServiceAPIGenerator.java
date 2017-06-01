@@ -101,11 +101,17 @@ public class ServiceAPIGenerator {
 			return parameterList;
 		
 		AnnotationValue value = getFieldFromAnnotationMirror(parameterListMirror, "value");
+		if (value == null)
+			return parameterList;
+		
 		List<AnnotationValue> paramList = (List<AnnotationValue>) value.getValue();
-
 		for (AnnotationValue param : paramList) {
 			AnnotationMirror paramMiror = (AnnotationMirror) param.getValue();
 			AnnotationValue paramValue = getFieldFromAnnotationMirror(paramMiror, "value");
+			
+			if (paramValue.getValue().toString().equals("<error>"))
+				continue;
+			
 			parameterList.add(paramValue.getValue().toString());
 		}
 		return parameterList;

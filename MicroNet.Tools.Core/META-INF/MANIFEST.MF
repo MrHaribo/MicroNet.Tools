@@ -23,6 +23,7 @@ Export-Package: micronet.activemq,
  micronet.tools.annotation,
  micronet.tools.annotation.api,
  micronet.tools.annotation.codegen,
+ micronet.tools.annotation.filesync,
  micronet.tools.core,
  micronet.tools.yaml.utility,
  micronet.type
