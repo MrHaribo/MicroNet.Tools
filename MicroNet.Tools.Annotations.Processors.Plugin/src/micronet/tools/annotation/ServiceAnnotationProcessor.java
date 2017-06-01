@@ -15,6 +15,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -101,31 +102,34 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 	private void contributeParameters(ServiceProject serviceProject) {
 		File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
 		try (RandomAccessFile file = new RandomAccessFile(parameterCodeFile, "rw")) {
-			FileLock lock = file.getChannel().lock();
-			
-			String data = readFileChannel(file.getChannel());
-			String[] codeArray = Serialization.deserialize(data, String[].class);
-			
-			Set<String> existingParameterCodes = new HashSet<String>(Arrays.asList(codeArray));
-			Set<String> projectParameterCodes = serviceProject.getRequiredParameters();
+			file.getChannel().lock();
+			try {
+				String data = readFileChannel(file.getChannel());
+				String[] codeArray = Serialization.deserialize(data, String[].class);
 
-			existingParameterCodes.addAll(projectParameterCodes);
-			codeArray = existingParameterCodes.toArray(new String[existingParameterCodes.size()]);
-			data = Serialization.serializePretty(codeArray);
-			
-			writeFileChannel(file.getChannel(), data);
-			lock.release();
+				Set<String> existingParameterCodes = new TreeSet<String>(Arrays.asList(codeArray));
+				Set<String> projectParameterCodes = serviceProject.getRequiredParameters();
+
+				existingParameterCodes.addAll(projectParameterCodes);
+				codeArray = existingParameterCodes.toArray(new String[existingParameterCodes.size()]);
+				data = Serialization.serializePretty(codeArray);
+
+				file.setLength(data.length());
+				writeFileChannel(file.getChannel(), data);
+			} catch (Exception e) {
+				System.out.println("Parse parameterCode File Error: " + e.getMessage());
+			}
 		} catch (IOException e) {
 			System.out.println("I/O Error: " + e.getMessage());
 		}
 	}
-	
-	private void writeFileChannel(FileChannel channel, String data)	throws IOException {
+
+	private void writeFileChannel(FileChannel channel, String data) throws IOException {
 		ByteBuffer buffer = ByteBuffer.wrap(data.getBytes());
 		channel.write(buffer, 0);
 		channel.close();
 	}
-	
+
 	private String readFileChannel(FileChannel channel) throws IOException {
 		StringBuilder dataString = new StringBuilder();
 		ByteBuffer buffer = ByteBuffer.allocate(20);
@@ -134,13 +138,50 @@ public class ServiceAnnotationProcessor extends AbstractProcessor implements Obs
 		while (noOfBytesRead != -1) {
 			buffer.flip();
 			while (buffer.hasRemaining()) {
-				dataString.append((char)buffer.get());
+				dataString.append((char) buffer.get());
 			}
 			buffer.clear();
 			noOfBytesRead = channel.read(buffer);
 		}
 		return dataString.toString();
 	}
+
+	// private boolean updateParameters(ServiceProject serviceProject) {
+	//
+	// Scanner scanner = null;
+	// FileWriter fileWriter = null;
+	//
+	//
+	//
+	// try {
+	// File parameterCodeFile = new File(sharedDir +
+	// CodegenConstants.PARAMETER_CODE);
+	// scanner = new Scanner(parameterCodeFile);
+	// String data = scanner.useDelimiter("\\A").next();
+	// String[] codeArray = Serialization.deserialize(data, String[].class);
+	//
+	// Set<String> existingParameterCodes = new
+	// HashSet<String>(Arrays.asList(codeArray));
+	// Set<String> projectParameterCodes =
+	// serviceProject.getRequiredParameters();
+	//
+	// existingParameterCodes.addAll(projectParameterCodes);
+	// codeArray = existingParameterCodes.toArray(new
+	// String[existingParameterCodes.size()]);
+	// data = Serialization.serialize(codeArray);
+	//
+	//
+	// fileWriter = new FileWriter(parameterCodeFile, false); // true to append
+	// fileWriter.write(data);
+	// fileWriter.close();
+	//
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// } finally {
+	// scanner.close(); // Put this call in a finally block
+	// fileWriter.close();
+	// }
+	// }
 
 	private Set<String> getRequiredParameters(ServiceAPI apiDescription) {
 		Set<String> requiredParameters = new HashSet<String>();
