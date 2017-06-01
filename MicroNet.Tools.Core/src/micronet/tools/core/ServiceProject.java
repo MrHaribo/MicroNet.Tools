@@ -9,11 +9,15 @@ import java.util.StringJoiner;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class ServiceProject {
 	
+	private static final String SPLIT_STRING = ",";
+	private static final String PREFERENCE_NAME = "com.github.mrharibo.micronet.preferences";
+
 	public enum Nature {
 		MAVEN,
 	    DOCKER, 
@@ -50,14 +54,14 @@ public class ServiceProject {
 	
 	public boolean isEnabled() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 		return preferences.getBoolean("enabled", false);
 	}
 
 	public void setEnabled(boolean isEnabled) {
 		try {
 			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 			preferences.putBoolean("enabled", isEnabled);
 			preferences.flush();
 		} catch (BackingStoreException e) {
@@ -67,14 +71,14 @@ public class ServiceProject {
 	
 	public String getNetworkMode() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 		return preferences.get("network_mode", null);
 	}
 
 	public void setNetworkMode(String networkMode) {
 		try {
 			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 			preferences.put("network_mode", networkMode);
 			preferences.flush();
 		} catch (BackingStoreException e) {
@@ -98,9 +102,13 @@ public class ServiceProject {
 	public IProject getProject() {
 		return project;
 	}
+	
+	public IPath getPath() {
+		return project.getLocation();
+	}
 
 	public String getNatureString() {
-		StringJoiner joiner = new StringJoiner(",");
+		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
 		for (Nature nature : natures) {
 		    joiner.add(nature.toString());
 		}
@@ -121,23 +129,23 @@ public class ServiceProject {
 
 	public String getLinksRaw() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 		String linkString = preferences.get("links", "");
 		return linkString;
 	}
     
 	public List<String> getLinks() {
 		String linkString = getLinksRaw();
-		List<String> result = new ArrayList<>(Arrays.asList(linkString.split(",")));
+		List<String> result = new ArrayList<>(Arrays.asList(linkString.split(SPLIT_STRING)));
 		result.remove("");
 		return result;
 	}
 
 	public void setLinks(List<String> links) {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 		
-		StringJoiner joiner = new StringJoiner(",");
+		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
 		for (String link : links) {
 			if (link.equals(""))
 				continue;
@@ -154,23 +162,23 @@ public class ServiceProject {
 
 	public String getPortsRaw() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 		String portString = preferences.get("ports", "");
 		return portString;
 	}
 	
 	public List<String> getPorts() {
 		String portString = getPortsRaw();
-		List<String> result = new ArrayList<>(Arrays.asList(portString.split(",")));
+		List<String> result = new ArrayList<>(Arrays.asList(portString.split(SPLIT_STRING)));
 		result.remove("");
 		return result;
 	}
 
 	public void setPorts(List<String> ports) {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode("com.github.mrharibo.micronet.preferences");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
 		
-		StringJoiner joiner = new StringJoiner(",");
+		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
 		for (String port : ports) {
 			if (port.equals(""))
 				continue;
@@ -183,5 +191,34 @@ public class ServiceProject {
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void setRequiredParameters(Set<String> requiredParameters) {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+		
+		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
+		for (String param : requiredParameters) {
+			if (param.equals(""))
+				continue;
+		    joiner.add(param);
+		}
+		
+		try {
+			preferences.put("parameters.required", joiner.toString());
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public Set<String> getRequiredParameters() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+		String parameterString = preferences.get("parameters.required", "");
+
+		Set<String> result = new HashSet<>(Arrays.asList(parameterString.split(SPLIT_STRING)));
+		result.remove("");
+		return result;
 	}
 }

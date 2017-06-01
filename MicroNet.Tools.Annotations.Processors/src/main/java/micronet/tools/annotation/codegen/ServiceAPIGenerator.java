@@ -32,7 +32,7 @@ public class ServiceAPIGenerator {
 		this.elementUtils = elementUtils;
 	}
 
-	public void generateAPIDescription(ServiceDescription description, String sharedDir) {
+	public ServiceAPI generateAPIDescription(ServiceDescription description, String sharedDir) {
 		
 		ServiceAPI serviceApi = new ServiceAPI();
 		serviceApi.setServiceName(description.getName());
@@ -86,6 +86,8 @@ public class ServiceAPIGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		return serviceApi;
 	}
 	
 	@SuppressWarnings("unchecked")
