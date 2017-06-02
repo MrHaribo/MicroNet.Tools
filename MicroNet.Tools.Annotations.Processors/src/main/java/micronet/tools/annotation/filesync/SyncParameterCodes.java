@@ -52,6 +52,37 @@ public class SyncParameterCodes {
 	    }
 	}
 	
+	public static void removeParameters(Set<String> removedCodes, String sharedDir) {
+
+		File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
+		
+	    try {
+	        semaphore.acquire();
+
+	        try (Scanner scanner = new Scanner(parameterCodeFile)) {
+		        scanner.useDelimiter("\\A");
+		        String data = scanner.next();
+				String[] codeArray = Serialization.deserialize(data, String[].class);
+				
+				Set<String> existingParameterCodes = new TreeSet<String>(Arrays.asList(codeArray));
+
+				existingParameterCodes.removeAll(removedCodes);
+				codeArray = existingParameterCodes.toArray(new String[existingParameterCodes.size()]);
+				data = Serialization.serializePretty(codeArray);
+				
+				try (PrintWriter printer = new PrintWriter(parameterCodeFile)) {
+					printer.print(data);
+				}
+	        } catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+	    } catch (InterruptedException e1) {
+			e1.printStackTrace();
+		} finally {
+	        semaphore.release();
+	    }
+	}
+	
 	public static Set<String> readParameters(String sharedDir) {
 		File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
 		

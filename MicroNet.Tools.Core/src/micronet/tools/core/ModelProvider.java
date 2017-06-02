@@ -160,6 +160,11 @@ public enum ModelProvider {
 		}
 		return result;
 	}
+	
+	public String getSharedDir() {
+		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		return workspaceRoot.getLocation().toOSString() + "/shared/";
+	}
 
 	public interface ServicesChangedListener {
 		public void onServicesChanged();

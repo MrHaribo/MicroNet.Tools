@@ -1,57 +1,61 @@
 package micronet.tools.ui.parametercodeview.views;
 
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.InputDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.ui.part.*;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.ViewPart;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
-import micronet.serialization.Serialization;
-import micronet.tools.annotation.codegen.CodegenConstants;
 import micronet.tools.annotation.filesync.SyncParameterCodes;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.parametercodeview.WatchDir;
 import micronet.tools.ui.parametercodeview.WatchDir.DirChangedListener;
 
-import org.eclipse.jface.viewers.*;
-import org.eclipse.swt.graphics.Image;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
-
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.*;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.DisposeEvent;
-import org.eclipse.swt.events.DisposeListener;
-
-
 /**
- * This sample class demonstrates how to plug-in a new
- * workbench view. The view shows data obtained from the
- * model. The sample creates a dummy model on the fly,
- * but a real implementation would connect to the model
- * available either in this or another plug-in (e.g. the workspace).
- * The view is connected to the model using a content provider.
+ * This sample class demonstrates how to plug-in a new workbench view. The view
+ * shows data obtained from the model. The sample creates a dummy model on the
+ * fly, but a real implementation would connect to the model available either in
+ * this or another plug-in (e.g. the workspace). The view is connected to the
+ * model using a content provider.
  * <p>
- * The view uses a label provider to define how model
- * objects should be presented in the view. Each
- * view can present the same model objects using
- * different labels and icons, if needed. Alternatively,
- * a single label provider can be shared between views
- * in order to ensure that objects of the same type are
- * presented in the same way everywhere.
+ * The view uses a label provider to define how model objects should be
+ * presented in the view. Each view can present the same model objects using
+ * different labels and icons, if needed. Alternatively, a single label provider
+ * can be shared between views in order to ensure that objects of the same type
+ * are presented in the same way everywhere.
  * <p>
  */
 
@@ -66,19 +70,25 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	private Action addParameterCodeAction;
 	private Action removeParameterCodeAction;
 
+	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
+	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
+	private final ImageDescriptor IMG_PARAM = getImageDescriptor("param.png");
+
 	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
 		public String getColumnText(Object obj, int index) {
 			return getText(obj);
 		}
+
 		public Image getColumnImage(Object obj, int index) {
 			return getImage(obj);
 		}
+
 		public Image getImage(Object obj) {
-			return PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
+			return IMG_PARAM.createImage();
 		}
 	}
 
-/**
+	/**
 	 * The constructor.
 	 */
 	public ParameterCodeView() {
@@ -86,28 +96,28 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	}
 
 	/**
-	 * This is a callback that will allow us
-	 * to create the viewer and initialize it.
+	 * This is a callback that will allow us to create the viewer and initialize
+	 * it.
 	 */
 	public void createPartControl(Composite parent) {
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.getTable().setHeaderVisible(true);
 		viewer.getTable().setLinesVisible(true);
-		
+
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 		viewer.setInput(new String[] { "One", "Two", "Three" });
 		viewer.setLabelProvider(new ViewLabelProvider());
 
 		// Create the help context id for the viewer's control
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "MicroNet.Tools.UI.ParameterCodeView.viewer");
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(),
+				"MicroNet.Tools.UI.ParameterCodeView.viewer");
 		getSite().setSelectionProvider(viewer);
 		makeActions();
 		hookContextMenu();
 		contributeToActionBars();
-		
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		String sharedDir = workspaceRoot.getLocation().toOSString() + "/shared/";
-		
+
+		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+
 		Thread watchDirThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -124,31 +134,30 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 				System.out.println("WatchDir Thread End");
 			}
 		});
-		
+
 		watchDirThread.start();
-		
+
 		parent.addDisposeListener(new DisposeListener() {
-            @Override
-            public void widgetDisposed(DisposeEvent e) {
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
 				watchDirThread.interrupt();
 				System.out.println("Eclipse Close Event !");
-            }
-        });
-		
+			}
+		});
+
 		dirChanged(null, null);
 	}
-	
+
 	@Override
 	public void dirChanged(String event, Path path) {
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		String sharedDir = workspaceRoot.getLocation().toOSString() + "/shared/";
-		
-		Set<String> parameterCodes = SyncParameterCodes.readParameters(sharedDir);
-		String[] codeArray = parameterCodes.toArray(new String[parameterCodes.size()]);
-		
 		Display.getDefault().asyncExec(() -> {
 			if (viewer.getControl().isDisposed())
 				return;
+			
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			Set<String> parameterCodes = SyncParameterCodes.readParameters(sharedDir);
+			String[] codeArray = parameterCodes.toArray(new String[parameterCodes.size()]);
+			
 			viewer.setInput(codeArray);
 			viewer.refresh();
 		});
@@ -185,7 +194,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
-	
+
 	private void fillLocalToolBar(IToolBarManager manager) {
 		manager.add(addParameterCodeAction);
 		manager.add(removeParameterCodeAction);
@@ -194,30 +203,62 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	private void makeActions() {
 		addParameterCodeAction = new Action() {
 			public void run() {
-				showMessage("Action 1 executed");
+				String newParameterName = promptName("Add ParameterCode", "NEW_CODE",
+						"Add a new ParameterCode to the Workspace");
+				if (newParameterName != null) {
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncParameterCodes.contributeParameters(new HashSet<String>(Arrays.asList(newParameterName)),
+							sharedDir);
+				}
 			}
 		};
-		addParameterCodeAction.setText("Action 1");
-		addParameterCodeAction.setToolTipText("Action 1 tooltip");
-		addParameterCodeAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-		
+		addParameterCodeAction.setText("Add Parameter Code");
+		addParameterCodeAction.setToolTipText("Adds a new Parameter Code to the Workspace");
+		addParameterCodeAction.setImageDescriptor(IMG_ADD);
+
 		removeParameterCodeAction = new Action() {
 			public void run() {
-				showMessage("Action 2 executed");
+
+				StringBuilder messageString = new StringBuilder();
+				Set<String> removedParameters = new HashSet<>();
+				IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+				for (Object o : selection.toList()) {
+					removedParameters.add(o.toString());
+					messageString.append(o.toString() + ",");
+				}
+				if (promptQuestion("Remove ParameterCodes", "You really want to remove: " + messageString + " ?")) {
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncParameterCodes.removeParameters(removedParameters, sharedDir);
+				}
 			}
 		};
-		removeParameterCodeAction.setText("Action 2");
-		removeParameterCodeAction.setToolTipText("Action 2 tooltip");
-		removeParameterCodeAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-				getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		removeParameterCodeAction.setText("Remove Parameter Codes");
+		removeParameterCodeAction.setToolTipText(
+				"Removes the selected Parameter Codes from the Workspace. (Only possible when no references remain)");
+		removeParameterCodeAction.setImageDescriptor(IMG_REMOVE);
 	}
 
-	private void showMessage(String message) {
-		MessageDialog.openInformation(
-			viewer.getControl().getShell(),
-			"Sample View",
-			message);
+	private void showMessage(String title, String message) {
+		MessageDialog.openInformation(viewer.getControl().getShell(), title, message);
+	}
+
+	private boolean promptQuestion(String title, String message) {
+		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
+	}
+
+	private String promptName(String title, String initialValue, String message) {
+		InputDialog dlg = new InputDialog(Display.getCurrent().getActiveShell(), title, message, initialValue, null);
+		if (dlg.open() == Window.OK) {
+			return dlg.getValue();
+		}
+		return null;
+	}
+
+	private static ImageDescriptor getImageDescriptor(String file) {
+		// assume that the current class is called View.java
+		Bundle bundle = FrameworkUtil.getBundle(ParameterCodeView.class);
+		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
+		return ImageDescriptor.createFromURL(url);
 	}
 
 	/**
