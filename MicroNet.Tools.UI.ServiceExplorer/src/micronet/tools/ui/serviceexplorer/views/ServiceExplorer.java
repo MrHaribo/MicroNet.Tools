@@ -25,6 +25,8 @@ import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
@@ -161,6 +163,17 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		final Text searchText = new Text(parent, SWT.BORDER | SWT.SEARCH);
 		searchText.setLayoutData(new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
 		createViewer(parent);
+		
+		// To support the search
+		ServiceFilter filter = new ServiceFilter();
+        searchText.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent ke) {
+                filter.setSearchText(searchText.getText());
+                viewer.refresh();
+            }
+
+        });
+        viewer.addFilter(filter);
 
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(),
