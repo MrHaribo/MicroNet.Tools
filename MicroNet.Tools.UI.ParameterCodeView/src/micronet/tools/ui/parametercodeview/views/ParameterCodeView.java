@@ -5,8 +5,13 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.action.Action;
@@ -19,10 +24,14 @@ import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CellLabelProvider;
+import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -32,14 +41,17 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
+import micronet.tools.annotation.api.ListenerAPI;
+import micronet.tools.annotation.api.ParameterAPI;
+import micronet.tools.annotation.api.ServiceAPI;
 import micronet.tools.annotation.filesync.SyncParameterCodes;
+import micronet.tools.annotation.filesync.SyncServiceAPI;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.parametercodeview.WatchDir;
 import micronet.tools.ui.parametercodeview.WatchDir.DirChangedListener;
@@ -73,14 +85,30 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
 	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
 	private final ImageDescriptor IMG_PARAM = getImageDescriptor("param.png");
-
-	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
+	
+	private Map<String, Set<String>> requiredParameters;
+	private Map<String, Set<String>> providedParameters;
+	
+	class ViewLabelProvider2 extends LabelProvider implements ITableLabelProvider {
 		public String getColumnText(Object obj, int index) {
-			return getText(obj);
+			
+			switch (index) {
+			default:
+			case 0:
+				return getText(obj);
+			case 1:
+				return "JO";//String.join(",", requiredParameters.get(getText(obj)));
+			case 2:
+				return "man";//String.join(",", providedParameters.get(getText(obj)));
+			}
+			
 		}
-
+		
 		public Image getColumnImage(Object obj, int index) {
-			return getImage(obj);
+			if (index == 0)
+				return getImage(obj);
+			else
+				return null;
 		}
 
 		public Image getImage(Object obj) {
@@ -106,7 +134,46 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 		viewer.setInput(new String[] { "One", "Two", "Three" });
-		viewer.setLabelProvider(new ViewLabelProvider());
+		//viewer.setLabelProvider(new ViewLabelProvider());
+		
+		
+		TableViewerColumn column = new TableViewerColumn(viewer, SWT.LEFT);
+		column.getColumn().setText("ParameterCode");
+		column.getColumn().setWidth(100);
+		column.setLabelProvider(new ColumnLabelProvider() {
+			@Override
+			public Image getImage(Object element) {
+				return IMG_PARAM.createImage();
+			}
+	        @Override
+	        public String getText(Object element) {
+	            return element.toString();
+	        }
+	    });
+		
+		column = new TableViewerColumn(viewer, SWT.LEFT);
+		column.getColumn().setText("Required By");
+		column.getColumn().setWidth(150);
+		column.setLabelProvider(new ColumnLabelProvider() {
+	        @Override
+	        public String getText(Object element) {
+	        	if (requiredParameters != null && !requiredParameters.containsKey(element.toString()))
+	        		return null;
+				return String.join(",", requiredParameters.get(element.toString()));
+	        }
+	    });
+		
+		column = new TableViewerColumn(viewer, SWT.LEFT);
+		column.getColumn().setText("Provided By");
+		column.getColumn().setWidth(150);
+		column.setLabelProvider(new ColumnLabelProvider() {
+	        @Override
+	        public String getText(Object element) {
+	        	if (providedParameters != null && !providedParameters.containsKey(element.toString()))
+	        		return null;
+	            return String.join(",", providedParameters.get(element.toString()));
+	        }
+	    });
 
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(),
@@ -124,7 +191,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 				System.out.println("WatchDir Thread Start");
 				try {
 					Path path = Paths.get(sharedDir);
-					WatchDir watchDir = new WatchDir(path, false);
+					WatchDir watchDir = new WatchDir(path, true);
 					watchDir.registerDirChangedListener(ParameterCodeView.this);
 					watchDir.processEvents();
 				} catch (IOException e) {
@@ -157,10 +224,34 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			Set<String> parameterCodes = SyncParameterCodes.readParameters(sharedDir);
 			String[] codeArray = parameterCodes.toArray(new String[parameterCodes.size()]);
+
+			refreshParameters(parameterCodes, sharedDir);
 			
 			viewer.setInput(codeArray);
 			viewer.refresh();
 		});
+	}
+
+	private void refreshParameters(Set<String> parameterCodes, String sharedDir) {
+		List<ServiceAPI> completeAPI = SyncServiceAPI.readServiceApi(sharedDir);
+		
+		requiredParameters = new HashMap<>();
+		providedParameters = new HashMap<>();
+		
+		for (ServiceAPI serviceAPI : completeAPI) {
+			for (ListenerAPI listenerAPI : serviceAPI.getListeners()) {
+				for (ParameterAPI paramAPI : listenerAPI.getRequestParameters()) {
+					if (!requiredParameters.containsKey(paramAPI.getType()))
+						requiredParameters.put(paramAPI.getType(), new TreeSet<>());
+					requiredParameters.get(paramAPI.getType()).add(serviceAPI.getServiceName());
+				}
+				for (ParameterAPI paramAPI : listenerAPI.getResponseParameters()) {
+					if (!providedParameters.containsKey(paramAPI.getType()))
+						providedParameters.put(paramAPI.getType(), new TreeSet<>());
+					providedParameters.get(paramAPI.getType()).add(serviceAPI.getServiceName());
+				}
+			}
+		}
 	}
 
 	private void hookContextMenu() {
