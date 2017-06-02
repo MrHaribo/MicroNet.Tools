@@ -1,17 +1,32 @@
 package micronet.tools.ui.modelview.views;
 
-import java.util.ArrayList;
-
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.*;
+
+import micronet.tools.ui.modelview.Entity;
+
 import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.jface.action.*;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.SWT;
-import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 
 
 /**
@@ -44,104 +59,48 @@ public class ModelView extends ViewPart {
 	private Action action1;
 	private Action action2;
 	private Action doubleClickAction;
-	 
-	class TreeObject implements IAdaptable {
-		private String name;
-		private TreeParent parent;
-		
-		public TreeObject(String name) {
-			this.name = name;
-		}
-		public String getName() {
-			return name;
-		}
-		public void setParent(TreeParent parent) {
-			this.parent = parent;
-		}
-		public TreeParent getParent() {
-			return parent;
-		}
-		public String toString() {
-			return getName();
-		}
-		public <T> T getAdapter(Class<T> key) {
-			return null;
-		}
-	}
 	
-	class TreeParent extends TreeObject {
-		private ArrayList children;
-		public TreeParent(String name) {
-			super(name);
-			children = new ArrayList();
-		}
-		public void addChild(TreeObject child) {
-			children.add(child);
-			child.setParent(this);
-		}
-		public void removeChild(TreeObject child) {
-			children.remove(child);
-			child.setParent(null);
-		}
-		public TreeObject [] getChildren() {
-			return (TreeObject [])children.toArray(new TreeObject[children.size()]);
-		}
-		public boolean hasChildren() {
-			return children.size()>0;
-		}
-	}
-
+	private Set<String> entityTemplatesName = new HashSet<>();
+	 
 	class ViewContentProvider implements ITreeContentProvider {
-		private TreeParent invisibleRoot;
+		private EntityTemplateNode entityTemplateRoot;
 
 		public Object[] getElements(Object parent) {
 			if (parent.equals(getViewSite())) {
-				if (invisibleRoot==null) initialize();
-				return getChildren(invisibleRoot);
+				if (entityTemplateRoot==null)
+					initialize();
+				return Arrays.asList(entityTemplateRoot).toArray();
 			}
 			return getChildren(parent);
 		}
 		public Object getParent(Object child) {
-			if (child instanceof TreeObject) {
-				return ((TreeObject)child).getParent();
+			if (child instanceof EntityNode) {
+				return ((EntityNode)child).getParent();
 			}
 			return null;
 		}
 		public Object [] getChildren(Object parent) {
-			if (parent instanceof TreeParent) {
-				return ((TreeParent)parent).getChildren();
+			if (parent instanceof EntityTemplateNode) {
+				return ((EntityTemplateNode)parent).getChildren();
 			}
 			return new Object[0];
 		}
 		public boolean hasChildren(Object parent) {
-			if (parent instanceof TreeParent)
-				return ((TreeParent)parent).hasChildren();
+			if (parent instanceof EntityTemplateNode)
+				return ((EntityTemplateNode)parent).hasChildren();
 			return false;
 		}
-/*
- * We will set up a dummy model to initialize tree heararchy.
- * In a real code, you will connect to a real model and
- * expose its hierarchy.
- */
+		
+		
 		private void initialize() {
-			TreeObject to1 = new TreeObject("Leaf 1");
-			TreeObject to2 = new TreeObject("Leaf 2");
-			TreeObject to3 = new TreeObject("Leaf 3");
-			TreeParent p1 = new TreeParent("Parent 1");
-			p1.addChild(to1);
-			p1.addChild(to2);
-			p1.addChild(to3);
+			entityTemplateRoot = new EntityTemplateNode("Entity Templates");
 			
-			TreeObject to4 = new TreeObject("Leaf 4");
-			TreeParent p2 = new TreeParent("Parent 2");
-			p2.addChild(to4);
-			
-			TreeParent root = new TreeParent("Root");
-			root.addChild(p1);
-			root.addChild(p2);
-			
-			invisibleRoot = new TreeParent("");
-			invisibleRoot.addChild(root);
+			EntityTemplateNode to1 = new EntityTemplateNode("Leaf 1");
+			EntityTemplateNode to2 = new EntityTemplateNode("Leaf 2");
+			EntityTemplateNode to3 = new EntityTemplateNode("Leaf 3");
+			entityTemplateRoot.addChild(to1);
+			entityTemplateRoot.addChild(to2);
+			entityTemplateRoot.addChild(to3);
 		}
 	}
 
@@ -152,7 +111,7 @@ public class ModelView extends ViewPart {
 		}
 		public Image getImage(Object obj) {
 			String imageKey = ISharedImages.IMG_OBJ_ELEMENT;
-			if (obj instanceof TreeParent)
+			if (obj instanceof EntityTemplateNode)
 			   imageKey = ISharedImages.IMG_OBJ_FOLDER;
 			return PlatformUI.getWorkbench().getSharedImages().getImage(imageKey);
 		}
@@ -169,12 +128,81 @@ public class ModelView extends ViewPart {
 	 * to create the viewer and initialize it.
 	 */
 	public void createPartControl(Composite parent) {
+		
+		parent.setLayout(new GridLayout(1, false));
+		
+		EntityDetails entityDetailPanel = new EntityDetails(parent, SWT.NONE);
+		entityDetailPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		drillDownAdapter = new DrillDownAdapter(viewer);
 		
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());
 		viewer.setLabelProvider(new ViewLabelProvider());
+		viewer.getTree().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			@Override
+			public void selectionChanged(SelectionChangedEvent arg0) {
+				
+				TreeSelection selection = (TreeSelection) arg0.getSelection();
+
+				if (selection.getFirstElement() == null || selection.size() > 1)
+					entityDetailPanel.setEntity(null);
+				
+				EntityNode selectedEntity = (EntityNode)selection.getFirstElement();
+				entityDetailPanel.setEntity(selectedEntity);
+			}
+		});
+		
+		entityDetailPanel.setAddTemplateListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
+				if (name == null)
+					return;
+				
+				if (entityTemplatesName.contains(name)) {
+					showMessage("Template with the same name exists already. Choose a unique name.");
+					return;
+				}
+				
+				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					entityTemplateNode.addChild(new EntityTemplateNode(name));
+					entityTemplatesName.add(name);
+					viewer.refresh();
+				}
+			}
+		});
+		
+		entityDetailPanel.setRemoveTemplateListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
+				
+				if (selectedNode == null || selectedNode.getParent() == null)
+					return;
+				
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					
+					if (entityTemplateNode.hasChildren()) {
+						showMessage("Cannot Remove Template with Children");
+						return;
+					}
+					
+					if (!promptQuestion("Remove Template", "Do you really want to remove the template: " + entityTemplateNode.getName()))
+						return;
+					
+					((EntityTemplateNode)entityTemplateNode.getParent()).removeChild(entityTemplateNode);
+					entityTemplatesName.add(entityTemplateNode.getName());
+					viewer.refresh();
+				}
+			}
+		});
 
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "MicroNet.Tools.UI.ModelView.viewer");
@@ -267,6 +295,18 @@ public class ModelView extends ViewPart {
 			viewer.getControl().getShell(),
 			"Model View",
 			message);
+	}
+	
+	private String promptName(String title, String initialValue, String message) {
+		InputDialog dlg = new InputDialog(Display.getCurrent().getActiveShell(), title, message, initialValue, null);
+		if (dlg.open() == Window.OK) {
+			return dlg.getValue();
+		}
+		return null;
+	}
+	
+	private boolean promptQuestion(String title, String message) {
+		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
 	}
 
 	/**
