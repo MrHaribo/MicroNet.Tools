@@ -7,12 +7,15 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
+import micronet.tools.ui.modelview.EntityNode;
+
 public class EntityDetails extends Composite {
 	
 	private Label label;
 	
-	Button addButton;
-	Button removeButton;
+	Button addChildTemplateButton;
+	Button addChildVariableButton;
+	Button removeNodeButton;
 	
 	EntityNode selectedEntity;
 
@@ -22,20 +25,26 @@ public class EntityDetails extends Composite {
 		setLayout(new FillLayout());
 		label = new Label(this, SWT.NONE);
 		
-		addButton = new Button(this, SWT.PUSH);
-		addButton.setText("Add Template");
+		addChildTemplateButton = new Button(this, SWT.PUSH);
+		addChildTemplateButton.setText("Add Child Template");
 		
+		addChildVariableButton = new Button(this, SWT.PUSH);
+		addChildVariableButton.setText("Add Variable");
 		
-		removeButton = new Button(this, SWT.PUSH);
-		removeButton.setText("Remove Template");
+		removeNodeButton = new Button(this, SWT.PUSH);
+		removeNodeButton.setText("Remove");
 	}
 	
 	public void setAddTemplateListener(SelectionListener listener) {
-		addButton.addSelectionListener(listener);
+		addChildTemplateButton.addSelectionListener(listener);
 	}
 	
-	public void setRemoveTemplateListener(SelectionListener listener) {
-		removeButton.addSelectionListener(listener);
+	public void setAddVariableListener(SelectionListener listener) {
+		addChildVariableButton.addSelectionListener(listener);
+	}
+	
+	public void setRemoveNodeListener(SelectionListener listener) {
+		removeNodeButton.addSelectionListener(listener);
 	}
 
 	public void setEntity(EntityNode entity) {
@@ -48,9 +57,9 @@ public class EntityDetails extends Composite {
 		
 		
 		if (selectedEntity.getParent() == null)
-			removeButton.setEnabled(false);
+			removeNodeButton.setEnabled(false);
 		else
-			removeButton.setEnabled(true);
+			removeNodeButton.setEnabled(true);
 	}
 
 	public EntityNode getSelectedEntity() {

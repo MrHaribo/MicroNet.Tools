@@ -78,6 +78,10 @@ public class SyncServiceAPI {
 			String apiFileName = description.getName() + "API";
 
 			semaphore.acquire();
+			
+			File apiDir = new File(sharedDir + "api/");
+			if (!apiDir.exists())
+				apiDir.mkdir();
 
 			String path = sharedDir + "api/" + apiFileName;
 			System.out.println("Api Path:" + path);

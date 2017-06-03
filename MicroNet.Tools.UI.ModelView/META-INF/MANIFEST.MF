@@ -5,6 +5,7 @@ Bundle-SymbolicName: MicroNet.Tools.UI.ModelView;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: micronet.tools.ui.modelview.Activator
 Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime
+ org.eclipse.core.runtime,
+ MicroNet.Tools.Core;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

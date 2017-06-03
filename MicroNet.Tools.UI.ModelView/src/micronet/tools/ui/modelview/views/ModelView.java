@@ -5,7 +5,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.*;
 
+import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.Entity;
+import micronet.tools.ui.modelview.EntityNode;
+import micronet.tools.ui.modelview.EntityTemplateNode;
+import micronet.tools.ui.modelview.EntityVariableNode;
+import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.SyncTemplateTree;
 
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
@@ -60,22 +66,21 @@ public class ModelView extends ViewPart {
 	private Action action2;
 	private Action doubleClickAction;
 	
+	private EntityTemplateNode entityTemplateRoot;
+	
 	private Set<String> entityTemplatesName = new HashSet<>();
 	 
 	class ViewContentProvider implements ITreeContentProvider {
-		private EntityTemplateNode entityTemplateRoot;
 
 		public Object[] getElements(Object parent) {
 			if (parent.equals(getViewSite())) {
-				if (entityTemplateRoot==null)
-					initialize();
 				return Arrays.asList(entityTemplateRoot).toArray();
 			}
 			return getChildren(parent);
 		}
 		public Object getParent(Object child) {
-			if (child instanceof EntityNode) {
-				return ((EntityNode)child).getParent();
+			if (child instanceof INode) {
+				return ((INode)child).getParent();
 			}
 			return null;
 		}
@@ -89,18 +94,6 @@ public class ModelView extends ViewPart {
 			if (parent instanceof EntityTemplateNode)
 				return ((EntityTemplateNode)parent).hasChildren();
 			return false;
-		}
-		
-		
-		private void initialize() {
-			entityTemplateRoot = new EntityTemplateNode("Entity Templates");
-			
-			EntityTemplateNode to1 = new EntityTemplateNode("Leaf 1");
-			EntityTemplateNode to2 = new EntityTemplateNode("Leaf 2");
-			EntityTemplateNode to3 = new EntityTemplateNode("Leaf 3");
-			entityTemplateRoot.addChild(to1);
-			entityTemplateRoot.addChild(to2);
-			entityTemplateRoot.addChild(to3);
 		}
 	}
 
@@ -136,6 +129,9 @@ public class ModelView extends ViewPart {
 		
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		drillDownAdapter = new DrillDownAdapter(viewer);
+		
+		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+		entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
 		
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());
@@ -174,11 +170,14 @@ public class ModelView extends ViewPart {
 					entityTemplateNode.addChild(new EntityTemplateNode(name));
 					entityTemplatesName.add(name);
 					viewer.refresh();
+					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		});
 		
-		entityDetailPanel.setRemoveTemplateListener(new SelectionAdapter() {
+		entityDetailPanel.setRemoveNodeListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
@@ -193,13 +192,49 @@ public class ModelView extends ViewPart {
 						showMessage("Cannot Remove Template with Children");
 						return;
 					}
+				}
+				
+				if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
+					return;
+				
+				if (selectedNode.getParent() instanceof EntityTemplateNode) {
+					((EntityTemplateNode)selectedNode.getParent()).removeChild(selectedNode);
+					entityTemplatesName.add(selectedNode.getName());
+					viewer.refresh();
 					
-					if (!promptQuestion("Remove Template", "Do you really want to remove the template: " + entityTemplateNode.getName()))
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+				}
+			}
+		});
+		
+		entityDetailPanel.setAddVariableListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					
+					if (entityTemplateNode.getName().equals(SyncTemplateTree.ENTITY_TEMPLATES_KEY))
 						return;
 					
-					((EntityTemplateNode)entityTemplateNode.getParent()).removeChild(entityTemplateNode);
-					entityTemplatesName.add(entityTemplateNode.getName());
+					String name = promptName("Add Variable", "NewVariable", "Add a new Variable to " + selectedNode.getName());
+					if (name == null)
+						return;
+					
+					for (EntityNode child : entityTemplateNode.getChildren()) {
+						if (child.getName().equals(name)) {
+							showMessage("Variable with the same name already exists. Choose a unique name.");
+							return;
+						}
+					}
+
+					entityTemplateNode.addChild(new EntityVariableNode(name));
+					entityTemplatesName.add(name);
 					viewer.refresh();
+					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		});
@@ -211,6 +246,7 @@ public class ModelView extends ViewPart {
 		hookContextMenu();
 		hookDoubleClickAction();
 		contributeToActionBars();
+	
 	}
 
 	private void hookContextMenu() {

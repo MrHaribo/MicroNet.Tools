@@ -1,10 +1,10 @@
-package micronet.tools.ui.modelview.views;
+package micronet.tools.ui.modelview;
 
 import org.eclipse.core.runtime.IAdaptable;
 
-class EntityNode implements IAdaptable {
+public abstract class EntityNode implements INode, IAdaptable  {
 	private String name;
-	private EntityNode parent;
+	private INode parent;
 	
 	public EntityNode(String name) {
 		this.name = name;
@@ -12,10 +12,10 @@ class EntityNode implements IAdaptable {
 	public String getName() {
 		return name;
 	}
-	public void setParent(EntityTemplateNode parent) {
+	public void setParent(INode parent) {
 		this.parent = parent;
 	}
-	public EntityNode getParent() {
+	public INode getParent() {
 		return parent;
 	}
 	public String toString() {
