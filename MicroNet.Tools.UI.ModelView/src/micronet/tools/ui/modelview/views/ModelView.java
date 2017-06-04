@@ -2,8 +2,6 @@ package micronet.tools.ui.modelview.views;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.action.Action;
@@ -24,10 +22,8 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
@@ -44,9 +40,10 @@ import org.osgi.framework.FrameworkUtil;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.EntityTemplateNode;
 import micronet.tools.ui.modelview.EntityVariableNode;
+import micronet.tools.ui.modelview.EnumNode;
+import micronet.tools.ui.modelview.EnumRootNode;
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.SyncTemplateTree;
-
+import micronet.tools.ui.modelview.SyncModelTree;
 
 public class ModelView extends ViewPart {
 
@@ -54,7 +51,7 @@ public class ModelView extends ViewPart {
 	 * The ID of the view as specified by the extension.
 	 */
 	public static final String ID = "micronet.tools.ui.modelview.views.ModelView";
-	
+
 	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
 	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
 
@@ -63,36 +60,44 @@ public class ModelView extends ViewPart {
 	private Action removeNodeAction;
 	private Action addChildTemplateAction;
 	private Action addChildVariableAction;
-	
+	private Action addEnumAction;
+
 	private INode selectedNode;
 	private EntityTemplateNode entityTemplateRoot;
+	private EnumRootNode enumRoot;
 	private Group detailsContainer;
-	
+
 	private Composite currentDetailPanel;
-	 
+
 	class ViewContentProvider implements ITreeContentProvider {
 
 		public Object[] getElements(Object parent) {
 			if (parent.equals(getViewSite())) {
-				return Arrays.asList(entityTemplateRoot).toArray();
+				return Arrays.asList(entityTemplateRoot, enumRoot).toArray();
 			}
 			return getChildren(parent);
 		}
+
 		public Object getParent(Object child) {
 			if (child instanceof INode) {
-				return ((INode)child).getParent();
+				return ((INode) child).getParent();
 			}
 			return null;
 		}
-		public Object [] getChildren(Object parent) {
-			if (parent instanceof EntityTemplateNode) {
-				return ((EntityTemplateNode)parent).getChildren();
-			}
+
+		public Object[] getChildren(Object parent) {
+			if (parent instanceof EntityTemplateNode) 
+				return ((EntityTemplateNode) parent).getChildren();
+			if (parent instanceof EnumRootNode)
+				return ((EnumRootNode) parent).getEnumDefinitions().toArray();
 			return new Object[0];
 		}
+
 		public boolean hasChildren(Object parent) {
 			if (parent instanceof EntityTemplateNode)
-				return ((EntityTemplateNode)parent).hasChildren();
+				return ((EntityTemplateNode) parent).hasChildren();
+			if (parent instanceof EnumRootNode)
+				return ((EnumRootNode) parent).getEnumDefinitions().size() > 0;
 			return false;
 		}
 	}
@@ -102,94 +107,104 @@ public class ModelView extends ViewPart {
 		public String getText(Object obj) {
 			return obj.toString();
 		}
+
 		public Image getImage(Object obj) {
 			String imageKey = ISharedImages.IMG_OBJ_ELEMENT;
-			if (obj instanceof EntityTemplateNode)
-			   imageKey = ISharedImages.IMG_OBJ_FOLDER;
+			if (obj instanceof EntityTemplateNode || obj instanceof EnumRootNode)
+				imageKey = ISharedImages.IMG_OBJ_FOLDER;
 			return PlatformUI.getWorkbench().getSharedImages().getImage(imageKey);
 		}
 	}
 
-/**
+	/**
 	 * The constructor.
 	 */
 	public ModelView() {
 	}
 
 	/**
-	 * This is a callback that will allow us
-	 * to create the viewer and initialize it.
+	 * This is a callback that will allow us to create the viewer and initialize
+	 * it.
 	 */
 	public void createPartControl(Composite parent) {
-		
-		parent.setLayout(new GridLayout(2, false));
-		
 
-		
+		parent.setLayout(new GridLayout(2, false));
+
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		drillDownAdapter = new DrillDownAdapter(viewer);
-		
+
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
+		entityTemplateRoot = SyncModelTree.loadTemplateTree(sharedDir);
 		
+		enumRoot = new EnumRootNode(SyncModelTree.ENUM_DEFINITIONS_KEY);
+
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());
 		viewer.setLabelProvider(new ViewLabelProvider());
 		viewer.getTree().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		
+
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			@Override
 			public void selectionChanged(SelectionChangedEvent arg0) {
-				
+
 				TreeSelection selection = (TreeSelection) arg0.getSelection();
 
 				if (currentDetailPanel != null)
 					currentDetailPanel.dispose();
-				
+
 				if (selection.getFirstElement() == null || selection.size() > 1) {
 					selectedNode = null;
 					return;
 				}
-								
-				selectedNode = (INode)selection.getFirstElement();
-				
+
+				selectedNode = (INode) selection.getFirstElement();
+
 				if (selectedNode instanceof EntityTemplateNode) {
-					
+
 					if (selectedNode.getParent() == null) {
-						TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer, SWT.NONE);
+						TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer,
+								SWT.NONE);
 						templateRootDetails.setOnAddChildTemplate(addChildTemplateAction);
 						currentDetailPanel = templateRootDetails;
-						
+
 					} else {
 						TemplateNodeDetails templateDetails = new TemplateNodeDetails(detailsContainer, SWT.NONE);
 						templateDetails.setOnAddChildTemplate(addChildTemplateAction);
 						templateDetails.setOnRemove(removeNodeAction);
 						templateDetails.setOnAddChildVariable(addChildVariableAction);
 						templateDetails.setNode(selectedNode);
-						
+
 						currentDetailPanel = templateDetails;
 					}
-					
+
 					currentDetailPanel.setVisible(true);
 				} else if (selectedNode instanceof EntityVariableNode) {
 					VariableNodeDetails variableDetails = new VariableNodeDetails(detailsContainer, SWT.NONE);
 					variableDetails.setOnRemove(removeNodeAction);
 					variableDetails.setNode(selectedNode);
-					
+
 					currentDetailPanel = variableDetails;
+				} else if (selectedNode instanceof EnumRootNode) {
+					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(detailsContainer, SWT.NONE);
+					enumRootDetails.setOnAddEnum(addEnumAction);
+					currentDetailPanel = enumRootDetails;
+				}else if (selectedNode instanceof EnumNode) {
+					EnumNodeDetails enumRootDetails = new EnumNodeDetails(detailsContainer, SWT.NONE);
+					enumRootDetails.setOnRemove(removeNodeAction);
+					currentDetailPanel = enumRootDetails;
 				}
-			
+
 				detailsContainer.layout(true);
 				detailsContainer.getParent().layout(true);
 			}
 		});
-		
-		detailsContainer = new Group (parent, SWT.NONE);
+
+		detailsContainer = new Group(parent, SWT.NONE);
 		detailsContainer.setText("Node Context");
-		detailsContainer.setLayout(new RowLayout(SWT.VERTICAL));
-		
-		GridData gridData = new GridData(SWT.FILL, SWT.FILL, false, false);
-	    gridData.widthHint = 250;
+		detailsContainer.setLayout(new GridLayout(1, false));
+
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, false, true);
+		gridData.widthHint = 250;
 		detailsContainer.setLayoutData(gridData);
 
 		// Create the help context id for the viewer's control
@@ -198,7 +213,7 @@ public class ModelView extends ViewPart {
 		makeActions();
 		hookContextMenu();
 		contributeToActionBars();
-	
+
 	}
 
 	private void hookContextMenu() {
@@ -234,7 +249,7 @@ public class ModelView extends ViewPart {
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
-	
+
 	private void fillLocalToolBar(IToolBarManager manager) {
 		manager.add(removeNodeAction);
 		manager.add(addChildTemplateAction);
@@ -248,68 +263,93 @@ public class ModelView extends ViewPart {
 				if (selectedNode == null || selectedNode.getParent() == null)
 					return;
 				
-				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+				if (selectedNode instanceof EnumNode) {
+					enumRoot.getEnumDefinitions().remove(selectedNode);
+					viewer.refresh();
 					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncModelTree.saveEnumTree(enumRoot, sharedDir);
+					return;
+				}
+
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
+
 					if (entityTemplateNode.hasChildren()) {
 						showMessage("Cannot Remove Template with Children");
 						return;
 					}
 				}
-				
+
 				if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
 					return;
-				
+
 				if (selectedNode.getParent() instanceof EntityTemplateNode) {
-					((EntityTemplateNode)selectedNode.getParent()).removeChild(selectedNode);
+					((EntityTemplateNode) selectedNode.getParent()).removeChild(selectedNode);
 					viewer.refresh();
-					
+
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
+				
+
 			}
 		};
 		removeNodeAction.setText("Action 1");
 		removeNodeAction.setToolTipText("Action 1 tooltip");
 		removeNodeAction.setImageDescriptor(IMG_REMOVE);
-		
+
 		addChildTemplateAction = new Action() {
 			public void run() {
 				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
 				if (name == null)
 					return;
 				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-				
-				if (SyncTemplateTree.templateExists(name, sharedDir)) {
+
+				if (!isValidJavaIdentifier(name)) {
+					showMessage("\"" + name + "\" is an invalid name.");
+					return;
+				}
+
+				if (SyncModelTree.templateExists(name, sharedDir)) {
 					showMessage("Template with the name \"" + name + "\" already exists. Choose a unique name.");
 					return;
 				}
 				
+				if (selectedNode == null)
+					selectedNode = entityTemplateRoot;
+
 				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 					entityTemplateNode.addChild(new EntityTemplateNode(name));
 					viewer.refresh();
-					
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+
+					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		};
 		addChildTemplateAction.setText("Add Child Template");
 		addChildTemplateAction.setToolTipText("Adds a Child Template to the currently selected Template.");
 		addChildTemplateAction.setImageDescriptor(IMG_ADD);
-		
+
 		addChildVariableAction = new Action() {
 			public void run() {
 				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
-					
-					if (entityTemplateNode.getName().equals(SyncTemplateTree.ENTITY_TEMPLATES_KEY))
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
+
+					if (entityTemplateNode.getName().equals(SyncModelTree.ENTITY_TEMPLATES_KEY))
 						return;
-					
-					String name = promptName("Add Variable", "NewVariable", "Add a new Variable to " + selectedNode.getName());
+
+					String name = promptName("Add Variable", "NewVariable",
+							"Add a new Variable to " + selectedNode.getName());
 					if (name == null)
 						return;
 					
+					if (!isValidJavaIdentifier(name)) {
+						showMessage("\"" + name + "\" is an invalid name.");
+						return;
+					}
+
 					for (INode child : entityTemplateNode.getChildren()) {
 						if (child.getName().equals(name)) {
 							showMessage("Variable with the same name already exists. Choose a unique name.");
@@ -319,24 +359,51 @@ public class ModelView extends ViewPart {
 
 					entityTemplateNode.addChild(new EntityVariableNode(name));
 					viewer.refresh();
-					
+
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		};
 		addChildVariableAction.setText("Add Variable");
 		addChildVariableAction.setToolTipText("Adds a Variable to the Selected Template");
 		addChildVariableAction.setImageDescriptor(IMG_ADD);
+		
+		addEnumAction = new Action() {
+			public void run() {
+				if (selectedNode instanceof EnumRootNode) {
+					EnumRootNode enumRootNode = (EnumRootNode) selectedNode;
+
+					String name = promptName("Add new Enum", "NewEnum",	"Enter Name for the new Enum");
+					if (name == null)
+						return;
+					
+					if (!isValidJavaIdentifier(name)) {
+						showMessage("\"" + name + "\" is an invalid name.");
+						return;
+					}
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					if (SyncModelTree.enumExists(name, sharedDir)) {
+						showMessage("Enum with the same name already exists. Choose a unique name.");
+						return;
+					}
+
+					enumRootNode.getEnumDefinitions().add(new EnumNode(name));
+					viewer.refresh();
+
+					SyncModelTree.saveEnumTree(enumRootNode, sharedDir);
+				}
+			}
+		};
+		addEnumAction.setText("Add Variable");
+		addEnumAction.setToolTipText("Adds a Variable to the Selected Template");
+		addEnumAction.setImageDescriptor(IMG_ADD);
 	}
 
 	private void showMessage(String message) {
-		MessageDialog.openInformation(
-			viewer.getControl().getShell(),
-			"Model View",
-			message);
+		MessageDialog.openInformation(viewer.getControl().getShell(), "Model View", message);
 	}
-	
+
 	private String promptName(String title, String initialValue, String message) {
 		InputDialog dlg = new InputDialog(Display.getCurrent().getActiveShell(), title, message, initialValue, null);
 		if (dlg.open() == Window.OK) {
@@ -344,16 +411,36 @@ public class ModelView extends ViewPart {
 		}
 		return null;
 	}
-	
+
 	private boolean promptQuestion(String title, String message) {
 		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
 	}
-	
+
 	private static ImageDescriptor getImageDescriptor(String file) {
 		// assume that the current class is called View.java
 		Bundle bundle = FrameworkUtil.getBundle(ModelView.class);
 		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
 		return ImageDescriptor.createFromURL(url);
+	}
+
+	public static boolean isValidJavaIdentifier(String s) {
+		// an empty or null string cannot be a valid identifier
+		if (s == null || s.length() == 0) {
+			return false;
+		}
+
+		char[] c = s.toCharArray();
+		if (!Character.isJavaIdentifierStart(c[0])) {
+			return false;
+		}
+
+		for (int i = 1; i < c.length; i++) {
+			if (!Character.isJavaIdentifierPart(c[i])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**

@@ -26,13 +26,15 @@ public class NodeDetails extends Composite {
 	public NodeDetails(Composite parent, int style) {
 		super(parent, style);
 		
-		setLayout(new FillLayout(SWT.VERTICAL));
+		setLayout(new GridLayout(1, false));
+		setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
+		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 				
 		label = new Label(detailsContainer, SWT.NONE);
-		label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, true, false));
+		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		
 		FontDescriptor descriptor = FontDescriptor.createFrom(label.getFont());
 		descriptor = descriptor.setStyle(SWT.BOLD);

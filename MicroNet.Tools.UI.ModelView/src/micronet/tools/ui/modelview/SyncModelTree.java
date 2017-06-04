@@ -27,8 +27,9 @@ import micronet.serialization.Serialization;
 import micronet.tools.annotation.api.ServiceAPI;
 import micronet.tools.annotation.codegen.CodegenConstants;
 
-public class SyncTemplateTree {
+public class SyncModelTree {
 
+	public static final String ENUM_DEFINITIONS_KEY = "Enum Definitions";
 	public static final String ENTITY_TEMPLATES_KEY = "Entity Templates";
 	private static final String VARIABLES_PROP_KEY = "variables";
 	private static final String NAME_PROP_KEY = "name";
@@ -38,10 +39,8 @@ public class SyncTemplateTree {
 
 	public static EntityTemplateNode loadTemplateTree(String sharedDir) {
 
-		File modelDir = new File(sharedDir + "model/");
-		if (!modelDir.exists())
-			return null;
-		File[] directoryListing = modelDir.listFiles();
+		File templateDir = getTemplateDir(sharedDir);
+		File[] directoryListing = templateDir.listFiles();
 		if (directoryListing == null)
 			return null;
 
@@ -69,13 +68,6 @@ public class SyncTemplateTree {
 		}
 
 		return constructTemplateTree(templateFileObjects);
-	}
-	
-	public static boolean templateExists(String name, String sharedDir) {
-		
-		File modelDir = new File(sharedDir + "model/");
-		File templateFile = new File(modelDir + "/" + name);
-		return templateFile.exists();
 	}
 
 	private static EntityTemplateNode constructTemplateTree(List<JsonElement> templateFileObjects) {
@@ -135,24 +127,76 @@ public class SyncTemplateTree {
 		
 		return templateTreeRoot;
 	}
+	
+	public static boolean templateExists(String name, String sharedDir) {
+		File templateDir =  getTemplateDir(sharedDir);
+		File templateFile = new File(templateDir + "/" + name);
+		return templateFile.exists();
+	}
+	
+	public static boolean enumExists(String name, String sharedDir) {
+		
+		File templateDir =  getEnumDir(sharedDir);
+		File templateFile = new File(templateDir + "/" + name);
+		return templateFile.exists();
+	}
 
 	public static void saveTemplateTree(EntityTemplateNode rootNode, String sharedDir) {
-
-		File modelDir = new File(sharedDir + "model/");
-		if (!modelDir.exists())
-			modelDir.mkdir();
-
-		SaveTemplateTreeVisitor visitor = new SaveTemplateTreeVisitor(modelDir + "/");
+		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
+		visitor.visit(rootNode);
+	}
+	
+	public static void saveEnumTree(EnumRootNode rootNode, String sharedDir) {
+		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
 		visitor.visit(rootNode);
 	}
 
-	private static class SaveTemplateTreeVisitor implements IVisitor {
-		private String modelDir;
+	private static class SaveModelTreeVisitor implements IVisitor {
+		private File templateDir;
+		private File enumDir;
 
-		public SaveTemplateTreeVisitor(String modelDir) {
-			this.modelDir = modelDir;
+		public SaveModelTreeVisitor(String sharedDir) {
+			this.templateDir = getTemplateDir(sharedDir);
+			this.enumDir = getEnumDir(sharedDir);
 		}
 
+		@Override
+		public void visit(EnumRootNode enumRootNode) {
+			for (EnumNode node : enumRootNode.getEnumDefinitions()) {
+				node.accept(this);
+			}
+		}
+
+		@Override
+		public void visit(EnumNode enumNode) {
+			
+			JsonArray enumConstants = new JsonArray();
+			for (String enumConstant : enumNode.getEnumConstants()) {
+				enumConstants.add(enumConstant);
+			}
+			
+			JsonObject enumDefinition = new JsonObject();
+
+			enumDefinition.addProperty(NAME_PROP_KEY, enumNode.getName());
+			enumDefinition.add(VARIABLES_PROP_KEY, enumConstants);
+			
+			File enumFile = new File(enumDir + "/" + enumNode.getName());
+			String data = new Gson().toJson(enumDefinition);
+
+			try {
+				semaphore.acquire();
+				try (PrintWriter printer = new PrintWriter(enumFile)) {
+					printer.print(data);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} finally {
+				semaphore.release();
+			}
+		}
+		
 		@Override
 		public void visit(EntityTemplateNode node) {
 
@@ -179,7 +223,7 @@ public class SyncTemplateTree {
 
 			template.add(VARIABLES_PROP_KEY, variables);
 
-			File templateFile = new File(modelDir + node.getName());
+			File templateFile = new File(templateDir + "/" + node.getName());
 			Gson gson = new Gson();
 			String data = gson.toJson(template);
 
@@ -197,5 +241,28 @@ public class SyncTemplateTree {
 				semaphore.release();
 			}
 		}
+	}
+	
+	private static File getModelDir(String sharedDir) {
+		File modelDir = new File(sharedDir + "model/");
+		if (!modelDir.exists())
+			modelDir.mkdir();
+		return modelDir;
+	}
+	
+	private static File getTemplateDir(String sharedDir) {
+		File modelDir = getModelDir(sharedDir);
+		File templateDir = new File(modelDir + "/templates/");
+		if (!templateDir.exists())
+			templateDir.mkdir();
+		return templateDir;
+	}
+	
+	private static File getEnumDir(String sharedDir) {
+		File modelDir = getModelDir(sharedDir);
+		File templateDir = new File(modelDir + "/enums/");
+		if (!templateDir.exists())
+			templateDir.mkdir();
+		return templateDir;
 	}
 }

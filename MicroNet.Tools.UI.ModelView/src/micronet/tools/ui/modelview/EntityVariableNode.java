@@ -1,7 +1,7 @@
 package micronet.tools.ui.modelview;
 
 public class EntityVariableNode extends EntityNode {
-	public BaseType type;
+	public VariableType type;
 	public EntityVariableNode(String name) {
 		super(name);
 	}
