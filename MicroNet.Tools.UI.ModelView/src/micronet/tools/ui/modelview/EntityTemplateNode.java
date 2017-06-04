@@ -3,24 +3,24 @@ package micronet.tools.ui.modelview;
 import java.util.ArrayList;
 
 public class EntityTemplateNode extends EntityNode {
-	private ArrayList<EntityNode> children;
+	private ArrayList<INode> children;
 
 	public EntityTemplateNode(String name) {
 		super(name);
-		children = new ArrayList<EntityNode>();
+		children = new ArrayList<INode>();
 	}
 
-	public void addChild(EntityNode child) {
+	public void addChild(INode child) {
 		children.add(child);
 		child.setParent(this);
 	}
 
-	public void removeChild(EntityNode child) {
+	public void removeChild(INode child) {
 		children.remove(child);
 		child.setParent(null);
 	}
 
-	public EntityNode[] getChildren() {
+	public INode[] getChildren() {
 		return children.toArray(new EntityNode[children.size()]);
 	}
 

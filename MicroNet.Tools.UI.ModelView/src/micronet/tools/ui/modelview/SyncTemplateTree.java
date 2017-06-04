@@ -70,6 +70,13 @@ public class SyncTemplateTree {
 
 		return constructTemplateTree(templateFileObjects);
 	}
+	
+	public static boolean templateExists(String name, String sharedDir) {
+		
+		File modelDir = new File(sharedDir + "model/");
+		File templateFile = new File(modelDir + "/" + name);
+		return templateFile.exists();
+	}
 
 	private static EntityTemplateNode constructTemplateTree(List<JsonElement> templateFileObjects) {
 

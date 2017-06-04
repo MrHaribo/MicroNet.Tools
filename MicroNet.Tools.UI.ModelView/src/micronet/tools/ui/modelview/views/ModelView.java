@@ -1,57 +1,52 @@
 package micronet.tools.ui.modelview.views;
 
-import org.eclipse.swt.widgets.Button;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.InputDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.TreeSelection;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.part.*;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.DrillDownAdapter;
+import org.eclipse.ui.part.ViewPart;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.Entity;
-import micronet.tools.ui.modelview.EntityNode;
 import micronet.tools.ui.modelview.EntityTemplateNode;
 import micronet.tools.ui.modelview.EntityVariableNode;
 import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 
-import org.eclipse.jface.viewers.*;
-import org.eclipse.jface.window.Window;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.eclipse.jface.action.*;
-import org.eclipse.jface.dialogs.InputDialog;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.*;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-
-
-/**
- * This sample class demonstrates how to plug-in a new
- * workbench view. The view shows data obtained from the
- * model. The sample creates a dummy model on the fly,
- * but a real implementation would connect to the model
- * available either in this or another plug-in (e.g. the workspace).
- * The view is connected to the model using a content provider.
- * <p>
- * The view uses a label provider to define how model
- * objects should be presented in the view. Each
- * view can present the same model objects using
- * different labels and icons, if needed. Alternatively,
- * a single label provider can be shared between views
- * in order to ensure that objects of the same type are
- * presented in the same way everywhere.
- * <p>
- */
 
 public class ModelView extends ViewPart {
 
@@ -59,16 +54,21 @@ public class ModelView extends ViewPart {
 	 * The ID of the view as specified by the extension.
 	 */
 	public static final String ID = "micronet.tools.ui.modelview.views.ModelView";
+	
+	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
+	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
 
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
-	private Action action1;
-	private Action action2;
-	private Action doubleClickAction;
+	private Action removeNodeAction;
+	private Action addChildTemplateAction;
+	private Action addChildVariableAction;
 	
+	private INode selectedNode;
 	private EntityTemplateNode entityTemplateRoot;
+	private Group detailsContainer;
 	
-	private Set<String> entityTemplatesName = new HashSet<>();
+	private Composite currentDetailPanel;
 	 
 	class ViewContentProvider implements ITreeContentProvider {
 
@@ -122,10 +122,9 @@ public class ModelView extends ViewPart {
 	 */
 	public void createPartControl(Composite parent) {
 		
-		parent.setLayout(new GridLayout(1, false));
+		parent.setLayout(new GridLayout(2, false));
 		
-		EntityDetails entityDetailPanel = new EntityDetails(parent, SWT.NONE);
-		entityDetailPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+
 		
 		viewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		drillDownAdapter = new DrillDownAdapter(viewer);
@@ -144,107 +143,60 @@ public class ModelView extends ViewPart {
 				
 				TreeSelection selection = (TreeSelection) arg0.getSelection();
 
-				if (selection.getFirstElement() == null || selection.size() > 1)
-					entityDetailPanel.setEntity(null);
+				if (currentDetailPanel != null)
+					currentDetailPanel.dispose();
 				
-				EntityNode selectedEntity = (EntityNode)selection.getFirstElement();
-				entityDetailPanel.setEntity(selectedEntity);
-			}
-		});
-		
-		entityDetailPanel.setAddTemplateListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
-				if (name == null)
-					return;
-				
-				if (entityTemplatesName.contains(name)) {
-					showMessage("Template with the same name exists already. Choose a unique name.");
+				if (selection.getFirstElement() == null || selection.size() > 1) {
+					selectedNode = null;
 					return;
 				}
-				
-				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
-				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
-					entityTemplateNode.addChild(new EntityTemplateNode(name));
-					entityTemplatesName.add(name);
-					viewer.refresh();
-					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
-				}
-			}
-		});
-		
-		entityDetailPanel.setRemoveNodeListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
-				
-				if (selectedNode == null || selectedNode.getParent() == null)
-					return;
+								
+				selectedNode = (INode)selection.getFirstElement();
 				
 				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
 					
-					if (entityTemplateNode.hasChildren()) {
-						showMessage("Cannot Remove Template with Children");
-						return;
+					if (selectedNode.getParent() == null) {
+						TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer, SWT.NONE);
+						templateRootDetails.setOnAddChildTemplate(addChildTemplateAction);
+						currentDetailPanel = templateRootDetails;
+						
+					} else {
+						TemplateNodeDetails templateDetails = new TemplateNodeDetails(detailsContainer, SWT.NONE);
+						templateDetails.setOnAddChildTemplate(addChildTemplateAction);
+						templateDetails.setOnRemove(removeNodeAction);
+						templateDetails.setOnAddChildVariable(addChildVariableAction);
+						templateDetails.setNode(selectedNode);
+						
+						currentDetailPanel = templateDetails;
 					}
-				}
-				
-				if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
-					return;
-				
-				if (selectedNode.getParent() instanceof EntityTemplateNode) {
-					((EntityTemplateNode)selectedNode.getParent()).removeChild(selectedNode);
-					entityTemplatesName.add(selectedNode.getName());
-					viewer.refresh();
 					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					currentDetailPanel.setVisible(true);
+				} else if (selectedNode instanceof EntityVariableNode) {
+					VariableNodeDetails variableDetails = new VariableNodeDetails(detailsContainer, SWT.NONE);
+					variableDetails.setOnRemove(removeNodeAction);
+					variableDetails.setNode(selectedNode);
+					
+					currentDetailPanel = variableDetails;
 				}
+			
+				detailsContainer.layout(true);
+				detailsContainer.getParent().layout(true);
 			}
 		});
 		
-		entityDetailPanel.setAddVariableListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				EntityNode selectedNode = entityDetailPanel.getSelectedEntity();
-				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
-					
-					if (entityTemplateNode.getName().equals(SyncTemplateTree.ENTITY_TEMPLATES_KEY))
-						return;
-					
-					String name = promptName("Add Variable", "NewVariable", "Add a new Variable to " + selectedNode.getName());
-					if (name == null)
-						return;
-					
-					for (EntityNode child : entityTemplateNode.getChildren()) {
-						if (child.getName().equals(name)) {
-							showMessage("Variable with the same name already exists. Choose a unique name.");
-							return;
-						}
-					}
-
-					entityTemplateNode.addChild(new EntityVariableNode(name));
-					entityTemplatesName.add(name);
-					viewer.refresh();
-					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
-				}
-			}
-		});
+		detailsContainer = new Group (parent, SWT.NONE);
+		detailsContainer.setText("Node Context");
+		detailsContainer.setLayout(new RowLayout(SWT.VERTICAL));
+		
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, false, false);
+	    gridData.widthHint = 250;
+		detailsContainer.setLayoutData(gridData);
 
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(), "MicroNet.Tools.UI.ModelView.viewer");
 		getSite().setSelectionProvider(viewer);
 		makeActions();
 		hookContextMenu();
-		hookDoubleClickAction();
 		contributeToActionBars();
 	
 	}
@@ -269,14 +221,14 @@ public class ModelView extends ViewPart {
 	}
 
 	private void fillLocalPullDown(IMenuManager manager) {
-		manager.add(action1);
+		manager.add(removeNodeAction);
 		manager.add(new Separator());
-		manager.add(action2);
+		manager.add(addChildTemplateAction);
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
-		manager.add(action1);
-		manager.add(action2);
+		manager.add(removeNodeAction);
+		manager.add(addChildTemplateAction);
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 		// Other plug-ins can contribute there actions here
@@ -284,48 +236,100 @@ public class ModelView extends ViewPart {
 	}
 	
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(action1);
-		manager.add(action2);
+		manager.add(removeNodeAction);
+		manager.add(addChildTemplateAction);
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 	}
 
 	private void makeActions() {
-		action1 = new Action() {
+		removeNodeAction = new Action() {
 			public void run() {
-				showMessage("Action 1 executed");
+				if (selectedNode == null || selectedNode.getParent() == null)
+					return;
+				
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					
+					if (entityTemplateNode.hasChildren()) {
+						showMessage("Cannot Remove Template with Children");
+						return;
+					}
+				}
+				
+				if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
+					return;
+				
+				if (selectedNode.getParent() instanceof EntityTemplateNode) {
+					((EntityTemplateNode)selectedNode.getParent()).removeChild(selectedNode);
+					viewer.refresh();
+					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+				}
 			}
 		};
-		action1.setText("Action 1");
-		action1.setToolTipText("Action 1 tooltip");
-		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		removeNodeAction.setText("Action 1");
+		removeNodeAction.setToolTipText("Action 1 tooltip");
+		removeNodeAction.setImageDescriptor(IMG_REMOVE);
 		
-		action2 = new Action() {
+		addChildTemplateAction = new Action() {
 			public void run() {
-				showMessage("Action 2 executed");
+				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
+				if (name == null)
+					return;
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+				
+				if (SyncTemplateTree.templateExists(name, sharedDir)) {
+					showMessage("Template with the name \"" + name + "\" already exists. Choose a unique name.");
+					return;
+				}
+				
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					entityTemplateNode.addChild(new EntityTemplateNode(name));
+					viewer.refresh();
+					
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+				}
 			}
 		};
-		action2.setText("Action 2");
-		action2.setToolTipText("Action 2 tooltip");
-		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-				getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-		doubleClickAction = new Action() {
+		addChildTemplateAction.setText("Add Child Template");
+		addChildTemplateAction.setToolTipText("Adds a Child Template to the currently selected Template.");
+		addChildTemplateAction.setImageDescriptor(IMG_ADD);
+		
+		addChildVariableAction = new Action() {
 			public void run() {
-				ISelection selection = viewer.getSelection();
-				Object obj = ((IStructuredSelection)selection).getFirstElement();
-				showMessage("Double-click detected on "+obj.toString());
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode)selectedNode;
+					
+					if (entityTemplateNode.getName().equals(SyncTemplateTree.ENTITY_TEMPLATES_KEY))
+						return;
+					
+					String name = promptName("Add Variable", "NewVariable", "Add a new Variable to " + selectedNode.getName());
+					if (name == null)
+						return;
+					
+					for (INode child : entityTemplateNode.getChildren()) {
+						if (child.getName().equals(name)) {
+							showMessage("Variable with the same name already exists. Choose a unique name.");
+							return;
+						}
+					}
+
+					entityTemplateNode.addChild(new EntityVariableNode(name));
+					viewer.refresh();
+					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+				}
 			}
 		};
+		addChildVariableAction.setText("Add Variable");
+		addChildVariableAction.setToolTipText("Adds a Variable to the Selected Template");
+		addChildVariableAction.setImageDescriptor(IMG_ADD);
 	}
 
-	private void hookDoubleClickAction() {
-		viewer.addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				doubleClickAction.run();
-			}
-		});
-	}
 	private void showMessage(String message) {
 		MessageDialog.openInformation(
 			viewer.getControl().getShell(),
@@ -343,6 +347,13 @@ public class ModelView extends ViewPart {
 	
 	private boolean promptQuestion(String title, String message) {
 		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
+	}
+	
+	private static ImageDescriptor getImageDescriptor(String file) {
+		// assume that the current class is called View.java
+		Bundle bundle = FrameworkUtil.getBundle(ModelView.class);
+		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
+		return ImageDescriptor.createFromURL(url);
 	}
 
 	/**
