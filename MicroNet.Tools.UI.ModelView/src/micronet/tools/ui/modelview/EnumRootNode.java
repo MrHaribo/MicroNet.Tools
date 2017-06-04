@@ -7,7 +7,7 @@ public class EnumRootNode implements INode {
 	
 	private String name;
 	
-	private List<EnumNode> enumDefinitions = new ArrayList<>();
+	private List<INode> enumDefinitions = new ArrayList<>();
 	
 	public EnumRootNode(String name) {
 		this.name = name;
@@ -31,11 +31,18 @@ public class EnumRootNode implements INode {
 	public void accept(IVisitor visitor) {
 		visitor.visit(this);
 	}
-	public List<EnumNode> getEnumDefinitions() {
-		return enumDefinitions;
-	}
-	public void setEnumDefinitions(List<EnumNode> enumDefinitions) {
-		this.enumDefinitions = enumDefinitions;
+	
+	public void addChild(INode child) {
+		enumDefinitions.add(child);
+		child.setParent(this);
 	}
 
+	public void removeChild(INode child) {
+		enumDefinitions.remove(child);
+		child.setParent(null);
+	}
+
+	public INode[] getChildren() {
+		return enumDefinitions.toArray(new EnumNode[enumDefinitions.size()]);
+	}
 }

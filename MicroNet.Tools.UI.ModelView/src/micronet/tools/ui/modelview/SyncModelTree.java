@@ -37,6 +37,49 @@ public class SyncModelTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
+	public static EnumRootNode loadEnumTree(String sharedDir) {
+		File enumDir = getEnumDir(sharedDir);
+		File[] directoryListing = enumDir.listFiles();
+		if (directoryListing == null)
+			return null;
+
+		JsonParser parser = new JsonParser();
+		EnumRootNode rootNode = new EnumRootNode(ENUM_DEFINITIONS_KEY);
+
+		for (File enumFile : directoryListing) {
+			String data = null;
+			try {
+				semaphore.acquire();
+				try (Scanner scanner = new Scanner(enumFile)) {
+					scanner.useDelimiter("\\A");
+					data = scanner.next();
+				} catch (IOException e) {
+					e.printStackTrace();
+					continue;
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				continue;
+			} finally {
+				semaphore.release();
+			}
+
+			JsonObject enumObject = parser.parse(data).getAsJsonObject();
+
+			String enumName = enumObject.getAsJsonPrimitive(NAME_PROP_KEY).getAsString();
+			JsonArray enumConstants = enumObject.getAsJsonArray(VARIABLES_PROP_KEY);
+
+			EnumNode enumNode = new EnumNode(enumName);
+
+			for (JsonElement enumConstant : enumConstants) {
+				enumNode.getEnumConstants().add(enumConstant.getAsString());
+			}
+			rootNode.addChild(enumNode);
+		}
+
+		return rootNode;
+	}
+
 	public static EntityTemplateNode loadTemplateTree(String sharedDir) {
 
 		File templateDir = getTemplateDir(sharedDir);
@@ -50,8 +93,8 @@ public class SyncModelTree {
 		try {
 			semaphore.acquire();
 
-			for (File parameterCodeFile : directoryListing) {
-				try (Scanner scanner = new Scanner(parameterCodeFile)) {
+			for (File templateFile : directoryListing) {
+				try (Scanner scanner = new Scanner(templateFile)) {
 					scanner.useDelimiter("\\A");
 					String data = scanner.next();
 
@@ -75,11 +118,11 @@ public class SyncModelTree {
 		Map<String, List<JsonElement>> parentMapping = new HashMap<>();
 		Stack<JsonElement> parentObjects = new Stack<>();
 		Map<String, EntityTemplateNode> processedNodes = new HashMap<>();
-		
+
 		EntityTemplateNode templateTreeRoot = new EntityTemplateNode(ENTITY_TEMPLATES_KEY);
 
 		for (JsonElement templateObject : templateFileObjects) {
-			
+
 			JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
 			String parentName = parentNameObject == null ? null : parentNameObject.getAsString();
 
@@ -99,7 +142,8 @@ public class SyncModelTree {
 
 			EntityTemplateNode parentNode = null;
 			if (processedNodes.containsKey(potentialParentName)) {
-				// Template was added by a parent before (cannot be a root element)
+				// Template was added by a parent before (cannot be a root
+				// element)
 				parentNode = processedNodes.get(potentialParentName);
 			} else {
 				parentNode = new EntityTemplateNode(potentialParentName);
@@ -118,25 +162,25 @@ public class SyncModelTree {
 					parentNode.addChild(childNode);
 				}
 			}
-			
+
 			JsonArray variables = parentTemplate.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
 			for (JsonElement variable : variables) {
 				parentNode.addChild(new EntityVariableNode(variable.getAsString()));
 			}
 		}
-		
+
 		return templateTreeRoot;
 	}
-	
+
 	public static boolean templateExists(String name, String sharedDir) {
-		File templateDir =  getTemplateDir(sharedDir);
+		File templateDir = getTemplateDir(sharedDir);
 		File templateFile = new File(templateDir + "/" + name);
 		return templateFile.exists();
 	}
-	
+
 	public static boolean enumExists(String name, String sharedDir) {
-		
-		File templateDir =  getEnumDir(sharedDir);
+
+		File templateDir = getEnumDir(sharedDir);
 		File templateFile = new File(templateDir + "/" + name);
 		return templateFile.exists();
 	}
@@ -145,10 +189,15 @@ public class SyncModelTree {
 		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
 		visitor.visit(rootNode);
 	}
-	
+
 	public static void saveEnumTree(EnumRootNode rootNode, String sharedDir) {
 		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
 		visitor.visit(rootNode);
+	}
+
+	public static void saveEnumNode(EnumNode node, String sharedDir) {
+		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
+		visitor.visit(node);
 	}
 
 	private static class SaveModelTreeVisitor implements IVisitor {
@@ -162,24 +211,24 @@ public class SyncModelTree {
 
 		@Override
 		public void visit(EnumRootNode enumRootNode) {
-			for (EnumNode node : enumRootNode.getEnumDefinitions()) {
+			for (INode node : enumRootNode.getChildren()) {
 				node.accept(this);
 			}
 		}
 
 		@Override
 		public void visit(EnumNode enumNode) {
-			
+
 			JsonArray enumConstants = new JsonArray();
 			for (String enumConstant : enumNode.getEnumConstants()) {
 				enumConstants.add(enumConstant);
 			}
-			
+
 			JsonObject enumDefinition = new JsonObject();
 
 			enumDefinition.addProperty(NAME_PROP_KEY, enumNode.getName());
 			enumDefinition.add(VARIABLES_PROP_KEY, enumConstants);
-			
+
 			File enumFile = new File(enumDir + "/" + enumNode.getName());
 			String data = new Gson().toJson(enumDefinition);
 
@@ -196,7 +245,7 @@ public class SyncModelTree {
 				semaphore.release();
 			}
 		}
-		
+
 		@Override
 		public void visit(EntityTemplateNode node) {
 
@@ -242,14 +291,14 @@ public class SyncModelTree {
 			}
 		}
 	}
-	
+
 	private static File getModelDir(String sharedDir) {
 		File modelDir = new File(sharedDir + "model/");
 		if (!modelDir.exists())
 			modelDir.mkdir();
 		return modelDir;
 	}
-	
+
 	private static File getTemplateDir(String sharedDir) {
 		File modelDir = getModelDir(sharedDir);
 		File templateDir = new File(modelDir + "/templates/");
@@ -257,12 +306,32 @@ public class SyncModelTree {
 			templateDir.mkdir();
 		return templateDir;
 	}
-	
+
 	private static File getEnumDir(String sharedDir) {
 		File modelDir = getModelDir(sharedDir);
 		File templateDir = new File(modelDir + "/enums/");
 		if (!templateDir.exists())
 			templateDir.mkdir();
 		return templateDir;
+	}
+
+	public static boolean isValidJavaIdentifier(String s) {
+		// an empty or null string cannot be a valid identifier
+		if (s == null || s.length() == 0) {
+			return false;
+		}
+
+		char[] c = s.toCharArray();
+		if (!Character.isJavaIdentifierStart(c[0])) {
+			return false;
+		}
+
+		for (int i = 1; i < c.length; i++) {
+			if (!Character.isJavaIdentifierPart(c[i])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

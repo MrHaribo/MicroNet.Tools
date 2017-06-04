@@ -21,17 +21,17 @@ public class NodeDetails extends Composite {
 	
 	Label label;
 	
-	INode node;
+	protected INode node;
 
 	public NodeDetails(Composite parent, int style) {
 		super(parent, style);
 		
 		setLayout(new GridLayout(1, false));
-		setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
-		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 				
 		label = new Label(detailsContainer, SWT.NONE);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));

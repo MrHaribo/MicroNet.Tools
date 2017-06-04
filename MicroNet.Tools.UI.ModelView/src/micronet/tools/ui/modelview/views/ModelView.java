@@ -89,7 +89,7 @@ public class ModelView extends ViewPart {
 			if (parent instanceof EntityTemplateNode) 
 				return ((EntityTemplateNode) parent).getChildren();
 			if (parent instanceof EnumRootNode)
-				return ((EnumRootNode) parent).getEnumDefinitions().toArray();
+				return ((EnumRootNode) parent).getChildren();
 			return new Object[0];
 		}
 
@@ -97,7 +97,7 @@ public class ModelView extends ViewPart {
 			if (parent instanceof EntityTemplateNode)
 				return ((EntityTemplateNode) parent).hasChildren();
 			if (parent instanceof EnumRootNode)
-				return ((EnumRootNode) parent).getEnumDefinitions().size() > 0;
+				return ((EnumRootNode) parent).getChildren().length > 0;
 			return false;
 		}
 	}
@@ -136,7 +136,7 @@ public class ModelView extends ViewPart {
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		entityTemplateRoot = SyncModelTree.loadTemplateTree(sharedDir);
 		
-		enumRoot = new EnumRootNode(SyncModelTree.ENUM_DEFINITIONS_KEY);
+		enumRoot = SyncModelTree.loadEnumTree(sharedDir);
 
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());
@@ -189,9 +189,10 @@ public class ModelView extends ViewPart {
 					enumRootDetails.setOnAddEnum(addEnumAction);
 					currentDetailPanel = enumRootDetails;
 				}else if (selectedNode instanceof EnumNode) {
-					EnumNodeDetails enumRootDetails = new EnumNodeDetails(detailsContainer, SWT.NONE);
-					enumRootDetails.setOnRemove(removeNodeAction);
-					currentDetailPanel = enumRootDetails;
+					EnumNodeDetails enumDetails = new EnumNodeDetails(detailsContainer, SWT.NONE);
+					enumDetails.setOnRemove(removeNodeAction);
+					enumDetails.setNode(selectedNode);
+					currentDetailPanel = enumDetails;
 				}
 
 				detailsContainer.layout(true);
@@ -264,7 +265,7 @@ public class ModelView extends ViewPart {
 					return;
 				
 				if (selectedNode instanceof EnumNode) {
-					enumRoot.getEnumDefinitions().remove(selectedNode);
+					enumRoot.removeChild(selectedNode);
 					viewer.refresh();
 					
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
@@ -291,8 +292,6 @@ public class ModelView extends ViewPart {
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
-				
-
 			}
 		};
 		removeNodeAction.setText("Action 1");
@@ -306,7 +305,7 @@ public class ModelView extends ViewPart {
 					return;
 				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 
-				if (!isValidJavaIdentifier(name)) {
+				if (!SyncModelTree.isValidJavaIdentifier(name)) {
 					showMessage("\"" + name + "\" is an invalid name.");
 					return;
 				}
@@ -345,7 +344,7 @@ public class ModelView extends ViewPart {
 					if (name == null)
 						return;
 					
-					if (!isValidJavaIdentifier(name)) {
+					if (!SyncModelTree.isValidJavaIdentifier(name)) {
 						showMessage("\"" + name + "\" is an invalid name.");
 						return;
 					}
@@ -378,7 +377,7 @@ public class ModelView extends ViewPart {
 					if (name == null)
 						return;
 					
-					if (!isValidJavaIdentifier(name)) {
+					if (!SyncModelTree.isValidJavaIdentifier(name)) {
 						showMessage("\"" + name + "\" is an invalid name.");
 						return;
 					}
@@ -388,7 +387,7 @@ public class ModelView extends ViewPart {
 						return;
 					}
 
-					enumRootNode.getEnumDefinitions().add(new EnumNode(name));
+					enumRootNode.addChild(new EnumNode(name));
 					viewer.refresh();
 
 					SyncModelTree.saveEnumTree(enumRootNode, sharedDir);
@@ -421,26 +420,6 @@ public class ModelView extends ViewPart {
 		Bundle bundle = FrameworkUtil.getBundle(ModelView.class);
 		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
 		return ImageDescriptor.createFromURL(url);
-	}
-
-	public static boolean isValidJavaIdentifier(String s) {
-		// an empty or null string cannot be a valid identifier
-		if (s == null || s.length() == 0) {
-			return false;
-		}
-
-		char[] c = s.toCharArray();
-		if (!Character.isJavaIdentifierStart(c[0])) {
-			return false;
-		}
-
-		for (int i = 1; i < c.length; i++) {
-			if (!Character.isJavaIdentifierPart(c[i])) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	/**
