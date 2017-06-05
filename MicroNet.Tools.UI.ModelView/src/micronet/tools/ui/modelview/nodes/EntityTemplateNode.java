@@ -1,6 +1,9 @@
-package micronet.tools.ui.modelview;
+package micronet.tools.ui.modelview.nodes;
 
 import java.util.ArrayList;
+
+import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.IVisitor;
 
 public class EntityTemplateNode extends EntityNode {
 	private ArrayList<INode> children;

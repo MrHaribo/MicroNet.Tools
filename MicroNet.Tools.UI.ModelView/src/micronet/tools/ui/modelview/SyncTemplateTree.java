@@ -1,39 +1,42 @@
 package micronet.tools.ui.modelview;
 
+import static micronet.tools.ui.modelview.ModelConstants.ENTITY_TEMPLATES_KEY;
+import static micronet.tools.ui.modelview.ModelConstants.NAME_PROP_KEY;
+import static micronet.tools.ui.modelview.ModelConstants.PARENT_PROP_KEY;
+import static micronet.tools.ui.modelview.ModelConstants.VARIABLES_PROP_KEY;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Stack;
-import java.util.TreeSet;
 import java.util.concurrent.Semaphore;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
-import micronet.serialization.Serialization;
-import micronet.tools.annotation.api.ServiceAPI;
-import micronet.tools.annotation.codegen.CodegenConstants;
+import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+import micronet.tools.ui.modelview.nodes.EntityVariableNode;
+import micronet.tools.ui.modelview.nodes.EnumNode;
+import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.MapDescription;
+import micronet.tools.ui.modelview.variables.NumberDescription;
+import micronet.tools.ui.modelview.variables.NumberType;
+import micronet.tools.ui.modelview.variables.VariableDescription;
+import micronet.tools.ui.modelview.variables.VariableType;
 
-public class SyncModelTree {
-
-	public static final String ENUM_DEFINITIONS_KEY = "Enum Definitions";
-	public static final String ENTITY_TEMPLATES_KEY = "Entity Templates";
-	private static final String VARIABLES_PROP_KEY = "variables";
-	private static final String NAME_PROP_KEY = "name";
-	private static final String PARENT_PROP_KEY = "parent";
+public class SyncTemplateTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
@@ -66,49 +69,6 @@ public class SyncModelTree {
 			semaphore.release();
 		}
 		return templateNames;
-	}
-	
-	public static EnumRootNode loadEnumTree(String sharedDir) {
-		File enumDir = getEnumDir(sharedDir);
-		File[] directoryListing = enumDir.listFiles();
-		if (directoryListing == null)
-			return null;
-
-		JsonParser parser = new JsonParser();
-		EnumRootNode rootNode = new EnumRootNode(ENUM_DEFINITIONS_KEY);
-
-		for (File enumFile : directoryListing) {
-			String data = null;
-			try {
-				semaphore.acquire();
-				try (Scanner scanner = new Scanner(enumFile)) {
-					scanner.useDelimiter("\\A");
-					data = scanner.next();
-				} catch (IOException e) {
-					e.printStackTrace();
-					continue;
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				continue;
-			} finally {
-				semaphore.release();
-			}
-
-			JsonObject enumObject = parser.parse(data).getAsJsonObject();
-
-			String enumName = enumObject.getAsJsonPrimitive(NAME_PROP_KEY).getAsString();
-			JsonArray enumConstants = enumObject.getAsJsonArray(VARIABLES_PROP_KEY);
-
-			EnumNode enumNode = new EnumNode(enumName);
-
-			for (JsonElement enumConstant : enumConstants) {
-				enumNode.getEnumConstants().add(enumConstant.getAsString());
-			}
-			rootNode.addChild(enumNode);
-		}
-
-		return rootNode;
 	}
 
 	public static EntityTemplateNode loadTemplateTree(String sharedDir) {
@@ -196,7 +156,8 @@ public class SyncModelTree {
 
 			JsonArray variables = parentTemplate.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
 			for (JsonElement variable : variables) {
-				parentNode.addChild(new EntityVariableNode(variable.getAsString()));
+				EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
+				parentNode.addChild(variableNode);
 			}
 		}
 
@@ -208,73 +169,17 @@ public class SyncModelTree {
 		File templateFile = new File(templateDir + "/" + name);
 		return templateFile.exists();
 	}
-
-	public static boolean enumExists(String name, String sharedDir) {
-
-		File templateDir = getEnumDir(sharedDir);
-		File templateFile = new File(templateDir + "/" + name);
-		return templateFile.exists();
-	}
-
+	
 	public static void saveTemplateTree(EntityTemplateNode rootNode, String sharedDir) {
-		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
+		SaveTemplateTreeVisitor visitor = new SaveTemplateTreeVisitor(sharedDir);
 		visitor.visit(rootNode);
 	}
 
-	public static void saveEnumTree(EnumRootNode rootNode, String sharedDir) {
-		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
-		visitor.visit(rootNode);
-	}
-
-	public static void saveEnumNode(EnumNode node, String sharedDir) {
-		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
-		visitor.visit(node);
-	}
-
-	private static class SaveModelTreeVisitor implements IVisitor {
+	private static class SaveTemplateTreeVisitor implements IVisitor {
 		private File templateDir;
-		private File enumDir;
 
-		public SaveModelTreeVisitor(String sharedDir) {
+		public SaveTemplateTreeVisitor(String sharedDir) {
 			this.templateDir = getTemplateDir(sharedDir);
-			this.enumDir = getEnumDir(sharedDir);
-		}
-
-		@Override
-		public void visit(EnumRootNode enumRootNode) {
-			for (INode node : enumRootNode.getChildren()) {
-				node.accept(this);
-			}
-		}
-
-		@Override
-		public void visit(EnumNode enumNode) {
-
-			JsonArray enumConstants = new JsonArray();
-			for (String enumConstant : enumNode.getEnumConstants()) {
-				enumConstants.add(enumConstant);
-			}
-
-			JsonObject enumDefinition = new JsonObject();
-
-			enumDefinition.addProperty(NAME_PROP_KEY, enumNode.getName());
-			enumDefinition.add(VARIABLES_PROP_KEY, enumConstants);
-
-			File enumFile = new File(enumDir + "/" + enumNode.getName());
-			String data = new Gson().toJson(enumDefinition);
-
-			try {
-				semaphore.acquire();
-				try (PrintWriter printer = new PrintWriter(enumFile)) {
-					printer.print(data);
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} finally {
-				semaphore.release();
-			}
 		}
 
 		@Override
@@ -294,7 +199,9 @@ public class SyncModelTree {
 				if (childNode instanceof EntityTemplateNode) {
 					childNode.accept(this);
 				} else if (childNode instanceof EntityVariableNode) {
-					variables.add(childNode.getName());
+					EntityVariableNode variableNode = (EntityVariableNode)childNode;
+					JsonObject variableObject = serializeVariableDescription(variableNode);
+					variables.add(variableObject);
 				}
 			}
 
@@ -304,7 +211,7 @@ public class SyncModelTree {
 			template.add(VARIABLES_PROP_KEY, variables);
 
 			File templateFile = new File(templateDir + "/" + node.getName());
-			Gson gson = new Gson();
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 			String data = gson.toJson(template);
 
 			try {
@@ -321,48 +228,92 @@ public class SyncModelTree {
 				semaphore.release();
 			}
 		}
-	}
+		
+		@Override
+		public void visit(EnumRootNode enumRootNode) {
+		}
 
-	private static File getModelDir(String sharedDir) {
-		File modelDir = new File(sharedDir + "model/");
-		if (!modelDir.exists())
-			modelDir.mkdir();
-		return modelDir;
+		@Override
+		public void visit(EnumNode enumNode) {
+		}
+	}
+	
+	private static EntityVariableNode deserializeVariable(JsonObject variableObject) {
+		String variableName = variableObject.getAsJsonPrimitive(ModelConstants.NAME_PROP_KEY).getAsString();
+		VariableType variableType = Enum.valueOf(VariableType.class, variableObject.getAsJsonPrimitive(ModelConstants.TYPE_PROP_KEY).getAsString());
+		
+		EntityVariableNode variableNode = new EntityVariableNode(variableName);
+		VariableDescription variabelDescription = null;
+		
+		switch (variableType) {
+		case LIST:
+			String listEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
+			variabelDescription = new CollectionDescription(VariableType.LIST, listEntryType);
+			break;
+		case SET:
+			String setEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
+			variabelDescription = new CollectionDescription(VariableType.SET, setEntryType);
+			break;
+		case NUMBER:
+			String numberType = variableObject.getAsJsonPrimitive(ModelConstants.NUMBER_TYPE_PROP_KEY).getAsString();
+			variabelDescription = new NumberDescription(Enum.valueOf(NumberType.class, numberType));
+			break;
+		case MAP:
+			String keyType = variableObject.getAsJsonPrimitive(ModelConstants.KEY_TYPE_PROP_KEY).getAsString();
+			String mapEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
+			variabelDescription = new MapDescription(keyType, mapEntryType);
+			break;
+		case BOOLEAN:
+		case CHAR:
+		case COMPONENT:
+		case ENUM:
+		case REF:
+		case STRING:
+			variabelDescription = new VariableDescription(variableType);
+			break;
+		}
+		
+		variableNode.setVariabelDescription(variabelDescription);
+		return variableNode;
+	}
+	
+	private static JsonObject serializeVariableDescription(EntityVariableNode variableNode) {
+		
+		JsonObject variableDesc = new JsonObject();
+		variableDesc.addProperty(ModelConstants.NAME_PROP_KEY, variableNode.getName());
+		variableDesc.addProperty(ModelConstants.TYPE_PROP_KEY, variableNode.getVariabelDescription().getType().toString());
+		
+		switch (variableNode.getVariabelDescription().getType()) {
+		case BOOLEAN:
+		case CHAR:
+		case COMPONENT:
+		case ENUM:
+		case REF:
+		case STRING:
+			return variableDesc;
+		case LIST:
+		case SET:
+			CollectionDescription collectionDesc = (CollectionDescription) variableNode.getVariabelDescription();
+			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, collectionDesc.getEntryType());
+			break;
+		case NUMBER:
+			NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
+			variableDesc.addProperty(ModelConstants.NUMBER_TYPE_PROP_KEY, numDesc.getNumberType().toString());
+			break;
+		case MAP:
+			MapDescription mapDesc = (MapDescription) variableNode.getVariabelDescription();
+			variableDesc.addProperty(ModelConstants.KEY_TYPE_PROP_KEY, mapDesc.getKeyType());
+			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, mapDesc.getEntryType());
+			break;
+		}
+		return variableDesc;
 	}
 
 	private static File getTemplateDir(String sharedDir) {
-		File modelDir = getModelDir(sharedDir);
+		File modelDir = ModelConstants.getModelDir(sharedDir);
 		File templateDir = new File(modelDir + "/templates/");
 		if (!templateDir.exists())
 			templateDir.mkdir();
 		return templateDir;
-	}
-
-	private static File getEnumDir(String sharedDir) {
-		File modelDir = getModelDir(sharedDir);
-		File templateDir = new File(modelDir + "/enums/");
-		if (!templateDir.exists())
-			templateDir.mkdir();
-		return templateDir;
-	}
-
-	public static boolean isValidJavaIdentifier(String s) {
-		// an empty or null string cannot be a valid identifier
-		if (s == null || s.length() == 0) {
-			return false;
-		}
-
-		char[] c = s.toCharArray();
-		if (!Character.isJavaIdentifierStart(c[0])) {
-			return false;
-		}
-
-		for (int i = 1; i < c.length; i++) {
-			if (!Character.isJavaIdentifierPart(c[i])) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 }

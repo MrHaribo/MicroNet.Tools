@@ -1,4 +1,4 @@
-package micronet.tools.ui.modelview;
+package micronet.tools.ui.modelview.variables;
 
 public enum VariableType {
 	STRING,

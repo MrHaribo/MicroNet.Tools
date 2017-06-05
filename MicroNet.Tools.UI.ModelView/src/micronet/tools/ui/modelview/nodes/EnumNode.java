@@ -1,7 +1,10 @@
-package micronet.tools.ui.modelview;
+package micronet.tools.ui.modelview.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.IVisitor;
 
 public class EnumNode implements INode {
 

@@ -1,6 +1,8 @@
-package micronet.tools.ui.modelview;
+package micronet.tools.ui.modelview.nodes;
 
 import org.eclipse.core.runtime.IAdaptable;
+
+import micronet.tools.ui.modelview.INode;
 
 public abstract class EntityNode implements INode, IAdaptable  {
 	private String name;

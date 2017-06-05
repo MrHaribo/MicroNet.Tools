@@ -38,12 +38,16 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.EntityTemplateNode;
-import micronet.tools.ui.modelview.EntityVariableNode;
-import micronet.tools.ui.modelview.EnumNode;
-import micronet.tools.ui.modelview.EnumRootNode;
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.SyncModelTree;
+import micronet.tools.ui.modelview.ModelConstants;
+import micronet.tools.ui.modelview.SyncEnumTree;
+import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+import micronet.tools.ui.modelview.nodes.EntityVariableNode;
+import micronet.tools.ui.modelview.nodes.EnumNode;
+import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.ui.modelview.variables.VariableDescription;
+import micronet.tools.ui.modelview.variables.VariableType;
 
 public class ModelView extends ViewPart {
 
@@ -134,9 +138,9 @@ public class ModelView extends ViewPart {
 		drillDownAdapter = new DrillDownAdapter(viewer);
 
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		entityTemplateRoot = SyncModelTree.loadTemplateTree(sharedDir);
+		entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
 		
-		enumRoot = SyncModelTree.loadEnumTree(sharedDir);
+		enumRoot = SyncEnumTree.loadEnumTree(sharedDir);
 
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());
@@ -269,7 +273,7 @@ public class ModelView extends ViewPart {
 					viewer.refresh();
 					
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncModelTree.saveEnumTree(enumRoot, sharedDir);
+					SyncEnumTree.saveEnumTree(enumRoot, sharedDir);
 					return;
 				}
 
@@ -290,7 +294,7 @@ public class ModelView extends ViewPart {
 					viewer.refresh();
 
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		};
@@ -305,12 +309,12 @@ public class ModelView extends ViewPart {
 					return;
 				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 
-				if (!SyncModelTree.isValidJavaIdentifier(name)) {
+				if (!ModelConstants.isValidJavaIdentifier(name)) {
 					showMessage("\"" + name + "\" is an invalid name.");
 					return;
 				}
 
-				if (SyncModelTree.templateExists(name, sharedDir)) {
+				if (SyncTemplateTree.templateExists(name, sharedDir)) {
 					showMessage("Template with the name \"" + name + "\" already exists. Choose a unique name.");
 					return;
 				}
@@ -323,7 +327,7 @@ public class ModelView extends ViewPart {
 					entityTemplateNode.addChild(new EntityTemplateNode(name));
 					viewer.refresh();
 
-					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		};
@@ -336,7 +340,7 @@ public class ModelView extends ViewPart {
 				if (selectedNode instanceof EntityTemplateNode) {
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 
-					if (entityTemplateNode.getName().equals(SyncModelTree.ENTITY_TEMPLATES_KEY))
+					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATES_KEY))
 						return;
 
 					String name = promptName("Add Variable", "NewVariable",
@@ -344,7 +348,7 @@ public class ModelView extends ViewPart {
 					if (name == null)
 						return;
 					
-					if (!SyncModelTree.isValidJavaIdentifier(name)) {
+					if (!ModelConstants.isValidJavaIdentifier(name)) {
 						showMessage("\"" + name + "\" is an invalid name.");
 						return;
 					}
@@ -356,11 +360,13 @@ public class ModelView extends ViewPart {
 						}
 					}
 
-					entityTemplateNode.addChild(new EntityVariableNode(name));
+					EntityVariableNode variableNode = new EntityVariableNode(name);
+					variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
+					entityTemplateNode.addChild(variableNode);
 					viewer.refresh();
 
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncModelTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		};
@@ -377,12 +383,12 @@ public class ModelView extends ViewPart {
 					if (name == null)
 						return;
 					
-					if (!SyncModelTree.isValidJavaIdentifier(name)) {
+					if (!ModelConstants.isValidJavaIdentifier(name)) {
 						showMessage("\"" + name + "\" is an invalid name.");
 						return;
 					}
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					if (SyncModelTree.enumExists(name, sharedDir)) {
+					if (SyncEnumTree.enumExists(name, sharedDir)) {
 						showMessage("Enum with the same name already exists. Choose a unique name.");
 						return;
 					}
@@ -390,7 +396,7 @@ public class ModelView extends ViewPart {
 					enumRootNode.addChild(new EnumNode(name));
 					viewer.refresh();
 
-					SyncModelTree.saveEnumTree(enumRootNode, sharedDir);
+					SyncEnumTree.saveEnumTree(enumRootNode, sharedDir);
 				}
 			}
 		};

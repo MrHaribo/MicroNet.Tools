@@ -12,8 +12,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
-import micronet.tools.ui.modelview.EntityTemplateNode;
 import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 
 public class NodeDetails extends Composite {
 	

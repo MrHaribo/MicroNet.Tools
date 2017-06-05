@@ -16,9 +16,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.EnumNode;
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.SyncModelTree;
+import micronet.tools.ui.modelview.ModelConstants;
+import micronet.tools.ui.modelview.SyncEnumTree;
+import micronet.tools.ui.modelview.nodes.EnumNode;
 
 public class EnumNodeDetails extends NodeDetails {
 	
@@ -82,7 +83,7 @@ public class EnumNodeDetails extends NodeDetails {
 		enumTokens.remove("");
 		
 		for (String enumToken : enumTokens) {
-			if (!SyncModelTree.isValidJavaIdentifier(enumToken))
+			if (!ModelConstants.isValidJavaIdentifier(enumToken))
 				MessageDialog.openInformation(textField.getShell(), "Invalid identifier", enumToken + "is not a valid enum constant identifier.");
 		}
 		
@@ -90,6 +91,6 @@ public class EnumNodeDetails extends NodeDetails {
 		enumNode.setEnumConstants(enumTokens);
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		SyncModelTree.saveEnumNode((EnumNode)node, sharedDir);
+		SyncEnumTree.saveEnumNode((EnumNode)node, sharedDir);
 	}
 }
