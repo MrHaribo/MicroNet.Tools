@@ -173,83 +173,38 @@ public class VariableNodeDetails extends NodeDetails {
 	private class MapDetails extends Composite {
 
 		private Combo keyTypeSelect;
-		private Combo entryTypeSelect;
-		
-		private Button primitiveRadio;
-		private Button templateRadio;
+		private EntryDetails entryDetails;
 
 		public MapDetails(Composite parent, int style) {
 			super(parent, style);
 			
-			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			setLayout(new GridLayout(2, false));
 			
 			MapDescription mapDesc = (MapDescription) variableNode.getVariabelDescription();
-			
-			VariableType variableType = getVariableEntryTypeOfCollection(mapDesc);
-			NumberType numberType = getNumberEntryTypeOfCollection(mapDesc);
-			boolean isTemplateType = variableType == null && numberType == null;
-			
-			List<String> templateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
-			String[] items = isTemplateType ? templateNames.toArray(new String[templateNames.size()]) : listTypes;
-			
-			setLayout(new GridLayout(3, false));
 			
 			Label label = new Label(this, SWT.NONE);
 			label.setText("Key Type:");
 			
-			SelectionAdapter updateDescAdapter = new SelectionAdapter() {
+			keyTypeSelect = new Combo(this, SWT.READ_ONLY);
+			keyTypeSelect.setItems(primitiveTypes);
+			keyTypeSelect.setText(mapDesc.getKeyType());
+			keyTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			keyTypeSelect.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					updateMapDescription();
 				}
-			};
-
-			keyTypeSelect = new Combo(this, SWT.READ_ONLY);
-			keyTypeSelect.setItems(primitiveTypes);
-			keyTypeSelect.setText(mapDesc.getKeyType());
-			keyTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-			keyTypeSelect.addSelectionListener(updateDescAdapter);
-			
-			label = new Label(this, SWT.NONE);
-			label.setText("Map Enties:");
-			
-			primitiveRadio = new Button (this, SWT.RADIO);
-			primitiveRadio.setText("Primitive");
-			primitiveRadio.setSelection(!isTemplateType);
-			primitiveRadio.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent arg0) {
-					entryTypeSelect.setItems(listTypes);
-					entryTypeSelect.setText(VariableType.STRING.toString());
-					updateMapDescription();
-				}
 			});
 			
-			templateRadio = new Button (this, SWT.RADIO);
-			templateRadio.setText("Template");
-			templateRadio.setSelection(isTemplateType);
-			templateRadio.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent arg0) {
-					List<String> templateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
-					entryTypeSelect.setItems(templateNames.toArray(new String[templateNames.size()]));
-					entryTypeSelect.setText(templateNames.get(0));
-					updateMapDescription();
-				}
+			entryDetails = new EntryDetails(mapDesc, this, style);
+			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			entryDetails.setChangedCallback(entryType -> {
+				updateMapDescription();
 			});
-			
-			label = new Label(this, SWT.NONE);
-			label.setText("Map Entry Type:");
-
-			entryTypeSelect = new Combo(this, SWT.READ_ONLY);
-			entryTypeSelect.setItems(items);
-			entryTypeSelect.setText(mapDesc.getEntryType());
-			entryTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 2, 1));
-			entryTypeSelect.addSelectionListener(updateDescAdapter);
 		}
-		
+
 		private void updateMapDescription() {
-			MapDescription mapDesc = new MapDescription(keyTypeSelect.getText(), entryTypeSelect.getText());
+			MapDescription mapDesc = new MapDescription(keyTypeSelect.getText(), entryDetails.getSelectedEntryType());
 			variableNode.setVariabelDescription(mapDesc);
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
