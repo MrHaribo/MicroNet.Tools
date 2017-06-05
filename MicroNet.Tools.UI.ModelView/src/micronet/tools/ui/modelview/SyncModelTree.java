@@ -37,6 +37,37 @@ public class SyncModelTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
+	public static List<String> getAllTemplateNames(String sharedDir) {
+		File templateDir = getTemplateDir(sharedDir);
+		File[] directoryListing = templateDir.listFiles();
+		if (directoryListing == null)
+			return null;
+
+		JsonParser parser = new JsonParser();
+		List<String> templateNames = new ArrayList<>();
+
+		try {
+			semaphore.acquire();
+
+			for (File templateFile : directoryListing) {
+				try (Scanner scanner = new Scanner(templateFile)) {
+					scanner.useDelimiter("\\A");
+					String data = scanner.next();
+
+					JsonElement templateObject = parser.parse(data);
+					templateNames.add(templateObject.getAsJsonObject().getAsJsonPrimitive(NAME_PROP_KEY).toString());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			semaphore.release();
+		}
+		return templateNames;
+	}
+	
 	public static EnumRootNode loadEnumTree(String sharedDir) {
 		File enumDir = getEnumDir(sharedDir);
 		File[] directoryListing = enumDir.listFiles();

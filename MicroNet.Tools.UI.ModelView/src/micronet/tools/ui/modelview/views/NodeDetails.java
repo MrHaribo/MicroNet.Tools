@@ -19,7 +19,7 @@ public class NodeDetails extends Composite {
 	
 	private Action onRemove;
 	
-	Label label;
+	private Label nameLabel;
 	
 	protected INode node;
 
@@ -33,12 +33,12 @@ public class NodeDetails extends Composite {
 		detailsContainer.setLayout(new GridLayout(2, false));
 		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 				
-		label = new Label(detailsContainer, SWT.NONE);
-		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		nameLabel = new Label(detailsContainer, SWT.NONE);
+		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		
-		FontDescriptor descriptor = FontDescriptor.createFrom(label.getFont());
+		FontDescriptor descriptor = FontDescriptor.createFrom(nameLabel.getFont());
 		descriptor = descriptor.setStyle(SWT.BOLD);
-		label.setFont(descriptor.createFont(label.getDisplay()));
+		nameLabel.setFont(descriptor.createFont(nameLabel.getDisplay()));
 		
 		Button removeNodeButton = new Button(detailsContainer, SWT.PUSH);
 		removeNodeButton.setText("Remove");
@@ -58,6 +58,6 @@ public class NodeDetails extends Composite {
 	
 	public void setNode(INode templateNode) {
 		this.node = templateNode;
-		label.setText(node.getName());
+		nameLabel.setText(node.getName());
 	}
 }

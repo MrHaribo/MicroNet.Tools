@@ -205,7 +205,7 @@ public class ModelView extends ViewPart {
 		detailsContainer.setLayout(new GridLayout(1, false));
 
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, false, true);
-		gridData.widthHint = 250;
+		gridData.widthHint = 280;
 		detailsContainer.setLayoutData(gridData);
 
 		// Create the help context id for the viewer's control
