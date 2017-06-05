@@ -269,11 +269,12 @@ public class ModelView extends ViewPart {
 					return;
 				
 				if (selectedNode instanceof EnumNode) {
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncEnumTree.removeEnum(selectedNode, sharedDir);
+
 					enumRoot.removeChild(selectedNode);
 					viewer.refresh();
 					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncEnumTree.saveEnumTree(enumRoot, sharedDir);
 					return;
 				}
 
@@ -290,11 +291,11 @@ public class ModelView extends ViewPart {
 					return;
 
 				if (selectedNode.getParent() instanceof EntityTemplateNode) {
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.removeTemplate(selectedNode, sharedDir);
+					
 					((EntityTemplateNode) selectedNode.getParent()).removeChild(selectedNode);
 					viewer.refresh();
-
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
 				}
 			}
 		};

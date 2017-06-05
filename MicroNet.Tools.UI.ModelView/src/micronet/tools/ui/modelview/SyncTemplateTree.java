@@ -170,6 +170,12 @@ public class SyncTemplateTree {
 		return templateFile.exists();
 	}
 	
+	public static void removeTemplate(INode node, String sharedDir) {
+		File templateDir = getTemplateDir(sharedDir);
+		File templateFile = new File(templateDir + "/" + node.getName());
+		templateFile.delete();
+	}
+	
 	public static void saveTemplateTree(EntityTemplateNode rootNode, String sharedDir) {
 		SaveTemplateTreeVisitor visitor = new SaveTemplateTreeVisitor(sharedDir);
 		visitor.visit(rootNode);

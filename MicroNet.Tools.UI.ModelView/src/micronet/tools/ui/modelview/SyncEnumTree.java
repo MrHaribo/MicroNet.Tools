@@ -72,9 +72,15 @@ public class SyncEnumTree {
 
 	public static boolean enumExists(String name, String sharedDir) {
 
-		File templateDir = getEnumDir(sharedDir);
-		File templateFile = new File(templateDir + "/" + name);
-		return templateFile.exists();
+		File enumDir = getEnumDir(sharedDir);
+		File enumFile = new File(enumDir + "/" + name);
+		return enumFile.exists();
+	}
+	
+	public static void removeEnum(INode node, String sharedDir) {
+		File enumDir = getEnumDir(sharedDir);
+		File enumFile = new File(enumDir + "/" + node.getName());
+		enumFile.delete();
 	}
 
 	public static void saveEnumTree(EnumRootNode rootNode, String sharedDir) {
@@ -145,4 +151,6 @@ public class SyncEnumTree {
 			templateDir.mkdir();
 		return templateDir;
 	}
+
+
 }

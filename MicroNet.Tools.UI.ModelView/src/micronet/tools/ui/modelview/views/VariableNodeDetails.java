@@ -1,9 +1,11 @@
 package micronet.tools.ui.modelview.views;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -16,10 +18,13 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
+import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.NumberType;
@@ -94,6 +99,17 @@ public class VariableNodeDetails extends NodeDetails {
 					case MAP:
 						variableNode.setVariabelDescription(new MapDescription(NumberType.INT.toString(), VariableType.STRING.toString()));
 						break;
+					case ENUM:
+						String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+						EnumRootNode loadEnumTree = SyncEnumTree.loadEnumTree(sharedDir);
+						if (loadEnumTree.getChildren().length == 0) {
+							variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
+							typeSelect.setText(VariableType.STRING.toString());
+							MessageDialog.openInformation(typeSelect.getShell(), "No Enum Present", "No enum has been defined yet. Define Enum first.");
+							return;
+						}
+						variableNode.setVariabelDescription(new EnumDescription(loadEnumTree.getChildren()[0].getName()));
+						break;
 					case REF:
 						variableNode.setVariabelDescription(new VariableDescription(VariableType.REF));
 						break;
@@ -108,9 +124,6 @@ public class VariableNodeDetails extends NodeDetails {
 						break;
 					case COMPONENT:
 						variableNode.setVariabelDescription(new VariableDescription(VariableType.COMPONENT));
-						break;
-					case ENUM:
-						variableNode.setVariabelDescription(new VariableDescription(VariableType.ENUM));
 						break;
 					}
 				}
@@ -148,12 +161,14 @@ public class VariableNodeDetails extends NodeDetails {
 		case MAP:
 			detailsPanel = new MapDetails(detailsContainer, SWT.NONE);
 			break;
+		case ENUM:
+			detailsPanel = new EnumDetails(detailsContainer, SWT.NONE);
+			break;
 		case REF:
 		case STRING:
 		case BOOLEAN:
 		case CHAR:
 		case COMPONENT:
-		case ENUM:
 		}
 		
 		if (detailsPanel != null && !detailsPanel.isDisposed()) {
@@ -168,6 +183,40 @@ public class VariableNodeDetails extends NodeDetails {
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		SyncTemplateTree.saveTemplateTree((EntityTemplateNode)node.getParent(), sharedDir);
+	}
+	
+	private class EnumDetails extends Composite {
+
+		public EnumDetails(Composite parent, int style) {
+			super(parent, style);
+			
+			EnumDescription numberDesc = (EnumDescription) variableNode.getVariabelDescription();
+			
+			setLayout(new GridLayout(2, false));
+			
+			Label label = new Label(this, SWT.NONE);
+			label.setText("Enum Type:");
+			
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			EnumRootNode enumRootNode = SyncEnumTree.loadEnumTree(sharedDir);
+			List<String> enumTypes = new ArrayList<>();
+			for (INode enumNode : enumRootNode.getChildren()) {
+				enumTypes.add(enumNode.getName());
+			}
+			
+			Combo enumTypeSelect = new Combo(this, SWT.READ_ONLY);
+			enumTypeSelect.setItems(enumTypes.toArray(new String[enumTypes.size()]));
+			enumTypeSelect.setText(numberDesc.getEnumType());
+			enumTypeSelect.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent arg0) {
+					variableNode.setVariabelDescription(new EnumDescription(enumTypeSelect.getText()));
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+				}
+			});
+		}
+		
 	}
 	
 	private class MapDetails extends Composite {
