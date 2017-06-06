@@ -2,6 +2,8 @@ package micronet.tools.ui.modelview.views;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.action.Action;
@@ -306,10 +308,17 @@ public class ModelView extends ViewPart {
 						return;
 					}
 					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					Map<String, List<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
+					if (templateUsage.containsKey(entityTemplateNode.getName())) {
+						showMessage("Template " + entityTemplateNode.getName() + " cant be removed because it is in use by: " +
+								String.join(",", templateUsage.get(entityTemplateNode.getName())));
+						return;
+					}
+					
 					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
 						return;
 
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.removeTemplate(selectedNode, sharedDir);
 					
 					((EntityTemplateNode) selectedNode.getParent()).removeChild(selectedNode);

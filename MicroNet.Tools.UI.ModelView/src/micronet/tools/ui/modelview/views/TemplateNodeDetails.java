@@ -69,8 +69,4 @@ public class TemplateNodeDetails extends NodeDetails {
 	public void setOnAddChildVariable(Action onAddChildVariable) {
 		this.onAddChildVariable = onAddChildVariable;
 	}
-
-
-	
-	
 }
