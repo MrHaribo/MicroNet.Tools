@@ -2,6 +2,7 @@ package micronet.tools.ui.modelview.views;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -18,6 +19,7 @@ import org.eclipse.swt.widgets.Text;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
+import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 
 public class EnumNodeDetails extends NodeDetails {
@@ -70,6 +72,21 @@ public class EnumNodeDetails extends NodeDetails {
 				}
 			}
 		});
+		
+		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+		Map<String, List<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
+		
+		if (enumUsage.containsKey(enumNode.getName())) {
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			label.setText("Used by Templates:");
+
+			String usage = String.join(", ", enumUsage.get(enumNode.getName()));	
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			label.setText(usage);
+		}
 	}
 	
 	private void saveEnumNode() {

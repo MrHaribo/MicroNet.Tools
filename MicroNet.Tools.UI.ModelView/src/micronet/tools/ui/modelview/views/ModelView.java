@@ -285,13 +285,20 @@ public class ModelView extends ViewPart {
 				if (selectedNode instanceof EntityTemplateRootNode || selectedNode instanceof EnumRootNode) {
 					return;
 				}
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 				
 				if (selectedNode instanceof EnumNode) {
+					
+					Map<String, List<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
+					if (enumUsage.containsKey(selectedNode.getName())) {
+						showMessage("Enum " + selectedNode.getName() + " cant be removed because it is in use by: " +
+								String.join(",", enumUsage.get(selectedNode.getName())));
+						return;
+					}
 					
 					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
 						return;
 					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncEnumTree.removeEnum(selectedNode, sharedDir);
 
 					enumRoot.removeChild(selectedNode);
@@ -308,7 +315,6 @@ public class ModelView extends ViewPart {
 						return;
 					}
 					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					Map<String, List<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
 					if (templateUsage.containsKey(entityTemplateNode.getName())) {
 						showMessage("Template " + entityTemplateNode.getName() + " cant be removed because it is in use by: " +

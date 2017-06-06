@@ -42,6 +42,39 @@ public class SyncTemplateTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
+	public static Map<String, List<String>> getEnumUsage(String sharedDir) {
+		EntityTemplateRootNode rootNode = loadTemplateTree(sharedDir);
+		return getEnumUsage(rootNode);
+	}
+	
+	private static Map<String, List<String>> getEnumUsage(EntityTemplateNode templateNode) {
+		Map<String, List<String>> enumUsage = new HashMap<>();
+		
+		for (INode childNode : templateNode.getChildren()) {
+			if (childNode instanceof EntityTemplateNode) {
+				Map<String, List<String>> childUsage = getEnumUsage((EntityTemplateNode) childNode);
+				for (Map.Entry<String, List<String>> usageEntry : childUsage.entrySet()) {
+					if (!enumUsage.containsKey(usageEntry.getKey())) 
+						enumUsage.put(usageEntry.getKey(), new ArrayList<>());
+					enumUsage.get(usageEntry.getKey()).addAll(usageEntry.getValue());
+				}
+			} else if (childNode instanceof EntityVariableNode) {
+
+				EntityVariableNode variableNode = (EntityVariableNode) childNode;
+				VariableDescription variableDescription = variableNode.getVariabelDescription();
+				
+				if (variableDescription.getType() == VariableType.ENUM) {
+					EnumDescription enumDesc = (EnumDescription) variableDescription;
+					
+					if (!enumUsage.containsKey(enumDesc.getEnumType()))
+						enumUsage.put(enumDesc.getEnumType(), new ArrayList<>());
+					enumUsage.get(enumDesc.getEnumType()).add(templateNode.getName());
+				}
+			}
+		}
+		return enumUsage;
+	}
+
 	public static Map<String, List<String>> getTemplateUsage(String sharedDir) {
 		EntityTemplateRootNode rootNode = loadTemplateTree(sharedDir);
 		return getTemplateUsage(rootNode);
