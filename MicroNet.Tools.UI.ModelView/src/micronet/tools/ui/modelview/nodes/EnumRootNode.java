@@ -5,19 +5,14 @@ import java.util.List;
 
 import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.IVisitor;
+import micronet.tools.ui.modelview.ModelConstants;
 
 public class EnumRootNode implements INode {
 	
-	private String name;
-	
 	private List<INode> enumDefinitions = new ArrayList<>();
-	
-	public EnumRootNode(String name) {
-		this.name = name;
-	}
 	@Override
 	public String getName() {
-		return name;
+		return ModelConstants.ENUM_DEFINITIONS_KEY;
 	}
 	@Override
 	public void setParent(INode parent) {

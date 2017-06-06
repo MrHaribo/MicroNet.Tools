@@ -381,8 +381,6 @@ public class VariableNodeDetails extends NodeDetails {
 			listTypeSelect.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					if (collectionDesc.getEntryType().equals(listTypeSelect.getText()))
-						return;
 					onChanged.accept(listTypeSelect.getText());
 				}
 			});

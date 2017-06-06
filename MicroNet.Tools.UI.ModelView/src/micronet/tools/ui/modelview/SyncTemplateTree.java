@@ -31,6 +31,7 @@ import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.NumberType;
@@ -108,7 +109,7 @@ public class SyncTemplateTree {
 					String data = scanner.next();
 
 					JsonElement templateObject = parser.parse(data);
-					templateNames.add(templateObject.getAsJsonObject().getAsJsonPrimitive(NAME_PROP_KEY).toString());
+					templateNames.add(templateObject.getAsJsonObject().getAsJsonPrimitive(NAME_PROP_KEY).getAsString());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -226,9 +227,9 @@ public class SyncTemplateTree {
 		templateFile.delete();
 	}
 	
-	public static void saveTemplateTree(EntityTemplateNode rootNode, String sharedDir) {
+	public static void saveTemplateTree(EntityTemplateNode node, String sharedDir) {
 		SaveTemplateTreeVisitor visitor = new SaveTemplateTreeVisitor(sharedDir);
-		visitor.visit(rootNode);
+		node.accept(visitor);
 	}
 
 	private static class SaveTemplateTreeVisitor implements IVisitor {
@@ -240,7 +241,7 @@ public class SyncTemplateTree {
 		
 
 		@Override
-		public void visir(EntityTemplateRootNode rootNode) {
+		public void visit(EntityTemplateRootNode rootNode) {
 			for (INode childNode : rootNode.getChildren()) {
 				if (childNode instanceof EntityTemplateNode) {
 					childNode.accept(this);
@@ -326,10 +327,13 @@ public class SyncTemplateTree {
 			String mapEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
 			variabelDescription = new MapDescription(keyType, mapEntryType);
 			break;
+		case ENUM:
+			String enumEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
+			variabelDescription = new EnumDescription(enumEntryType);
+			break;
 		case BOOLEAN:
 		case CHAR:
 		case COMPONENT:
-		case ENUM:
 		case REF:
 		case STRING:
 			variabelDescription = new VariableDescription(variableType);
@@ -350,8 +354,11 @@ public class SyncTemplateTree {
 		case BOOLEAN:
 		case CHAR:
 		case COMPONENT:
-		case ENUM:
 		case REF:
+		case ENUM:
+			EnumDescription enumDesc = (EnumDescription) variableNode.getVariabelDescription();
+			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, enumDesc.getEnumType());
+			break;
 		case STRING:
 			return variableDesc;
 		case LIST:

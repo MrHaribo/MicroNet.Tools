@@ -1,13 +1,20 @@
 package micronet.tools.ui.modelview.views;
 
+import java.util.List;
+import java.util.Map;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
 
+import micronet.tools.core.ModelProvider;
+import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 
 public class TemplateNodeDetails extends NodeDetails {
@@ -38,6 +45,21 @@ public class TemplateNodeDetails extends NodeDetails {
 				onAddChildVariable.run();
 			}
 		});
+		
+		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+		Map<String, List<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
+		
+		if (templateUsage.containsKey(templateNode.getName())) {
+			Label label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			label.setText("Used by Templates:");
+
+			String usage = String.join(", ", templateUsage.get(templateNode.getName()));	
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			label.setText(usage);
+		}
 	}
 
 	public void setOnAddChildTemplate(Action onAddChildTemplate) {

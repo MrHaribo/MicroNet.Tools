@@ -1,6 +1,5 @@
 package micronet.tools.ui.modelview;
 
-import static micronet.tools.ui.modelview.ModelConstants.ENUM_DEFINITIONS_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.NAME_PROP_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.VARIABLES_PROP_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.getModelDir;
@@ -36,7 +35,7 @@ public class SyncEnumTree {
 			return null;
 
 		JsonParser parser = new JsonParser();
-		EnumRootNode rootNode = new EnumRootNode(ENUM_DEFINITIONS_KEY);
+		EnumRootNode rootNode = new EnumRootNode();
 
 		for (File enumFile : directoryListing) {
 			String data = null;
@@ -92,7 +91,7 @@ public class SyncEnumTree {
 
 	public static void saveEnumNode(EnumNode node, String sharedDir) {
 		SaveModelTreeVisitor visitor = new SaveModelTreeVisitor(sharedDir);
-		visitor.visit(node);
+		node.accept(visitor);
 	}
 
 	private static class SaveModelTreeVisitor implements IVisitor {
@@ -146,7 +145,7 @@ public class SyncEnumTree {
 		}
 
 		@Override
-		public void visir(EntityTemplateRootNode rootNode) {
+		public void visit(EntityTemplateRootNode rootNode) {
 			// TODO Auto-generated method stub
 			
 		}

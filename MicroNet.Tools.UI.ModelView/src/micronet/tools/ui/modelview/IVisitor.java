@@ -8,7 +8,7 @@ import micronet.tools.ui.modelview.nodes.EnumRootNode;
 public interface IVisitor {
 	void visit(EntityTemplateNode node);
 
-	void visir(EntityTemplateRootNode rootNode);
+	void visit(EntityTemplateRootNode rootNode);
 	
 	void visit(EnumNode enumNode);
 

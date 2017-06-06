@@ -9,7 +9,6 @@ public class EntityTemplateRootNode extends EntityTemplateNode {
 	
 	@Override
 	public void accept(IVisitor visitor) {
-		// TODO Auto-generated method stub
 		visitor.visit(this);
 	}
 }
