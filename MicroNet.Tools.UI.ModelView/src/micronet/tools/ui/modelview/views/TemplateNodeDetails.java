@@ -8,13 +8,15 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
+import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+
 public class TemplateNodeDetails extends NodeDetails {
 
 	private Action onAddChildTemplate;
 	private Action onAddChildVariable;
 	
-	public TemplateNodeDetails(Composite parent, int style) {
-		super(parent, style);
+	public TemplateNodeDetails(EntityTemplateNode templateNode, Composite parent, int style) {
+		super(templateNode, parent, style);
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));

@@ -18,6 +18,7 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
@@ -67,8 +68,10 @@ public class VariableNodeDetails extends NodeDetails {
 	
 	private EntityVariableNode variableNode;
 	
-	public VariableNodeDetails(Composite parent, int style) {
-		super(parent, style);
+	public VariableNodeDetails(EntityVariableNode variableNode, Composite parent, int style) {
+		super(variableNode, parent, style);
+		
+		this.variableNode = variableNode;
 		
 		detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
@@ -80,6 +83,7 @@ public class VariableNodeDetails extends NodeDetails {
 		
 		typeSelect = new Combo(detailsContainer, SWT.READ_ONLY);
 		typeSelect.setItems(baseTypes);
+		typeSelect.setText(variableNode.getVariabelDescription().getType().toString());
 		typeSelect.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -130,15 +134,7 @@ public class VariableNodeDetails extends NodeDetails {
 				updateVariableDetails();
 			}
 		});
-	}
-	
-	@Override
-	public void setNode(INode node) {
-		super.setNode(node);
 		
-		this.variableNode = (EntityVariableNode)node;
-		
-		typeSelect.setText(variableNode.getVariabelDescription().getType().toString());
 		updateVariableDetails();
 	}
 	
@@ -182,7 +178,7 @@ public class VariableNodeDetails extends NodeDetails {
 		detailsContainer.getParent().getParent().layout();
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		SyncTemplateTree.saveTemplateTree((EntityTemplateNode)node.getParent(), sharedDir);
+		SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
 	}
 	
 	private class EnumDetails extends Composite {
@@ -336,9 +332,9 @@ public class VariableNodeDetails extends NodeDetails {
 
 		public EntryDetails(CollectionDescription collectionDesc, Composite parent, int style) {
 			super(parent, style);
-			
-			VariableType variableType = getVariableEntryTypeOfCollection(collectionDesc);
-			NumberType numberType = getNumberEntryTypeOfCollection(collectionDesc);
+	
+			VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(collectionDesc);
+			NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(collectionDesc);
 			boolean isTemplateType = variableType == null && numberType == null;
 			
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
@@ -421,23 +417,5 @@ public class VariableNodeDetails extends NodeDetails {
 			});
 		}
 		
-	}
-	
-	private VariableType getVariableEntryTypeOfCollection(CollectionDescription desc) {
-		VariableType variableType = null;
-		try {
-			variableType = Enum.valueOf(VariableType.class, desc.getEntryType());
-		} catch (IllegalArgumentException e) {
-		}
-		return variableType;
-	}
-
-	private NumberType getNumberEntryTypeOfCollection(CollectionDescription desc) {
-		NumberType numberType = null;
-		try {
-			numberType = Enum.valueOf(NumberType.class, desc.getEntryType());
-		} catch (IllegalArgumentException e) {
-		}
-		return numberType;
 	}
 }

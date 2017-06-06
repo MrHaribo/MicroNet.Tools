@@ -16,7 +16,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.nodes.EnumNode;
@@ -27,8 +26,12 @@ public class EnumNodeDetails extends NodeDetails {
 	private String saveString = "Save";
 	private Text textField;
 	
-	public EnumNodeDetails(Composite parent, int style) {
-		super(parent, style);
+	EnumNode enumNode;
+	
+	public EnumNodeDetails(EnumNode enumNode, Composite parent, int style) {
+		super(enumNode, parent, style);
+		
+		this.enumNode = enumNode;
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
@@ -48,6 +51,11 @@ public class EnumNodeDetails extends NodeDetails {
 		textField.setLayoutData(gridData);
 		textField.setEditable(false);
 		
+		StringJoiner joiner = new StringJoiner(",\n");
+		for (String enumConstant : enumNode.getEnumConstants())
+			joiner.add(enumConstant);
+		textField.setText(joiner.toString());
+		
 		editButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -64,18 +72,6 @@ public class EnumNodeDetails extends NodeDetails {
 		});
 	}
 	
-	@Override
-	public void setNode(INode templateNode) {
-		super.setNode(templateNode);
-		
-		EnumNode enumNode = (EnumNode)templateNode;
-		
-		StringJoiner joiner = new StringJoiner(",\n");
-		for (String enumConstant : enumNode.getEnumConstants())
-			joiner.add(enumConstant);
-		textField.setText(joiner.toString());
-	}
-	
 	private void saveEnumNode() {
 		String text = textField.getText().replaceAll("\\s+","");
 		
@@ -87,10 +83,9 @@ public class EnumNodeDetails extends NodeDetails {
 				MessageDialog.openInformation(textField.getShell(), "Invalid identifier", enumToken + "is not a valid enum constant identifier.");
 		}
 		
-		EnumNode enumNode = (EnumNode)node;
 		enumNode.setEnumConstants(enumTokens);
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		SyncEnumTree.saveEnumNode((EnumNode)node, sharedDir);
+		SyncEnumTree.saveEnumNode(enumNode, sharedDir);
 	}
 }

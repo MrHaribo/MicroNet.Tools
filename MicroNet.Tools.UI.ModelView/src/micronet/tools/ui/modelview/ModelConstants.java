@@ -2,6 +2,10 @@ package micronet.tools.ui.modelview;
 
 import java.io.File;
 
+import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.NumberType;
+import micronet.tools.ui.modelview.variables.VariableType;
+
 public class ModelConstants {
 	public static final String ENUM_DEFINITIONS_KEY = "Enum Definitions";
 	public static final String ENTITY_TEMPLATES_KEY = "Entity Templates";
@@ -18,6 +22,30 @@ public class ModelConstants {
 		if (!modelDir.exists())
 			modelDir.mkdir();
 		return modelDir;
+	}
+	
+	public static boolean isTemplateCollection(CollectionDescription desc) {
+		VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(desc);
+		NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(desc);
+		return variableType == null && numberType == null;
+	}
+	
+	public static VariableType getVariableEntryTypeOfCollection(CollectionDescription desc) {
+		VariableType variableType = null;
+		try {
+			variableType = Enum.valueOf(VariableType.class, desc.getEntryType());
+		} catch (IllegalArgumentException e) {
+		}
+		return variableType;
+	}
+
+	public static NumberType getNumberEntryTypeOfCollection(CollectionDescription desc) {
+		NumberType numberType = null;
+		try {
+			numberType = Enum.valueOf(NumberType.class, desc.getEntryType());
+		} catch (IllegalArgumentException e) {
+		}
+		return numberType;
 	}
 	
 	public static boolean isValidJavaIdentifier(String s) {

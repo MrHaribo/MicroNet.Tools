@@ -41,6 +41,54 @@ public class SyncTemplateTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
+	public static Map<String, List<String>> getTemplateUsage(String sharedDir) {
+		EntityTemplateRootNode rootNode = loadTemplateTree(sharedDir);
+		return getTemplateUsage(rootNode);
+	}
+	
+	public static Map<String, List<String>> getTemplateUsage(EntityTemplateNode templateNode) {
+		Map<String, List<String>> templateUsage = new HashMap<>();
+		
+		for (INode childNode : templateNode.getChildren()) {
+			if (childNode instanceof EntityTemplateNode) {
+				
+				Map<String, List<String>> childUsage = getTemplateUsage((EntityTemplateNode) childNode);
+				for (Map.Entry<String, List<String>> usageEntry : childUsage.entrySet()) {
+					if (!templateUsage.containsKey(usageEntry.getKey())) 
+						templateUsage.put(usageEntry.getKey(), new ArrayList<>());
+					templateUsage.get(usageEntry.getKey()).addAll(usageEntry.getValue());
+				}
+				
+			} else if (childNode instanceof EntityVariableNode) {
+
+				EntityVariableNode variableNode = (EntityVariableNode) childNode;
+				VariableDescription variableDescription = variableNode.getVariabelDescription();
+				
+				String usedKey = null;
+				String usingTemplate = templateNode.getName();
+				
+				switch (variableDescription.getType()) {
+				case COMPONENT:
+					break;
+				case LIST:
+				case MAP:
+					CollectionDescription collectionDesc = (CollectionDescription) variableDescription;
+					if (ModelConstants.isTemplateCollection(collectionDesc))
+						usedKey = collectionDesc.getEntryType();
+					break;
+				case ENUM: case SET: case REF: case BOOLEAN: case CHAR: case STRING: case NUMBER: default:
+					break;
+				}
+				
+				if (usedKey != null) {
+					if (!templateUsage.containsKey(usedKey))
+						templateUsage.put(usedKey, new ArrayList<>());
+					templateUsage.get(usedKey).add(usingTemplate);
+				}
+			}
+		}
+		return templateUsage;
+	}
 	
 	public static List<String> getAllTemplateNames(String sharedDir) {
 		File templateDir = getTemplateDir(sharedDir);

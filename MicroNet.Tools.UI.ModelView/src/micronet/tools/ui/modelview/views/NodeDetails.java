@@ -5,7 +5,6 @@ import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -13,17 +12,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 
 public class NodeDetails extends Composite {
 	
 	private Action onRemove;
 	
-	private Label nameLabel;
-	
-	protected INode node;
-
-	public NodeDetails(Composite parent, int style) {
+	public NodeDetails(INode node, Composite parent, int style) {
 		super(parent, style);
 		
 		setLayout(new GridLayout(1, false));
@@ -33,8 +27,9 @@ public class NodeDetails extends Composite {
 		detailsContainer.setLayout(new GridLayout(2, false));
 		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 				
-		nameLabel = new Label(detailsContainer, SWT.NONE);
+		Label nameLabel = new Label(detailsContainer, SWT.NONE);
 		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		nameLabel.setText(node.getName());
 		
 		FontDescriptor descriptor = FontDescriptor.createFrom(nameLabel.getFont());
 		descriptor = descriptor.setStyle(SWT.BOLD);
@@ -54,10 +49,5 @@ public class NodeDetails extends Composite {
 
 	public void setOnRemove(Action onRemove) {
 		this.onRemove = onRemove;
-	}
-	
-	public void setNode(INode templateNode) {
-		this.node = templateNode;
-		nameLabel.setText(node.getName());
 	}
 }

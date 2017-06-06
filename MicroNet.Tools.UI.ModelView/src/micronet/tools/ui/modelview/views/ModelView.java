@@ -172,25 +172,22 @@ public class ModelView extends ViewPart {
 					templateRootDetails.setOnAddChildTemplate(addChildTemplateAction);
 					currentDetailPanel = templateRootDetails;
 				} else if (selectedNode instanceof EntityTemplateNode) {
-					TemplateNodeDetails templateDetails = new TemplateNodeDetails(detailsContainer, SWT.NONE);
+					TemplateNodeDetails templateDetails = new TemplateNodeDetails((EntityTemplateNode)selectedNode, detailsContainer, SWT.NONE);
 					templateDetails.setOnAddChildTemplate(addChildTemplateAction);
 					templateDetails.setOnRemove(removeNodeAction);
 					templateDetails.setOnAddChildVariable(addChildVariableAction);
-					templateDetails.setNode(selectedNode);
 					currentDetailPanel = templateDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
-					VariableNodeDetails variableDetails = new VariableNodeDetails(detailsContainer, SWT.NONE);
+					VariableNodeDetails variableDetails = new VariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
 					variableDetails.setOnRemove(removeNodeAction);
-					variableDetails.setNode(selectedNode);
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
 					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(detailsContainer, SWT.NONE);
 					enumRootDetails.setOnAddEnum(addEnumAction);
 					currentDetailPanel = enumRootDetails;
 				}else if (selectedNode instanceof EnumNode) {
-					EnumNodeDetails enumDetails = new EnumNodeDetails(detailsContainer, SWT.NONE);
+					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.NONE);
 					enumDetails.setOnRemove(removeNodeAction);
-					enumDetails.setNode(selectedNode);
 					currentDetailPanel = enumDetails;
 				}
 
