@@ -42,7 +42,9 @@ import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.ui.modelview.codegen.ModelGenerator;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
@@ -58,6 +60,7 @@ public class ModelView extends ViewPart {
 
 	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
 	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
+	private final ImageDescriptor IMG_MICRONET = getImageDescriptor("micronet_icon.png");
 
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
@@ -65,9 +68,11 @@ public class ModelView extends ViewPart {
 	private Action addChildTemplateAction;
 	private Action addChildVariableAction;
 	private Action addEnumAction;
+	
+	private Action testGenAction;
 
 	private INode selectedNode;
-	private EntityTemplateNode entityTemplateRoot;
+	private EntityTemplateRootNode entityTemplateRoot;
 	private EnumRootNode enumRoot;
 	private Group detailsContainer;
 
@@ -139,7 +144,6 @@ public class ModelView extends ViewPart {
 
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
-		
 		enumRoot = SyncEnumTree.loadEnumTree(sharedDir);
 
 		viewer.setContentProvider(new ViewContentProvider());
@@ -163,30 +167,21 @@ public class ModelView extends ViewPart {
 
 				selectedNode = (INode) selection.getFirstElement();
 
-				if (selectedNode instanceof EntityTemplateNode) {
-
-					if (selectedNode.getParent() == null) {
-						TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer,
-								SWT.NONE);
-						templateRootDetails.setOnAddChildTemplate(addChildTemplateAction);
-						currentDetailPanel = templateRootDetails;
-
-					} else {
-						TemplateNodeDetails templateDetails = new TemplateNodeDetails(detailsContainer, SWT.NONE);
-						templateDetails.setOnAddChildTemplate(addChildTemplateAction);
-						templateDetails.setOnRemove(removeNodeAction);
-						templateDetails.setOnAddChildVariable(addChildVariableAction);
-						templateDetails.setNode(selectedNode);
-
-						currentDetailPanel = templateDetails;
-					}
-
-					currentDetailPanel.setVisible(true);
+				if (selectedNode instanceof EntityTemplateRootNode) {
+					TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer,	SWT.NONE);
+					templateRootDetails.setOnAddChildTemplate(addChildTemplateAction);
+					currentDetailPanel = templateRootDetails;
+				} else if (selectedNode instanceof EntityTemplateNode) {
+					TemplateNodeDetails templateDetails = new TemplateNodeDetails(detailsContainer, SWT.NONE);
+					templateDetails.setOnAddChildTemplate(addChildTemplateAction);
+					templateDetails.setOnRemove(removeNodeAction);
+					templateDetails.setOnAddChildVariable(addChildVariableAction);
+					templateDetails.setNode(selectedNode);
+					currentDetailPanel = templateDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
 					VariableNodeDetails variableDetails = new VariableNodeDetails(detailsContainer, SWT.NONE);
 					variableDetails.setOnRemove(removeNodeAction);
 					variableDetails.setNode(selectedNode);
-
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
 					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(detailsContainer, SWT.NONE);
@@ -256,19 +251,47 @@ public class ModelView extends ViewPart {
 	}
 
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(removeNodeAction);
-		manager.add(addChildTemplateAction);
+		manager.add(testGenAction);
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 	}
 
 	private void makeActions() {
+		testGenAction = new Action() {
+			public void run() {
+				if (selectedNode == null || selectedNode.getParent() == null)
+					return;
+				
+
+				if (selectedNode instanceof EntityTemplateNode) {
+					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
+					
+					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATES_KEY))
+						return;
+
+					
+					ModelGenerator.generateModelEntity(entityTemplateNode);
+				}
+			}
+		};
+		testGenAction.setText("Test Gen");
+		testGenAction.setToolTipText("Action 1 tooltip");
+		testGenAction.setImageDescriptor(IMG_MICRONET);
+		
 		removeNodeAction = new Action() {
 			public void run() {
 				if (selectedNode == null || selectedNode.getParent() == null)
 					return;
 				
+				if (selectedNode instanceof EntityTemplateRootNode || selectedNode instanceof EnumRootNode) {
+					return;
+				}
+				
 				if (selectedNode instanceof EnumNode) {
+					
+					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
+						return;
+					
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncEnumTree.removeEnum(selectedNode, sharedDir);
 
@@ -285,12 +308,10 @@ public class ModelView extends ViewPart {
 						showMessage("Cannot Remove Template with Children");
 						return;
 					}
-				}
+					
+					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
+						return;
 
-				if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
-					return;
-
-				if (selectedNode.getParent() instanceof EntityTemplateNode) {
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.removeTemplate(selectedNode, sharedDir);
 					
@@ -328,7 +349,7 @@ public class ModelView extends ViewPart {
 					entityTemplateNode.addChild(new EntityTemplateNode(name));
 					viewer.refresh();
 
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
 				}
 			}
 		};
@@ -338,14 +359,14 @@ public class ModelView extends ViewPart {
 
 		addChildVariableAction = new Action() {
 			public void run() {
+				
+				if (selectedNode instanceof EntityTemplateRootNode)
+					return;
+				
 				if (selectedNode instanceof EntityTemplateNode) {
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 
-					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATES_KEY))
-						return;
-
-					String name = promptName("Add Variable", "NewVariable",
-							"Add a new Variable to " + selectedNode.getName());
+					String name = promptName("Add Variable", "NewVariable",	"Add a new Variable to " + selectedNode.getName());
 					if (name == null)
 						return;
 					
@@ -367,7 +388,7 @@ public class ModelView extends ViewPart {
 					viewer.refresh();
 
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateRoot, sharedDir);
+					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
 				}
 			}
 		};
@@ -401,8 +422,8 @@ public class ModelView extends ViewPart {
 				}
 			}
 		};
-		addEnumAction.setText("Add Variable");
-		addEnumAction.setToolTipText("Adds a Variable to the Selected Template");
+		addEnumAction.setText("Add Enum");
+		addEnumAction.setToolTipText("Adds a new Enum.");
 		addEnumAction.setImageDescriptor(IMG_ADD);
 	}
 

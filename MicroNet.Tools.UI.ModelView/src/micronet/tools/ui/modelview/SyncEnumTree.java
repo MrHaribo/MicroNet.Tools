@@ -20,12 +20,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 
 public class SyncEnumTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
+
 	
 	public static EnumRootNode loadEnumTree(String sharedDir) {
 		File enumDir = getEnumDir(sharedDir);
@@ -140,6 +142,12 @@ public class SyncEnumTree {
 
 		@Override
 		public void visit(EntityTemplateNode node) {
+			
+		}
+
+		@Override
+		public void visir(EntityTemplateRootNode rootNode) {
+			// TODO Auto-generated method stub
 			
 		}
 	}

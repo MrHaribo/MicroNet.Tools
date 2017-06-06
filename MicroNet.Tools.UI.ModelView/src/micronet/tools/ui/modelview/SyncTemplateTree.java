@@ -26,6 +26,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
@@ -40,6 +41,7 @@ public class SyncTemplateTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
+	
 	public static List<String> getAllTemplateNames(String sharedDir) {
 		File templateDir = getTemplateDir(sharedDir);
 		File[] directoryListing = templateDir.listFiles();
@@ -71,7 +73,7 @@ public class SyncTemplateTree {
 		return templateNames;
 	}
 
-	public static EntityTemplateNode loadTemplateTree(String sharedDir) {
+	public static EntityTemplateRootNode loadTemplateTree(String sharedDir) {
 
 		File templateDir = getTemplateDir(sharedDir);
 		File[] directoryListing = templateDir.listFiles();
@@ -104,13 +106,13 @@ public class SyncTemplateTree {
 		return constructTemplateTree(templateFileObjects);
 	}
 
-	private static EntityTemplateNode constructTemplateTree(List<JsonElement> templateFileObjects) {
+	private static EntityTemplateRootNode constructTemplateTree(List<JsonElement> templateFileObjects) {
 
 		Map<String, List<JsonElement>> parentMapping = new HashMap<>();
 		Stack<JsonElement> parentObjects = new Stack<>();
 		Map<String, EntityTemplateNode> processedNodes = new HashMap<>();
 
-		EntityTemplateNode templateTreeRoot = new EntityTemplateNode(ENTITY_TEMPLATES_KEY);
+		EntityTemplateRootNode templateTreeRoot = new EntityTemplateRootNode(ENTITY_TEMPLATES_KEY);
 
 		for (JsonElement templateObject : templateFileObjects) {
 
@@ -187,6 +189,16 @@ public class SyncTemplateTree {
 		public SaveTemplateTreeVisitor(String sharedDir) {
 			this.templateDir = getTemplateDir(sharedDir);
 		}
+		
+
+		@Override
+		public void visir(EntityTemplateRootNode rootNode) {
+			for (INode childNode : rootNode.getChildren()) {
+				if (childNode instanceof EntityTemplateNode) {
+					childNode.accept(this);
+				} 
+			}
+		}
 
 		@Override
 		public void visit(EntityTemplateNode node) {
@@ -210,9 +222,6 @@ public class SyncTemplateTree {
 					variables.add(variableObject);
 				}
 			}
-
-			if (node.getName().equals(ENTITY_TEMPLATES_KEY))
-				return;
 
 			template.add(VARIABLES_PROP_KEY, variables);
 
