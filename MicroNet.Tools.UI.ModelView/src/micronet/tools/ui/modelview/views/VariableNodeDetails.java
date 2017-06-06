@@ -25,6 +25,7 @@ import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
@@ -88,6 +89,7 @@ public class VariableNodeDetails extends NodeDetails {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				VariableType variableType = Enum.valueOf(VariableType.class, typeSelect.getText());
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 				
 				if (variableNode.getVariabelDescription().getType() != variableType){
 					switch (variableType) {
@@ -103,8 +105,11 @@ public class VariableNodeDetails extends NodeDetails {
 					case MAP:
 						variableNode.setVariabelDescription(new MapDescription(NumberType.INT.toString(), VariableType.STRING.toString()));
 						break;
+					case COMPONENT:
+						List<String> templateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
+						variableNode.setVariabelDescription(new ComponentDescription(templateNames.get(0)));
+						break;
 					case ENUM:
-						String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 						EnumRootNode loadEnumTree = SyncEnumTree.loadEnumTree(sharedDir);
 						if (loadEnumTree.getChildren().length == 0) {
 							variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
@@ -126,9 +131,7 @@ public class VariableNodeDetails extends NodeDetails {
 					case CHAR:
 						variableNode.setVariabelDescription(new VariableDescription(VariableType.CHAR));
 						break;
-					case COMPONENT:
-						variableNode.setVariabelDescription(new VariableDescription(VariableType.COMPONENT));
-						break;
+
 					}
 				}
 				updateVariableDetails();
@@ -160,11 +163,13 @@ public class VariableNodeDetails extends NodeDetails {
 		case ENUM:
 			detailsPanel = new EnumDetails(detailsContainer, SWT.NONE);
 			break;
+		case COMPONENT:
+			detailsPanel = new ComponentDetails(detailsContainer, SWT.NONE);
+			break;
 		case REF:
 		case STRING:
 		case BOOLEAN:
 		case CHAR:
-		case COMPONENT:
 		}
 		
 		if (detailsPanel != null && !detailsPanel.isDisposed()) {
@@ -382,6 +387,39 @@ public class VariableNodeDetails extends NodeDetails {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					onChanged.accept(listTypeSelect.getText());
+				}
+			});
+		}
+	}
+	
+	private class ComponentDetails extends Composite {
+
+		private Combo componentTypeSelect;
+		
+		public ComponentDetails(Composite parent, int style) {
+			super(parent, style);
+			
+			ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariabelDescription();
+			
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			List<String> templateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
+			String[] items = templateNames.toArray(new String[templateNames.size()]);
+			
+			setLayout(new GridLayout(3, false));
+			
+			Label label = new Label(this, SWT.NONE);
+			label.setText("Component Type:");
+
+			componentTypeSelect = new Combo(this, SWT.READ_ONLY);
+			componentTypeSelect.setItems(items);
+			componentTypeSelect.setText(componentDesc.getComponentType());
+			componentTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true, 2, 1));
+			componentTypeSelect.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					variableNode.setVariabelDescription(new ComponentDescription(componentTypeSelect.getText()));
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
 				}
 			});
 		}

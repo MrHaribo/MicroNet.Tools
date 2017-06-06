@@ -310,9 +310,11 @@ public class ModelView extends ViewPart {
 				if (selectedNode instanceof EntityTemplateNode) {
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 
-					if (entityTemplateNode.hasChildren()) {
-						showMessage("Cannot Remove Template with Children");
-						return;
+					for (INode node : entityTemplateNode.getChildren()) {
+						if (node instanceof EntityTemplateNode) {
+							showMessage("Cannot Remove Template with Children");
+							return;
+						}
 					}
 					
 					Map<String, List<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);

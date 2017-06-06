@@ -31,6 +31,7 @@ import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
@@ -99,10 +100,11 @@ public class SyncTemplateTree {
 				VariableDescription variableDescription = variableNode.getVariabelDescription();
 				
 				String usedKey = null;
-				String usingTemplate = templateNode.getName();
 				
 				switch (variableDescription.getType()) {
 				case COMPONENT:
+					ComponentDescription componentDesc = (ComponentDescription) variableDescription;
+					usedKey = componentDesc.getComponentType();
 					break;
 				case LIST:
 				case MAP:
@@ -117,7 +119,7 @@ public class SyncTemplateTree {
 				if (usedKey != null) {
 					if (!templateUsage.containsKey(usedKey))
 						templateUsage.put(usedKey, new ArrayList<>());
-					templateUsage.get(usedKey).add(usingTemplate);
+					templateUsage.get(usedKey).add(templateNode.getName());
 				}
 			}
 		}
@@ -364,9 +366,12 @@ public class SyncTemplateTree {
 			String enumEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
 			variabelDescription = new EnumDescription(enumEntryType);
 			break;
+		case COMPONENT:
+			String componentType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
+			variabelDescription = new ComponentDescription(componentType);
+			break;
 		case BOOLEAN:
 		case CHAR:
-		case COMPONENT:
 		case REF:
 		case STRING:
 			variabelDescription = new VariableDescription(variableType);
@@ -384,16 +389,14 @@ public class SyncTemplateTree {
 		variableDesc.addProperty(ModelConstants.TYPE_PROP_KEY, variableNode.getVariabelDescription().getType().toString());
 		
 		switch (variableNode.getVariabelDescription().getType()) {
-		case BOOLEAN:
-		case CHAR:
 		case COMPONENT:
-		case REF:
+			ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariabelDescription();
+			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, componentDesc.getComponentType());
+			break;
 		case ENUM:
 			EnumDescription enumDesc = (EnumDescription) variableNode.getVariabelDescription();
 			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, enumDesc.getEnumType());
 			break;
-		case STRING:
-			return variableDesc;
 		case LIST:
 		case SET:
 			CollectionDescription collectionDesc = (CollectionDescription) variableNode.getVariabelDescription();
@@ -408,6 +411,12 @@ public class SyncTemplateTree {
 			variableDesc.addProperty(ModelConstants.KEY_TYPE_PROP_KEY, mapDesc.getKeyType());
 			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, mapDesc.getEntryType());
 			break;
+		case BOOLEAN:
+		case CHAR:
+		case REF:
+		case STRING:
+		default:
+			return variableDesc;
 		}
 		return variableDesc;
 	}
