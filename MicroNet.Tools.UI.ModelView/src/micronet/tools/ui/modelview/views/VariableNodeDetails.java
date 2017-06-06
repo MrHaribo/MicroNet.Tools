@@ -51,7 +51,6 @@ public class VariableNodeDetails extends NodeDetails {
 		VariableType.REF.toString(),
 		VariableType.BOOLEAN.toString(),
 		VariableType.CHAR.toString(),
-		VariableType.ENUM.toString(),
 		VariableType.STRING.toString(),
 		NumberType.BYTE.toString(),
 		NumberType.SHORT.toString(),

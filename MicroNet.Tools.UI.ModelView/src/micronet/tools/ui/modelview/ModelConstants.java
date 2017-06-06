@@ -24,25 +24,57 @@ public class ModelConstants {
 		return modelDir;
 	}
 	
+	public static boolean isPrimitiveTypeName(String typeName) {
+		boolean numberTypeName = isNumberTypeName(typeName);
+		boolean variableTypeName = isVariableTypeName(typeName);
+		return numberTypeName || variableTypeName;
+	}
+	
+	public static boolean isNumberTypeName(String typeName) {
+		try {
+			Enum.valueOf(NumberType.class, typeName.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean isVariableTypeName(String typeName) {
+		try {
+			Enum.valueOf(VariableType.class, typeName.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+		return true;
+	}
+	
 	public static boolean isTemplateCollection(CollectionDescription desc) {
 		VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(desc);
 		NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(desc);
 		return variableType == null && numberType == null;
 	}
-	
+
 	public static VariableType getVariableEntryTypeOfCollection(CollectionDescription desc) {
+		return getVariableEntryTypeFromName(desc.getEntryType());
+	}
+
+	public static VariableType getVariableEntryTypeFromName(String name) {
 		VariableType variableType = null;
 		try {
-			variableType = Enum.valueOf(VariableType.class, desc.getEntryType());
+			variableType = Enum.valueOf(VariableType.class, name);
 		} catch (IllegalArgumentException e) {
 		}
 		return variableType;
 	}
-
+	
 	public static NumberType getNumberEntryTypeOfCollection(CollectionDescription desc) {
+		return getNumberEntryTypeFromName(desc.getEntryType());
+	}
+		
+	public static NumberType getNumberEntryTypeFromName(String name) {
 		NumberType numberType = null;
 		try {
-			numberType = Enum.valueOf(NumberType.class, desc.getEntryType());
+			numberType = Enum.valueOf(NumberType.class, name);
 		} catch (IllegalArgumentException e) {
 		}
 		return numberType;

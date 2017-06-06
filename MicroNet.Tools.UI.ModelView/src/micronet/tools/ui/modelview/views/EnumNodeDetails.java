@@ -3,6 +3,7 @@ package micronet.tools.ui.modelview.views;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -74,7 +75,7 @@ public class EnumNodeDetails extends NodeDetails {
 		});
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		Map<String, List<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
+		Map<String, Set<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
 		
 		if (enumUsage.containsKey(enumNode.getName())) {
 			label = new Label(this, SWT.NONE);

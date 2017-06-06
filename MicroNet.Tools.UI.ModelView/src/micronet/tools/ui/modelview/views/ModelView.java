@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.action.Action;
@@ -289,7 +290,7 @@ public class ModelView extends ViewPart {
 				
 				if (selectedNode instanceof EnumNode) {
 					
-					Map<String, List<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
+					Map<String, Set<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
 					if (enumUsage.containsKey(selectedNode.getName())) {
 						showMessage("Enum " + selectedNode.getName() + " cant be removed because it is in use by: " +
 								String.join(",", enumUsage.get(selectedNode.getName())));
@@ -317,7 +318,7 @@ public class ModelView extends ViewPart {
 						}
 					}
 					
-					Map<String, List<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
+					Map<String, Set<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
 					if (templateUsage.containsKey(entityTemplateNode.getName())) {
 						showMessage("Template " + entityTemplateNode.getName() + " cant be removed because it is in use by: " +
 								String.join(",", templateUsage.get(entityTemplateNode.getName())));
@@ -347,6 +348,11 @@ public class ModelView extends ViewPart {
 
 				if (!ModelConstants.isValidJavaIdentifier(name)) {
 					showMessage("\"" + name + "\" is an invalid name.");
+					return;
+				}
+				
+				if (ModelConstants.isPrimitiveTypeName(name)) {
+					showMessage("Primitive Typenames are reserved.");
 					return;
 				}
 

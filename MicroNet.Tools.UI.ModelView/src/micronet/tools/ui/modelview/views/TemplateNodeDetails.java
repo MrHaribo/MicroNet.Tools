@@ -1,7 +1,7 @@
 package micronet.tools.ui.modelview.views;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
@@ -47,7 +47,7 @@ public class TemplateNodeDetails extends NodeDetails {
 		});
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-		Map<String, List<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
+		Map<String, Set<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
 		
 		if (templateUsage.containsKey(templateNode.getName())) {
 			Label label = new Label(this, SWT.NONE);
