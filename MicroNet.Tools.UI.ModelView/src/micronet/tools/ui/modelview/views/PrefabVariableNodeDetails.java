@@ -13,7 +13,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+import micronet.tools.core.ModelProvider;
+import micronet.tools.ui.modelview.SyncEnumTree;
+import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
+import micronet.tools.ui.modelview.variables.EnumDescription;
 
 public class PrefabVariableNodeDetails extends Composite {
 
@@ -61,6 +65,7 @@ public class PrefabVariableNodeDetails extends Composite {
 		case COMPONENT:
 			break;
 		case ENUM:
+			new EnumEditor(this, SWT.NONE);
 			break;
 		case LIST:
 			break;
@@ -78,6 +83,37 @@ public class PrefabVariableNodeDetails extends Composite {
 		default:
 			break;
 			
+		}
+	}
+	
+	private class EnumEditor {
+
+		private Combo comboBox;
+		
+		public EnumEditor(Composite parent, int style) {
+			
+			EnumDescription enumDesc = (EnumDescription) variableNode.getVariableDescription();
+			
+			Label label = new Label(parent, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			label.setText("Enum Type:");
+			
+			label = new Label(parent, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			label.setText(enumDesc.getEnumType());
+			
+			label = new Label(parent, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			label.setText("Value:");
+			
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			EnumNode enumMirror = SyncEnumTree.loadEnum(enumDesc.getEnumType(), sharedDir);
+			
+			List<String> values = enumMirror.getEnumConstants();
+			
+			comboBox = new Combo (parent, SWT.READ_ONLY);
+			comboBox.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			comboBox.setItems(values.toArray(new String[values.size()]));
 		}
 	}
 	

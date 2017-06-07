@@ -27,48 +27,72 @@ public class SyncEnumTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
 
-	
 	public static EnumRootNode loadEnumTree(String sharedDir) {
 		File enumDir = getEnumDir(sharedDir);
 		File[] directoryListing = enumDir.listFiles();
 		if (directoryListing == null)
 			return null;
 
-		JsonParser parser = new JsonParser();
 		EnumRootNode rootNode = new EnumRootNode();
 
 		for (File enumFile : directoryListing) {
-			String data = null;
-			try {
-				semaphore.acquire();
-				try (Scanner scanner = new Scanner(enumFile)) {
-					scanner.useDelimiter("\\A");
-					data = scanner.next();
-				} catch (IOException e) {
-					e.printStackTrace();
-					continue;
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				continue;
-			} finally {
-				semaphore.release();
-			}
-
-			JsonObject enumObject = parser.parse(data).getAsJsonObject();
-
-			String enumName = enumObject.getAsJsonPrimitive(NAME_PROP_KEY).getAsString();
-			JsonArray enumConstants = enumObject.getAsJsonArray(VARIABLES_PROP_KEY);
-
-			EnumNode enumNode = new EnumNode(enumName);
-
-			for (JsonElement enumConstant : enumConstants) {
-				enumNode.getEnumConstants().add(enumConstant.getAsString());
-			}
+			
+			String data = loadEnumFile(enumFile);
+			if (data == null)
+				return null;
+			
+			EnumNode enumNode = parseEnumFile(data);
 			rootNode.addChild(enumNode);
 		}
 
 		return rootNode;
+	}
+	
+	public static EnumNode loadEnum(String enumType, String sharedDir) {
+		File enumDir = getEnumDir(sharedDir);
+		File enumFile = new File(enumDir + "/" + enumType);
+		if (!enumFile.exists())
+			return null;
+
+		String data = loadEnumFile(enumFile);
+		if (data == null)
+			return null;
+		
+		return parseEnumFile(data);
+	}
+
+	private static EnumNode parseEnumFile(String data) {
+		JsonParser parser = new JsonParser();
+		JsonObject enumObject = parser.parse(data).getAsJsonObject();
+
+		String enumName = enumObject.getAsJsonPrimitive(NAME_PROP_KEY).getAsString();
+		JsonArray enumConstants = enumObject.getAsJsonArray(VARIABLES_PROP_KEY);
+
+		EnumNode enumNode = new EnumNode(enumName);
+		for (JsonElement enumConstant : enumConstants) {
+			enumNode.getEnumConstants().add(enumConstant.getAsString());
+		}
+		return enumNode;
+	}
+
+	private static String loadEnumFile(File enumFile) {
+		String data = null;
+		try {
+			semaphore.acquire();
+			try (Scanner scanner = new Scanner(enumFile)) {
+				scanner.useDelimiter("\\A");
+				data = scanner.next();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			semaphore.release();
+		}
+		return data;
 	}
 
 	public static boolean enumExists(String name, String sharedDir) {
@@ -158,6 +182,7 @@ public class SyncEnumTree {
 			templateDir.mkdir();
 		return templateDir;
 	}
+
 
 
 }

@@ -4,7 +4,6 @@ import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.IVisitor;
 import micronet.tools.ui.modelview.SyncTemplateTree;
-import micronet.tools.ui.modelview.variables.VariableType;
 
 public class PrefabNode extends ModelNode {
 
@@ -27,9 +26,8 @@ public class PrefabNode extends ModelNode {
 		
 		for (INode child : templateNodeMirror.getChildren()) {
 			if (child instanceof EntityVariableNode) {
-				EntityVariableNode variableNode = (EntityVariableNode) child;
-				VariableType variableType = variableNode.getVariabelDescription().getType();
-				PrefabVariableNode prefabVariable = new PrefabVariableNode(variableNode.getName(),templateNodeMirror.getName(), variableType);
+				EntityVariableNode variableNodeMirror = (EntityVariableNode) child;
+				PrefabVariableNode prefabVariable = new PrefabVariableNode(variableNodeMirror, templateNodeMirror.getName());
 				addChild(prefabVariable);
 			}
 		}

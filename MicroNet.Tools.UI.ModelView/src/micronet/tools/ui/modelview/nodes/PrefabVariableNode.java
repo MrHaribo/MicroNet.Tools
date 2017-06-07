@@ -1,17 +1,18 @@
 package micronet.tools.ui.modelview.nodes;
 
 import micronet.tools.ui.modelview.IVisitor;
+import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
 public class PrefabVariableNode extends ModelNode {
 
 	private String contributingTemplate;
-	private VariableType variableType;
+	private VariableDescription variableDescription;
 	
-	public PrefabVariableNode(String name, String contributingTemplate, VariableType variableType) {
-		super(name);
+	public PrefabVariableNode(EntityVariableNode variableNodeMirror, String contributingTemplate) {
+		super(variableNodeMirror.getName());
 		this.contributingTemplate = contributingTemplate;
-		this.variableType = variableType;
+		this.variableDescription = variableNodeMirror.getVariabelDescription();
 	}
 
 	@Override
@@ -19,7 +20,11 @@ public class PrefabVariableNode extends ModelNode {
 	}
 
 	public VariableType getVariableType() {
-		return variableType;
+		return variableDescription.getType();
+	}
+
+	public VariableDescription getVariableDescription() {
+		return variableDescription;
 	}
 
 	public String getContributingTemplate() {
