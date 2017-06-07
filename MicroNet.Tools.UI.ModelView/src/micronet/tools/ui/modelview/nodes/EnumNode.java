@@ -3,34 +3,15 @@ package micronet.tools.ui.modelview.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.IVisitor;
 
-public class EnumNode implements INode {
+public class EnumNode extends ModelNode {
 
-	private String name;
-	private INode parent;
+	public EnumNode(String name) {
+		super(name);
+	}
 	
 	private List<String> enumConstants = new ArrayList<>();
-	
-	public EnumNode(String name) {
-		this.name = name;
-	}
-	@Override
-	public String getName() {
-		return name;
-	}
-	@Override
-	public void setParent(INode parent) {
-		this.parent = parent;
-	}
-	@Override
-	public INode getParent() {
-		return parent;
-	}
-	public String toString() {
-		return getName();
-	}
 
 	@Override
 	public void accept(IVisitor visitor) {

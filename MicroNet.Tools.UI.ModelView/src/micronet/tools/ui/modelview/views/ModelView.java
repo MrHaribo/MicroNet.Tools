@@ -35,6 +35,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
@@ -51,6 +52,10 @@ import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.ui.modelview.nodes.ModelNode;
+import micronet.tools.ui.modelview.nodes.PrefabNode;
+import micronet.tools.ui.modelview.nodes.PrefabRootNode;
+import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
@@ -71,21 +76,24 @@ public class ModelView extends ViewPart {
 	private Action addChildTemplateAction;
 	private Action addChildVariableAction;
 	private Action addEnumAction;
+	private Action addPrefabAction;
 	
 	private Action testGenAction;
 
-	private INode selectedNode;
+	private ModelNode selectedNode;
+
 	private EntityTemplateRootNode entityTemplateRoot;
 	private EnumRootNode enumRoot;
+	private PrefabRootNode prefabRoot;
+	
 	private Group detailsContainer;
-
 	private Composite currentDetailPanel;
 
 	class ViewContentProvider implements ITreeContentProvider {
 
 		public Object[] getElements(Object parent) {
 			if (parent.equals(getViewSite())) {
-				return Arrays.asList(entityTemplateRoot, enumRoot).toArray();
+				return Arrays.asList(entityTemplateRoot, enumRoot, prefabRoot).toArray();
 			}
 			return getChildren(parent);
 		}
@@ -98,18 +106,14 @@ public class ModelView extends ViewPart {
 		}
 
 		public Object[] getChildren(Object parent) {
-			if (parent instanceof EntityTemplateNode) 
-				return ((EntityTemplateNode) parent).getChildren();
-			if (parent instanceof EnumRootNode)
-				return ((EnumRootNode) parent).getChildren();
+			if (parent instanceof ModelNode) 
+				return ((ModelNode) parent).getChildren();
 			return new Object[0];
 		}
 
 		public boolean hasChildren(Object parent) {
-			if (parent instanceof EntityTemplateNode)
-				return ((EntityTemplateNode) parent).hasChildren();
-			if (parent instanceof EnumRootNode)
-				return ((EnumRootNode) parent).getChildren().length > 0;
+			if (parent instanceof ModelNode)
+				return ((ModelNode) parent).hasChildren();
 			return false;
 		}
 	}
@@ -122,7 +126,7 @@ public class ModelView extends ViewPart {
 
 		public Image getImage(Object obj) {
 			String imageKey = ISharedImages.IMG_OBJ_ELEMENT;
-			if (obj instanceof EntityTemplateNode || obj instanceof EnumRootNode)
+			if (obj instanceof EntityTemplateNode || obj instanceof EnumRootNode || obj instanceof PrefabNode || obj instanceof PrefabRootNode)
 				imageKey = ISharedImages.IMG_OBJ_FOLDER;
 			return PlatformUI.getWorkbench().getSharedImages().getImage(imageKey);
 		}
@@ -148,6 +152,7 @@ public class ModelView extends ViewPart {
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
 		enumRoot = SyncEnumTree.loadEnumTree(sharedDir);
+		prefabRoot = new PrefabRootNode();
 
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());
@@ -167,8 +172,11 @@ public class ModelView extends ViewPart {
 					selectedNode = null;
 					return;
 				}
+				
+				if (!(selection.getFirstElement() instanceof ModelNode))
+					return;
 
-				selectedNode = (INode) selection.getFirstElement();
+				selectedNode = (ModelNode) selection.getFirstElement();
 
 				if (selectedNode instanceof EntityTemplateRootNode) {
 					TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer,	SWT.NONE);
@@ -181,17 +189,29 @@ public class ModelView extends ViewPart {
 					templateDetails.setOnAddChildVariable(addChildVariableAction);
 					currentDetailPanel = templateDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
-					VariableNodeDetails variableDetails = new VariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
+					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
 					variableDetails.setOnRemove(removeNodeAction);
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
 					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(detailsContainer, SWT.NONE);
 					enumRootDetails.setOnAddEnum(addEnumAction);
 					currentDetailPanel = enumRootDetails;
-				}else if (selectedNode instanceof EnumNode) {
+				} else if (selectedNode instanceof EnumNode) {
 					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.NONE);
 					enumDetails.setOnRemove(removeNodeAction);
 					currentDetailPanel = enumDetails;
+				} else if (selectedNode instanceof PrefabNode) {
+					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
+					prefabDetails.setOnRemove(removeNodeAction);
+					prefabDetails.setOnAddPrefab(addPrefabAction);
+					currentDetailPanel = prefabDetails;
+				} else if (selectedNode instanceof PrefabRootNode) {
+					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(detailsContainer, SWT.NONE);
+					prefabDetails.setOnAddPrefab(addPrefabAction);
+					currentDetailPanel = prefabDetails;
+				} else if (selectedNode instanceof PrefabVariableNode) {
+					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE);
+					currentDetailPanel = prefabDetails;
 				}
 
 				detailsContainer.layout(true);
@@ -266,7 +286,7 @@ public class ModelView extends ViewPart {
 				if (selectedNode instanceof EntityTemplateNode) {
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 					
-					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATES_KEY))
+					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATE_ROOT_KEY))
 						return;
 
 					
@@ -445,6 +465,48 @@ public class ModelView extends ViewPart {
 		addEnumAction.setText("Add Enum");
 		addEnumAction.setToolTipText("Adds a new Enum.");
 		addEnumAction.setImageDescriptor(IMG_ADD);
+		
+		addPrefabAction = new Action() {
+			public void run() {
+				if (selectedNode instanceof PrefabNode || selectedNode instanceof PrefabRootNode) {
+
+					String name = promptName("Add new Prefab Node", "NewPrefab", "Enter Name for the new Prefab");
+					if (name == null)
+						return;
+					
+					if (!ModelConstants.isValidJavaIdentifier(name)) {
+						showMessage("\"" + name + "\" is an invalid name.");
+						return;
+					}
+					
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					List<String> allTemplateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
+					
+					ElementListSelectionDialog dialog = new ElementListSelectionDialog(viewer.getControl().getShell(), new LabelProvider());
+					dialog.setElements(allTemplateNames.toArray());
+					dialog.setTitle("Select A type for the Prefab");
+					if (dialog.open() != Window.OK)
+						return;
+					
+					Object[] selectedType = dialog.getResult();
+					if (selectedType.length == 0 || selectedType.length > 1)
+						return;
+					
+//					if (SyncEnumTree.enumExists(name, sharedDir)) {
+//						showMessage("Enum with the same name already exists. Choose a unique name.");
+//						return;
+//					}
+
+					selectedNode.addChild(new PrefabNode(name, selectedType[0].toString()));
+					viewer.refresh();
+
+					//SyncEnumTree.saveEnumTree(enumRootNode, sharedDir);
+				}
+			}
+		};
+		addPrefabAction.setText("Add Prefab");
+		addPrefabAction.setToolTipText("Adds a new Prefab.");
+		addPrefabAction.setImageDescriptor(IMG_ADD);
 	}
 
 	private void showMessage(String message) {

@@ -33,7 +33,7 @@ import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
-public class VariableNodeDetails extends NodeDetails {
+public class TemplateVariableNodeDetails extends NodeDetails {
 	
 	private static String[] primitiveTypes = {
 		VariableType.CHAR.toString(),
@@ -68,7 +68,7 @@ public class VariableNodeDetails extends NodeDetails {
 	
 	private EntityVariableNode variableNode;
 	
-	public VariableNodeDetails(EntityVariableNode variableNode, Composite parent, int style) {
+	public TemplateVariableNodeDetails(EntityVariableNode variableNode, Composite parent, int style) {
 		super(variableNode, parent, style);
 		
 		this.variableNode = variableNode;

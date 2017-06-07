@@ -7,8 +7,9 @@ import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableType;
 
 public class ModelConstants {
-	public static final String ENUM_DEFINITIONS_KEY = "Enum Definitions";
-	public static final String ENTITY_TEMPLATES_KEY = "Entity Templates";
+	public static final String ENUM_DEFINITION_ROOT_KEY = "Enum Definitions";
+	public static final String ENTITY_TEMPLATE_ROOT_KEY = "Entity Templates";
+	public static final String PREFAB_ROOT_KEY = "Entity Prefabs";
 	public static final String VARIABLES_PROP_KEY = "variables";
 	public static final String NAME_PROP_KEY = "name";
 	public static final String TYPE_PROP_KEY = "type";

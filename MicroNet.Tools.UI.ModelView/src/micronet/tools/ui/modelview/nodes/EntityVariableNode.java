@@ -4,7 +4,7 @@ import micronet.tools.ui.modelview.IVisitor;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
-public class EntityVariableNode extends EntityNode {
+public class EntityVariableNode extends ModelNode {
 
 	private VariableDescription variabelDescription = new VariableDescription(VariableType.STRING);
 	

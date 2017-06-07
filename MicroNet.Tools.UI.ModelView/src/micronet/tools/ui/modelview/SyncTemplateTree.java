@@ -1,6 +1,6 @@
 package micronet.tools.ui.modelview;
 
-import static micronet.tools.ui.modelview.ModelConstants.ENTITY_TEMPLATES_KEY;
+import static micronet.tools.ui.modelview.ModelConstants.ENTITY_TEMPLATE_ROOT_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.NAME_PROP_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.PARENT_PROP_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.VARIABLES_PROP_KEY;
@@ -44,7 +44,7 @@ import micronet.tools.ui.modelview.variables.VariableType;
 public class SyncTemplateTree {
 
 	private static Semaphore semaphore = new Semaphore(1);
-
+	
 	public static Map<String, Set<String>> getEnumUsage(String sharedDir) {
 		EntityTemplateRootNode rootNode = loadTemplateTree(sharedDir);
 		return getEnumUsage(rootNode);
@@ -158,6 +158,70 @@ public class SyncTemplateTree {
 		}
 		return templateNames;
 	}
+	
+	public static EntityTemplateNode loadTemplateType(String templateType, String sharedDir) {
+		
+		XOBJ<String> parentNameOut = new XOBJ<>(null);    
+	    
+		EntityTemplateNode templateNode = loadTemplateType(templateType, parentNameOut.Out(), sharedDir); 
+	    EntityTemplateNode originalNode = templateNode;
+
+	    while (parentNameOut.Value != null) {
+	    	String parentName = parentNameOut.Value;
+	    	parentNameOut = new XOBJ<>(null);   
+	    	EntityTemplateNode parentNode = loadTemplateType(parentName, parentNameOut.Out(), sharedDir);
+	    	templateNode.setParent(parentNode);
+	    	templateNode = parentNode;
+	    }
+	    
+		return originalNode;
+	}
+	
+	public static EntityTemplateNode loadTemplateType(String name, XOUT<String> parentName, String sharedDir) {
+
+		File templateDir = getTemplateDir(sharedDir);
+		
+		File templateFile = new File(templateDir + "/" + name);
+		if (!templateFile.exists())
+			return null;
+		
+		JsonElement templateObject = null;
+
+		try {
+			semaphore.acquire();
+
+			try (Scanner scanner = new Scanner(templateFile)) {
+				scanner.useDelimiter("\\A");
+				String data = scanner.next();
+
+				JsonParser parser = new JsonParser();
+				templateObject = parser.parse(data);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			semaphore.release();
+		}
+		
+		if (templateObject == null)
+			return null;
+		
+		String templateName = templateObject.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
+		EntityTemplateNode templateNode = new EntityTemplateNode(templateName);
+		
+		JsonArray variables = templateObject.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
+		for (JsonElement variable : variables) {
+			EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
+			templateNode.addChild(variableNode);
+		}
+		
+		JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
+		parentName.Obj.Value = parentNameObject == null ? null : parentNameObject.getAsString();
+
+		return templateNode;
+	}
 
 	public static EntityTemplateRootNode loadTemplateTree(String sharedDir) {
 
@@ -198,7 +262,7 @@ public class SyncTemplateTree {
 		Stack<JsonElement> parentObjects = new Stack<>();
 		Map<String, EntityTemplateNode> processedNodes = new HashMap<>();
 
-		EntityTemplateRootNode templateTreeRoot = new EntityTemplateRootNode(ENTITY_TEMPLATES_KEY);
+		EntityTemplateRootNode templateTreeRoot = new EntityTemplateRootNode(ENTITY_TEMPLATE_ROOT_KEY);
 
 		for (JsonElement templateObject : templateFileObjects) {
 
@@ -292,7 +356,7 @@ public class SyncTemplateTree {
 			JsonObject template = new JsonObject();
 
 			String parentName = node.getParent() != null ? node.getParent().getName() : null;
-			parentName = parentName != ENTITY_TEMPLATES_KEY ? parentName : null;
+			parentName = parentName != ENTITY_TEMPLATE_ROOT_KEY ? parentName : null;
 			template.addProperty(NAME_PROP_KEY, node.getName());
 			template.addProperty(PARENT_PROP_KEY, parentName);
 
