@@ -39,6 +39,10 @@ public abstract class ModelNode implements INode, IAdaptable  {
 	public INode[] getChildren() {
 		return children.toArray(new ModelNode[children.size()]);
 	}
+	
+	public void clearChildren() {
+		children.clear();
+	}
 
 	public boolean hasChildren() {
 		return children.size() > 0;

@@ -14,6 +14,7 @@ import micronet.tools.ui.modelview.nodes.PrefabNode;
 
 public class PrefabNodeDetails extends NodeDetails {
 	private Action onAddPrefab;
+	private Action onSavePrefabTreeAction;
 	
 	public PrefabNodeDetails(PrefabNode prefabNode, Composite parent, int style) {
 		super(prefabNode, parent, style);
@@ -33,9 +34,22 @@ public class PrefabNodeDetails extends NodeDetails {
 				onAddPrefab.run();
 			}
 		});
+		
+		button = new Button(this, SWT.PUSH);
+		button.setText("Save Prefab");
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent arg0) {
+				onSavePrefabTreeAction.run();
+			}
+		});
 	}
 	
 	public void setOnAddPrefab(Action onAddPrefab) {
 		this.onAddPrefab = onAddPrefab;
+	}
+	
+	public void setOnSavePrefab(Action savePrefabTreeAction) {
+		this.onSavePrefabTreeAction = savePrefabTreeAction;
 	}
 }

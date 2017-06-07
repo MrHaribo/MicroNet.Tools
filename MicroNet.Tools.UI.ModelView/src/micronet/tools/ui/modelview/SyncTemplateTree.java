@@ -32,6 +32,8 @@ import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.ui.modelview.nodes.PrefabNode;
+import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
@@ -397,9 +399,14 @@ public class SyncTemplateTree {
 		@Override
 		public void visit(EnumRootNode enumRootNode) {
 		}
-
 		@Override
 		public void visit(EnumNode enumNode) {
+		}
+		@Override
+		public void visit(PrefabNode prefabNode) {
+		}
+		@Override
+		public void visit(PrefabRootNode prefabRootNode) {
 		}
 	}
 	

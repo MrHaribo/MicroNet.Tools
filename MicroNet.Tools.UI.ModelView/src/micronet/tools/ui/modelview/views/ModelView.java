@@ -45,6 +45,7 @@ import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
+import micronet.tools.ui.modelview.SyncPrefabTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.codegen.ModelGenerator;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
@@ -72,11 +73,17 @@ public class ModelView extends ViewPart {
 
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
+	
 	private Action removeNodeAction;
+	
 	private Action addChildTemplateAction;
 	private Action addChildVariableAction;
+	
 	private Action addEnumAction;
+	
 	private Action addPrefabAction;
+	private Action refreshPrefabTreeAction;
+	private Action savePrefabTreeAction;
 	
 	private Action testGenAction;
 
@@ -204,13 +211,16 @@ public class ModelView extends ViewPart {
 					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
 					prefabDetails.setOnRemove(removeNodeAction);
 					prefabDetails.setOnAddPrefab(addPrefabAction);
+					prefabDetails.setOnSavePrefab(savePrefabTreeAction);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabRootNode) {
 					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(detailsContainer, SWT.NONE);
 					prefabDetails.setOnAddPrefab(addPrefabAction);
+					prefabDetails.setOnSavePrefab(savePrefabTreeAction);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabVariableNode) {
 					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE);
+					prefabDetails.setOnPrefabTreeChanged(refreshPrefabTreeAction);
 					currentDetailPanel = prefabDetails;
 				}
 
@@ -507,6 +517,27 @@ public class ModelView extends ViewPart {
 		addPrefabAction.setText("Add Prefab");
 		addPrefabAction.setToolTipText("Adds a new Prefab.");
 		addPrefabAction.setImageDescriptor(IMG_ADD);
+		
+		refreshPrefabTreeAction = new Action() {
+			public void run() {
+				viewer.refresh();
+			}
+		};
+		refreshPrefabTreeAction.setText("Refresh Prefab Tree");
+		refreshPrefabTreeAction.setToolTipText("Refreshes the Prefab tree.");
+		refreshPrefabTreeAction.setImageDescriptor(IMG_ADD);
+		
+		savePrefabTreeAction = new Action() {
+			public void run() {
+				if (selectedNode != null) {
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncPrefabTree.savePrefab(selectedNode, sharedDir);
+				}
+			}
+		};
+		savePrefabTreeAction.setText("Save Prefab Tree");
+		savePrefabTreeAction.setToolTipText("Saves the Prefab Tree to disk.");
+		savePrefabTreeAction.setImageDescriptor(IMG_ADD);
 	}
 
 	private void showMessage(String message) {

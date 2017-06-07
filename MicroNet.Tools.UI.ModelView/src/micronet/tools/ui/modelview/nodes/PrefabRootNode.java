@@ -12,6 +12,6 @@ public class PrefabRootNode extends ModelNode {
 
 	@Override
 	public void accept(IVisitor visitor) {
-		//visitor.visit(this);
+		visitor.visit(this);
 	}
 }

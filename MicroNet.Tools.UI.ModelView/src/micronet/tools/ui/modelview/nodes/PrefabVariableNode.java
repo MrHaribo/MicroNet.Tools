@@ -9,6 +9,8 @@ public class PrefabVariableNode extends ModelNode {
 	private String contributingTemplate;
 	private VariableDescription variableDescription;
 	
+	private Object variableValue = null;
+	
 	public PrefabVariableNode(EntityVariableNode variableNodeMirror, String contributingTemplate) {
 		super(variableNodeMirror.getName());
 		this.contributingTemplate = contributingTemplate;
@@ -29,5 +31,13 @@ public class PrefabVariableNode extends ModelNode {
 
 	public String getContributingTemplate() {
 		return contributingTemplate;
+	}
+
+	public void setVariableValue(Object variableValue) {
+		this.variableValue = variableValue;
+	}
+
+	public Object getVariableValue() {
+		return variableValue;
 	}
 }

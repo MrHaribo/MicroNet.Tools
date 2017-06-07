@@ -22,6 +22,8 @@ import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.ui.modelview.nodes.PrefabNode;
+import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 
 public class SyncEnumTree {
 
@@ -165,13 +167,15 @@ public class SyncEnumTree {
 
 		@Override
 		public void visit(EntityTemplateNode node) {
-			
 		}
-
 		@Override
 		public void visit(EntityTemplateRootNode rootNode) {
-			// TODO Auto-generated method stub
-			
+		}
+		@Override
+		public void visit(PrefabNode prefabNode) {
+		}
+		@Override
+		public void visit(PrefabRootNode prefabRootNode) {
 		}
 	}
 

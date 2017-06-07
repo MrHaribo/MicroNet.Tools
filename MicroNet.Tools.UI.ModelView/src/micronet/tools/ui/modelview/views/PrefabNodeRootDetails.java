@@ -11,12 +11,13 @@ import org.eclipse.swt.widgets.Composite;
 public class PrefabNodeRootDetails extends Composite {
 
 	private Action onAddPrefab;
-	
+	private Action onSavePrefabTreeAction;
+
 	public PrefabNodeRootDetails(Composite parent, int style) {
 		super(parent, style);
-		
+
 		setLayout(new FillLayout(SWT.VERTICAL));
-		
+
 		Button button = new Button(this, SWT.PUSH);
 		button.setText("Create Prefab");
 		button.addSelectionListener(new SelectionAdapter() {
@@ -25,9 +26,22 @@ public class PrefabNodeRootDetails extends Composite {
 				onAddPrefab.run();
 			}
 		});
+		
+		button = new Button(this, SWT.PUSH);
+		button.setText("Save Prefab Tree");
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent arg0) {
+				onSavePrefabTreeAction.run();
+			}
+		});
 	}
 
 	public void setOnAddPrefab(Action onAddPrefab) {
 		this.onAddPrefab = onAddPrefab;
+	}
+
+	public void setOnSavePrefab(Action savePrefabTreeAction) {
+		this.onSavePrefabTreeAction = savePrefabTreeAction;
 	}
 }
