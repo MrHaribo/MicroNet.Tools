@@ -220,7 +220,7 @@ public class PrefabVariableNodeDetails extends Composite {
 		
 		public StringEditor(Composite parent, int style) {
 			super(parent, style);
-			setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
 			setLayout(new GridLayout(2, false));
 			
 			
@@ -234,9 +234,9 @@ public class PrefabVariableNodeDetails extends Composite {
 			if (variableNode.getVariableValue() != null) {
 				textField.setText(variableNode.getVariableValue().toString());
 			}
-			textField.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
+			
+			textField.addModifyListener(new ModifyListener() {
+				public void modifyText(ModifyEvent event) {
 					variableNode.setVariableValue(textField.getText());
 				}
 			});

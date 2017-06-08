@@ -41,10 +41,18 @@ public class SyncPrefabTree {
 	
 	}
 	
+	public static void removePrefab(PrefabNode node, String sharedDir) {
+		String prefabID = serializePrefabID(node);
+		File metaFile = new File(getPrefabMetaDir(sharedDir) + "/" + prefabID);
+		File dataFile = new File(getPrefabDataDir(sharedDir) + "/" + prefabID);
+		metaFile.delete();
+		dataFile.delete();
+	}
+	
 	public static PrefabRootNode loadPrefabTree(String sharedDir) {
 		
-		File enumDir = getPrefabDir(sharedDir);
-		File[] directoryListing = enumDir.listFiles();
+		File prefabMetaDir = getPrefabMetaDir(sharedDir);
+		File[] directoryListing = prefabMetaDir.listFiles();
 		if (directoryListing == null)
 			return null;
 		
@@ -56,14 +64,22 @@ public class SyncPrefabTree {
 			}
 		});
 
-		for (File prefabFile : directoryListing) {
+		for (File metaFile : directoryListing) {
 			
-			String data = loadPrefabFile(prefabFile);
-			if (data == null)
+			String metaData = loadFile(metaFile);
+			if (metaData == null)
 				return null;
 			
-			String[] prefabID = deserializePrefabID(prefabFile.getName());
-			PrefabNode prefabNode = parsePrefab(prefabID, data, sharedDir);
+			String[] prefabID = deserializePrefabID(metaFile.getName());
+			String prefabName = prefabID[prefabID.length-1];
+			
+			JsonObject metaObject = new JsonParser().parse(metaData).getAsJsonObject();
+			String prefabType = metaObject.getAsJsonPrimitive(TYPE_PROP_KEY).getAsString();
+			
+			File prefabDataDir = getPrefabDataDir(sharedDir);
+			File dataFile = new File(prefabDataDir + "/" + metaFile.getName());
+			
+			PrefabNode prefabNode = parsePrefab(prefabName, prefabType, dataFile);
 			prefabMap.put(prefabID, prefabNode);
 			System.out.println("h23");
 		}
@@ -81,22 +97,14 @@ public class SyncPrefabTree {
 		return rootNode;
 	}
 	
-
-	
-	public static void savePrefab(INode node, String sharedDir) {
-		SavePrefabTreeVisitor visitor = new SavePrefabTreeVisitor(sharedDir);
-		node.accept(visitor);
+	private static PrefabNode parsePrefab(String prefabName, String prefabType, File file) {
 		
-	}
-	
-	private static PrefabNode parsePrefab(String[] prefabID, String data, String sharedDir) {
+		String data = loadFile(file);
+		if (data == null)
+			return null;
 		
 		JsonParser parser = new JsonParser();
 		JsonObject prefabObject = parser.parse(data).getAsJsonObject();
-
-		//TODO: Get Type from other file
-		String prefabType = prefabObject.getAsJsonPrimitive(TYPE_PROP_KEY).getAsString();
-		String prefabName = prefabID[prefabID.length-1];
 		
 		PrefabNode prefabNode = new PrefabNode(prefabName, prefabType);
 		
@@ -178,14 +186,10 @@ public class SyncPrefabTree {
 			return new JsonPrimitive((boolean)variableNode.getVariableValue());
 		case CHAR:
 			return new JsonPrimitive((char)variableNode.getVariableValue());
-		case COMPONENT:
-			break;
+		case STRING:
+			return new JsonPrimitive(variableNode.getVariableValue().toString());
 		case ENUM:
 			return new JsonPrimitive(variableNode.getVariableValue().toString());
-		case LIST:
-			break;
-		case MAP:
-			break;
 		case NUMBER:
 			NumberDescription numberDescription = (NumberDescription) variableNode.getVariableDescription();
 			switch (numberDescription.getNumberType()) {
@@ -208,7 +212,11 @@ public class SyncPrefabTree {
 			break;
 		case SET:
 			break;
-		case STRING:
+		case COMPONENT:
+			break;
+		case LIST:
+			break;
+		case MAP:
 			break;
 		default:
 			return null;
@@ -218,11 +226,20 @@ public class SyncPrefabTree {
 		return null;
 	}
 	
+	
+	public static void savePrefab(INode node, String sharedDir) {
+		SavePrefabTreeVisitor visitor = new SavePrefabTreeVisitor(sharedDir);
+		node.accept(visitor);
+		
+	}
+	
 	private static class SavePrefabTreeVisitor implements IVisitor {
-		private File prefabDir;
+		private File prefabMetaDir;
+		private File prefabDataDir;
 
 		public SavePrefabTreeVisitor(String sharedDir) {
-			this.prefabDir = getPrefabDir(sharedDir);
+			this.prefabMetaDir = getPrefabMetaDir(sharedDir);
+			this.prefabDataDir = getPrefabDataDir(sharedDir);
 		}
 
 		@Override
@@ -236,10 +253,11 @@ public class SyncPrefabTree {
 		public void visit(PrefabNode prefabNode) {
 			
 			String prefabID = serializePrefabID(prefabNode);
+			
+			JsonObject prefabMeta = new JsonObject();
+			prefabMeta.addProperty(TYPE_PROP_KEY, prefabNode.getTemplateType());
+			
 			JsonObject prefabObject = new JsonObject();
-			
-			prefabObject.addProperty(TYPE_PROP_KEY, prefabNode.getTemplateType());
-			
 			for (INode node : prefabNode.getChildren()) {
 				if (node instanceof PrefabNode) {
 					node.accept(this);
@@ -254,23 +272,18 @@ public class SyncPrefabTree {
 				}
 			}
 			
-			File prefabFile = new File(prefabDir + "/" + prefabID);
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
-			String data = gson.toJson(prefabObject);
 
-			try {
-				semaphore.acquire();
-				try (PrintWriter printer = new PrintWriter(prefabFile)) {
-					printer.print(data);
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} finally {
-				semaphore.release();
-			}
+			File file = new File(prefabDataDir + "/" + prefabID);
+			String data = gson.toJson(prefabObject);
+			saveFile(file, data);
+			
+			file = new File(prefabMetaDir + "/" + prefabID);
+			data = gson.toJson(prefabMeta);
+			saveFile(file, data);
 		}
+
+
 
 		@Override
 		public void visit(EnumRootNode enumRootNode) {
@@ -305,8 +318,23 @@ public class SyncPrefabTree {
 			return new String[]{prefabName};
 		return id;
 	}
+	
+	private static void saveFile(File file, String data) {
+		try {
+			semaphore.acquire();
+			try (PrintWriter printer = new PrintWriter(file)) {
+				printer.print(data);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			semaphore.release();
+		}
+	}
 
-	private static String loadPrefabFile(File file) {
+	private static String loadFile(File file) {
 		String data = null;
 		try {
 			semaphore.acquire();
@@ -324,6 +352,22 @@ public class SyncPrefabTree {
 			semaphore.release();
 		}
 		return data;
+	}
+	
+	private static File getPrefabMetaDir(String sharedDir) {
+		File prefabDir = getPrefabDir(sharedDir);
+		File prefabDataDir = new File(prefabDir + "/meta/");
+		if (!prefabDataDir.exists())
+			prefabDataDir.mkdir();
+		return prefabDataDir;
+	}
+	
+	private static File getPrefabDataDir(String sharedDir) {
+		File prefabDir = getPrefabDir(sharedDir);
+		File prefabDataDir = new File(prefabDir + "/data/");
+		if (!prefabDataDir.exists())
+			prefabDataDir.mkdir();
+		return prefabDataDir;
 	}
 	
 	private static File getPrefabDir(String sharedDir) {

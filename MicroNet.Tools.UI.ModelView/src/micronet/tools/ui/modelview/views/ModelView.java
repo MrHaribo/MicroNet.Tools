@@ -363,6 +363,15 @@ public class ModelView extends ViewPart {
 					((EntityTemplateNode) selectedNode.getParent()).removeChild(selectedNode);
 					viewer.refresh();
 				}
+				
+				if (selectedNode instanceof PrefabNode) {
+					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
+						return;
+
+					SyncPrefabTree.removePrefab((PrefabNode)selectedNode, sharedDir);
+					((ModelNode)selectedNode.getParent()).removeChild(selectedNode);
+					viewer.refresh();
+				}
 			}
 		};
 		removeNodeAction.setText("Action 1");
