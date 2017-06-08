@@ -159,7 +159,7 @@ public class ModelView extends ViewPart {
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
 		enumRoot = SyncEnumTree.loadEnumTree(sharedDir);
-		prefabRoot = new PrefabRootNode();
+		prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
 
 		viewer.setContentProvider(new ViewContentProvider());
 		viewer.setInput(getViewSite());

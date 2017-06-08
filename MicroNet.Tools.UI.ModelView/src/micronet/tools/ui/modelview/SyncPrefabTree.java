@@ -1,19 +1,27 @@
 package micronet.tools.ui.modelview;
 
+import static micronet.tools.ui.modelview.ModelConstants.TYPE_PROP_KEY;
 import static micronet.tools.ui.modelview.ModelConstants.getModelDir;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
@@ -30,8 +38,50 @@ public class SyncPrefabTree {
 	private static Semaphore semaphore = new Semaphore(1);
 	
 	public static void loadPrefab(PrefabNode prefabNode, String sharedDir) {
-		
+	
 	}
+	
+	public static PrefabRootNode loadPrefabTree(String sharedDir) {
+		
+		File enumDir = getPrefabDir(sharedDir);
+		File[] directoryListing = enumDir.listFiles();
+		if (directoryListing == null)
+			return null;
+		
+		Map<String[], PrefabNode> prefabMap = new TreeMap<>(new Comparator<String[]>() {
+			@Override
+			public int compare(String[] o1, String[] o2) {
+				int comparison = o1.length - o2.length;
+				return comparison;
+			}
+		});
+
+		for (File prefabFile : directoryListing) {
+			
+			String data = loadPrefabFile(prefabFile);
+			if (data == null)
+				return null;
+			
+			String[] prefabID = deserializePrefabID(prefabFile.getName());
+			PrefabNode prefabNode = parsePrefab(prefabID, data, sharedDir);
+			prefabMap.put(prefabID, prefabNode);
+			System.out.println("h23");
+		}
+		PrefabRootNode rootNode = new PrefabRootNode();
+		
+		for (Map.Entry<String[], PrefabNode> prefab : prefabMap.entrySet()) {
+			
+			if (prefab.getKey().length == 1) {
+				rootNode.addChild(prefab.getValue());
+			} else {
+				String[] parentName = Arrays.copyOf(prefab.getKey(), prefab.getKey().length-1);
+				prefabMap.get(parentName).addChild(prefab.getValue());
+			}
+		}
+		return rootNode;
+	}
+	
+
 	
 	public static void savePrefab(INode node, String sharedDir) {
 		SavePrefabTreeVisitor visitor = new SavePrefabTreeVisitor(sharedDir);
@@ -39,6 +89,88 @@ public class SyncPrefabTree {
 		
 	}
 	
+	private static PrefabNode parsePrefab(String[] prefabID, String data, String sharedDir) {
+		
+		JsonParser parser = new JsonParser();
+		JsonObject prefabObject = parser.parse(data).getAsJsonObject();
+
+		//TODO: Get Type from other file
+		String prefabType = prefabObject.getAsJsonPrimitive(TYPE_PROP_KEY).getAsString();
+		String prefabName = prefabID[prefabID.length-1];
+		
+		PrefabNode prefabNode = new PrefabNode(prefabName, prefabType);
+		
+		deserializePrefabVariables(prefabObject, prefabNode);
+		
+		return prefabNode;
+	}
+	
+	private static void deserializePrefabVariables(JsonObject prefabObject, PrefabNode prefabNode) {
+		
+		for (INode childNode : prefabNode.getChildren()) {
+			
+			if (childNode instanceof PrefabVariableNode) {
+				
+				PrefabVariableNode variableNode = (PrefabVariableNode)childNode;
+				
+				JsonElement element = prefabObject.get(variableNode.getName());
+				if (element == null)
+					continue;
+				
+				deserializePrefabVariable(variableNode, element);
+			}
+		}
+	}
+	
+	private static void deserializePrefabVariable(PrefabVariableNode variableNode, JsonElement element) {
+		
+		switch (variableNode.getVariableType()) {
+		case BOOLEAN:
+			variableNode.setVariableValue(element.getAsBoolean());
+			break;
+		case CHAR:
+			variableNode.setVariableValue(element.getAsCharacter());
+			break;
+		case COMPONENT:
+			break;
+		case ENUM:
+			variableNode.setVariableValue(element.getAsString());
+			break;
+		case LIST:
+			break;
+		case MAP:
+			break;
+		case NUMBER:
+			NumberDescription numberDescription = (NumberDescription) variableNode.getVariableDescription();
+			switch (numberDescription.getNumberType()) {
+			case BYTE:
+				variableNode.setVariableValue(element.getAsByte());
+				break;
+			case DOUBLE:
+				variableNode.setVariableValue(element.getAsDouble());
+				break;
+			case FLOAT:
+				variableNode.setVariableValue(element.getAsFloat());
+				break;
+			case INT:
+				variableNode.setVariableValue(element.getAsInt());
+				break;
+			case LONG:
+				variableNode.setVariableValue(element.getAsLong());
+				break;
+			case SHORT:
+				variableNode.setVariableValue(element.getAsShort());
+				break;
+			}
+		case REF:
+			break;
+		case SET:
+			break;
+		case STRING:
+			break;
+		}
+	}
+
 	private static JsonElement serializePrefabVariable(PrefabVariableNode variableNode) {
 		
 		switch (variableNode.getVariableType()) {
@@ -103,8 +235,10 @@ public class SyncPrefabTree {
 		@Override
 		public void visit(PrefabNode prefabNode) {
 			
-			String prefabName = getPrefabName(prefabNode);
+			String prefabID = serializePrefabID(prefabNode);
 			JsonObject prefabObject = new JsonObject();
+			
+			prefabObject.addProperty(TYPE_PROP_KEY, prefabNode.getTemplateType());
 			
 			for (INode node : prefabNode.getChildren()) {
 				if (node instanceof PrefabNode) {
@@ -120,7 +254,7 @@ public class SyncPrefabTree {
 				}
 			}
 			
-			File prefabFile = new File(prefabDir + "/" + prefabName);
+			File prefabFile = new File(prefabDir + "/" + prefabID);
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 			String data = gson.toJson(prefabObject);
 
@@ -152,7 +286,7 @@ public class SyncPrefabTree {
 		}
 	}
 
-	private static String getPrefabName(PrefabNode prefabNode) {
+	private static String serializePrefabID(PrefabNode prefabNode) {
 		List<String> prefabNameArray = new ArrayList<>(); 
 		prefabNameArray.add(prefabNode.getName());
 		
@@ -163,6 +297,33 @@ public class SyncPrefabTree {
 		}
 		Collections.reverse(prefabNameArray);
 		return String.join(".", prefabNameArray);
+	}
+	
+	private static String[] deserializePrefabID(String prefabName) {
+		String[] id = prefabName.split("\\.");
+		if (id.length == 0)
+			return new String[]{prefabName};
+		return id;
+	}
+
+	private static String loadPrefabFile(File file) {
+		String data = null;
+		try {
+			semaphore.acquire();
+			try (Scanner scanner = new Scanner(file)) {
+				scanner.useDelimiter("\\A");
+				data = scanner.next();
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			semaphore.release();
+		}
+		return data;
 	}
 	
 	private static File getPrefabDir(String sharedDir) {

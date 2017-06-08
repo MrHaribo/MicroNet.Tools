@@ -12,6 +12,7 @@ public class ModelConstants {
 	public static final String PREFAB_ROOT_KEY = "Entity Prefabs";
 	public static final String VARIABLES_PROP_KEY = "variables";
 	public static final String NAME_PROP_KEY = "name";
+	public static final String ID_PROP_KEY = "id";
 	public static final String TYPE_PROP_KEY = "type";
 	public static final String NUMBER_TYPE_PROP_KEY = "number_type";
 	public static final String ENTRY_TYPE_PROP_KEY = "entry_type";
