@@ -50,7 +50,7 @@ public class SyncPrefabTree {
 			}
 		}
 		
-		String prefabID = ModelNode.serializeID(node);
+		String prefabID = PrefabNode.serializeID(node);
 		File metaFile = new File(getPrefabMetaDir(sharedDir) + "/" + prefabID);
 		File dataFile = new File(getPrefabDataDir(sharedDir) + "/" + prefabID);
 		metaFile.delete();

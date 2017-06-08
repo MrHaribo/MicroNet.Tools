@@ -54,14 +54,10 @@ public abstract class ModelNode implements INode, IAdaptable  {
 		return getName();
 	}
 	
-	public String getID() {
-		return serializeID(this);
-	}
-	
 	public <T> T getAdapter(Class<T> key) {
 		return null;
 	}
-
+	
 	@Override
     public boolean equals(Object o) {
 		return o.hashCode() == this.hashCode();
@@ -71,6 +67,10 @@ public abstract class ModelNode implements INode, IAdaptable  {
     public int hashCode() {
         return getID().hashCode();
     }
+    
+	public String getID() {
+		return serializeID(this);
+	}
     
 	public static String serializeID(ModelNode modelNode) {
 		List<String> prefabNameArray = new ArrayList<>(); 
