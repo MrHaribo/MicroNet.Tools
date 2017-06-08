@@ -42,6 +42,13 @@ public class SyncPrefabTree {
 	}
 	
 	public static void removePrefab(PrefabNode node, String sharedDir) {
+		
+		for (INode childNode : node.getChildren()) {
+			if (childNode instanceof PrefabNode) {
+				removePrefab((PrefabNode)node, sharedDir);
+			}
+		}
+		
 		String prefabID = serializePrefabID(node);
 		File metaFile = new File(getPrefabMetaDir(sharedDir) + "/" + prefabID);
 		File dataFile = new File(getPrefabDataDir(sharedDir) + "/" + prefabID);
@@ -125,13 +132,17 @@ public class SyncPrefabTree {
 				if (element == null)
 					continue;
 				
-				deserializePrefabVariable(variableNode, element);
+				try {
+					deserializePrefabVariable(variableNode, element);
+				} catch (Exception e) {
+					variableNode.setVariableValue(null);
+				}
 			}
 		}
 	}
 	
 	private static void deserializePrefabVariable(PrefabVariableNode variableNode, JsonElement element) {
-		
+
 		switch (variableNode.getVariableType()) {
 		case BOOLEAN:
 			variableNode.setVariableValue(element.getAsBoolean());

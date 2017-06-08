@@ -78,6 +78,7 @@ public class ModelView extends ViewPart {
 	
 	private Action addChildTemplateAction;
 	private Action addChildVariableAction;
+	private Action reftreshPrefabTree;
 	
 	private Action addEnumAction;
 	
@@ -198,6 +199,7 @@ public class ModelView extends ViewPart {
 				} else if (selectedNode instanceof EntityVariableNode) {
 					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
 					variableDetails.setOnRemove(removeNodeAction);
+					variableDetails.setOnVariableChanged(reftreshPrefabTree);
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
 					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(detailsContainer, SWT.NONE);
@@ -333,12 +335,9 @@ public class ModelView extends ViewPart {
 					SyncEnumTree.removeEnum(selectedNode, sharedDir);
 
 					enumRoot.removeChild(selectedNode);
-					viewer.refresh();
 					
-					return;
-				}
-
-				if (selectedNode instanceof EntityTemplateNode) {
+				} else if (selectedNode instanceof EntityTemplateNode) {
+					
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 
 					for (INode node : entityTemplateNode.getChildren()) {
@@ -361,17 +360,28 @@ public class ModelView extends ViewPart {
 					SyncTemplateTree.removeTemplate(selectedNode, sharedDir);
 					
 					((EntityTemplateNode) selectedNode.getParent()).removeChild(selectedNode);
-					viewer.refresh();
-				}
-				
-				if (selectedNode instanceof PrefabNode) {
+					
+				} else if (selectedNode instanceof EntityVariableNode) {
+					
+					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
+						return;
+
+					EntityTemplateNode parentTemplate = (EntityTemplateNode)selectedNode.getParent();
+					
+					parentTemplate.removeChild(selectedNode);
+					SyncTemplateTree.saveTemplateTree(parentTemplate, sharedDir);
+					
+				} else if (selectedNode instanceof PrefabNode) {
+					
 					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
 						return;
 
 					SyncPrefabTree.removePrefab((PrefabNode)selectedNode, sharedDir);
 					((ModelNode)selectedNode.getParent()).removeChild(selectedNode);
-					viewer.refresh();
 				}
+				
+				prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+				viewer.refresh();
 			}
 		};
 		removeNodeAction.setText("Action 1");
@@ -444,10 +454,12 @@ public class ModelView extends ViewPart {
 					EntityVariableNode variableNode = new EntityVariableNode(name);
 					variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
 					entityTemplateNode.addChild(variableNode);
-					viewer.refresh();
 
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
+					
+					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+					viewer.refresh();
 				}
 			}
 		};
@@ -547,6 +559,17 @@ public class ModelView extends ViewPart {
 		savePrefabTreeAction.setText("Save Prefab Tree");
 		savePrefabTreeAction.setToolTipText("Saves the Prefab Tree to disk.");
 		savePrefabTreeAction.setImageDescriptor(IMG_ADD);
+		
+		reftreshPrefabTree = new Action() {
+			public void run() {
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+				prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+				viewer.refresh();
+			}
+		};
+		reftreshPrefabTree.setText("Refresh Prefab Tree");
+		reftreshPrefabTree.setToolTipText("Refreshed the prefab tree.");
+		reftreshPrefabTree.setImageDescriptor(IMG_ADD);
 	}
 
 	private void showMessage(String message) {

@@ -324,7 +324,7 @@ public class PrefabVariableNodeDetails extends Composite {
 			comboBox.setItems(values.toArray(new String[values.size()]));
 			
 			if (variableNode.getVariableValue() == null) {
-				variableNode.setVariableValue("a");
+				variableNode.setVariableValue('a');
 				comboBox.setText("a");
 			} else {
 				comboBox.setText(variableNode.getVariableValue().toString());
@@ -333,7 +333,7 @@ public class PrefabVariableNodeDetails extends Composite {
 			comboBox.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					variableNode.setVariableValue(comboBox.getText());
+					variableNode.setVariableValue(comboBox.getText().charAt(0));
 				}
 			});
 		}

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -68,6 +69,12 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 	
 	private EntityVariableNode variableNode;
 	
+	private Action onVariableChanged;
+	
+	public void setOnVariableChanged(Action onVariableChanged) {
+		this.onVariableChanged = onVariableChanged;
+	}
+
 	public TemplateVariableNodeDetails(EntityVariableNode variableNode, Composite parent, int style) {
 		super(variableNode, parent, style);
 		
@@ -134,6 +141,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					}
 				}
 				updateVariableDetails();
+				onVariableChanged.run();
 			}
 		});
 		
@@ -257,6 +265,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			variableNode.setVariabelDescription(mapDesc);
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+			onVariableChanged.run();
 		}
 	}
 	
@@ -290,6 +299,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			variableNode.setVariabelDescription(new CollectionDescription(VariableType.SET, setTypeSelect.getText()));
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+			onVariableChanged.run();
 		}
 	}
 	
@@ -315,6 +325,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			variableNode.setVariabelDescription(new CollectionDescription(VariableType.LIST, entryDetails.getSelectedEntryType()));
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+			onVariableChanged.run();
 		}
 	}
 	
@@ -419,6 +430,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					variableNode.setVariabelDescription(new ComponentDescription(componentTypeSelect.getText()));
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+					onVariableChanged.run();
 				}
 			});
 		}
@@ -448,6 +460,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					variableNode.setVariabelDescription(new NumberDescription(newType));
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+					onVariableChanged.run();
 				}
 			});
 		}
