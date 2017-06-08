@@ -416,9 +416,11 @@ public class ModelView extends ViewPart {
 				if (selectedNode instanceof EntityTemplateNode) {
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 					entityTemplateNode.addChild(new EntityTemplateNode(name));
-					viewer.refresh();
 
 					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
+					
+					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+					viewer.refresh();
 				}
 			}
 		};
@@ -487,9 +489,10 @@ public class ModelView extends ViewPart {
 					}
 
 					enumRootNode.addChild(new EnumNode(name));
-					viewer.refresh();
 
 					SyncEnumTree.saveEnumTree(enumRootNode, sharedDir);
+					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+					viewer.refresh();
 				}
 			}
 		};
@@ -510,6 +513,13 @@ public class ModelView extends ViewPart {
 						return;
 					}
 					
+					for (INode childNode : selectedNode.getChildren()) {
+						if (childNode.getName().toLowerCase().equals(name.toLowerCase())) {
+							showMessage("Sibling Prefab with the same name already exists. Choose a unique name.");
+							return;
+						}
+					}
+					
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					List<String> allTemplateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
 					
@@ -523,15 +533,10 @@ public class ModelView extends ViewPart {
 					if (selectedType.length == 0 || selectedType.length > 1)
 						return;
 					
-//					if (SyncEnumTree.enumExists(name, sharedDir)) {
-//						showMessage("Enum with the same name already exists. Choose a unique name.");
-//						return;
-//					}
-
 					selectedNode.addChild(new PrefabNode(name, selectedType[0].toString()));
-					viewer.refresh();
+					SyncPrefabTree.savePrefab(selectedNode, sharedDir);
 
-					//SyncEnumTree.saveEnumTree(enumRootNode, sharedDir);
+					viewer.refresh();
 				}
 			}
 		};

@@ -28,6 +28,7 @@ import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
@@ -49,7 +50,7 @@ public class SyncPrefabTree {
 			}
 		}
 		
-		String prefabID = serializePrefabID(node);
+		String prefabID = ModelNode.serializeID(node);
 		File metaFile = new File(getPrefabMetaDir(sharedDir) + "/" + prefabID);
 		File dataFile = new File(getPrefabDataDir(sharedDir) + "/" + prefabID);
 		metaFile.delete();
@@ -263,7 +264,6 @@ public class SyncPrefabTree {
 		@Override
 		public void visit(PrefabNode prefabNode) {
 			
-			String prefabID = serializePrefabID(prefabNode);
 			
 			JsonObject prefabMeta = new JsonObject();
 			prefabMeta.addProperty(TYPE_PROP_KEY, prefabNode.getTemplateType());
@@ -285,11 +285,11 @@ public class SyncPrefabTree {
 			
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-			File file = new File(prefabDataDir + "/" + prefabID);
+			File file = new File(prefabDataDir + "/" + prefabNode.getID());
 			String data = gson.toJson(prefabObject);
 			saveFile(file, data);
 			
-			file = new File(prefabMetaDir + "/" + prefabID);
+			file = new File(prefabMetaDir + "/" + prefabNode.getID());
 			data = gson.toJson(prefabMeta);
 			saveFile(file, data);
 		}
@@ -308,19 +308,6 @@ public class SyncPrefabTree {
 		@Override
 		public void visit(EntityTemplateRootNode rootNode) {
 		}
-	}
-
-	private static String serializePrefabID(PrefabNode prefabNode) {
-		List<String> prefabNameArray = new ArrayList<>(); 
-		prefabNameArray.add(prefabNode.getName());
-		
-		INode parent = prefabNode.getParent();
-		while (parent != null && !(parent instanceof PrefabRootNode)) {
-			prefabNameArray.add(parent.getName());
-			parent = parent.getParent();
-		}
-		Collections.reverse(prefabNameArray);
-		return String.join(".", prefabNameArray);
 	}
 	
 	private static String[] deserializePrefabID(String prefabName) {

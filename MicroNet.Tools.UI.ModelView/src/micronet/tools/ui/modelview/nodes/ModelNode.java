@@ -1,9 +1,11 @@
 package micronet.tools.ui.modelview.nodes;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.viewers.IElementComparer;
 
 import micronet.tools.ui.modelview.INode;
 
@@ -16,6 +18,7 @@ public abstract class ModelNode implements INode, IAdaptable  {
 		this.name = name;
 		this.children = new ArrayList<>();
 	}
+	
 	public String getName() {
 		return name;
 	}
@@ -50,7 +53,35 @@ public abstract class ModelNode implements INode, IAdaptable  {
 	public String toString() {
 		return getName();
 	}
+	
+	public String getID() {
+		return serializeID(this);
+	}
+	
 	public <T> T getAdapter(Class<T> key) {
 		return null;
+	}
+
+	@Override
+    public boolean equals(Object o) {
+		return o.hashCode() == this.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return getID().hashCode();
+    }
+    
+	public static String serializeID(ModelNode modelNode) {
+		List<String> prefabNameArray = new ArrayList<>(); 
+		prefabNameArray.add(modelNode.getName());
+		
+		INode parent = modelNode.getParent();
+		while (parent != null && !(parent instanceof PrefabRootNode)) {
+			prefabNameArray.add(parent.getName());
+			parent = parent.getParent();
+		}
+		Collections.reverse(prefabNameArray);
+		return String.join(".", prefabNameArray);
 	}
 }
