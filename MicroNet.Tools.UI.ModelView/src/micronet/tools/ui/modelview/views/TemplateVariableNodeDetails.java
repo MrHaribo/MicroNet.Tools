@@ -38,9 +38,8 @@ import micronet.tools.ui.modelview.variables.VariableType;
 
 public class TemplateVariableNodeDetails extends NodeDetails {
 	
-	private static String[] primitiveTypes = {
+	private static String[] setTypes = {
 		VariableType.CHAR.toString(),
-		VariableType.ENUM.toString(),
 		VariableType.STRING.toString(),
 		NumberType.BYTE.toString(),
 		NumberType.SHORT.toString(),
@@ -51,6 +50,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 	};
 	
 	private static String[] listTypes = {
+		VariableType.ENUM.toString(),
 		VariableType.BOOLEAN.toString(),
 		VariableType.CHAR.toString(),
 		VariableType.STRING.toString(),
@@ -179,7 +179,11 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			detailsPanel = new MapDetails(detailsContainer, SWT.NONE);
 			break;
 		case ENUM:
-			detailsPanel = new EnumDetails(detailsContainer, SWT.NONE);
+			detailsPanel = new EnumDetails(detailsContainer, SWT.NONE, enumType -> {
+				variableNode.setVariabelDescription(new EnumDescription(enumType));
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+				SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+			});
 			break;
 		case COMPONENT:
 			detailsPanel = new ComponentDetails(detailsContainer, SWT.NONE);
@@ -207,7 +211,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 	
 	private class EnumDetails extends Composite {
 
-		public EnumDetails(Composite parent, int style) {
+		public EnumDetails(Composite parent, int style, Consumer<String> changedCallback) {
 			super(parent, style);
 			
 			EnumDescription numberDesc = (EnumDescription) variableNode.getVariabelDescription();
@@ -230,13 +234,10 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			enumTypeSelect.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
-					variableNode.setVariabelDescription(new EnumDescription(enumTypeSelect.getText()));
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+					changedCallback.accept(enumTypeSelect.getText());
 				}
 			});
 		}
-		
 	}
 	
 	private class MapDetails extends Composite {
@@ -255,7 +256,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			label.setText("Key Type:");
 			
 			keyTypeSelect = new Combo(this, SWT.READ_ONLY);
-			keyTypeSelect.setItems(primitiveTypes);
+			keyTypeSelect.setItems(setTypes);
 			keyTypeSelect.setText(mapDesc.getKeyType());
 			keyTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			keyTypeSelect.addSelectionListener(new SelectionAdapter() {
@@ -265,11 +266,10 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 				}
 			});
 			
-			entryDetails = new EntryDetails(mapDesc, this, style);
-			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-			entryDetails.setChangedCallback(entryType -> {
+			entryDetails = new EntryDetails(mapDesc, this, style, entryType -> {
 				updateMapDescription();
 			});
+			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 		}
 
 		private void updateMapDescription() {
@@ -296,7 +296,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			label.setText("Set Entry Type:");
 
 			setTypeSelect = new Combo(this, SWT.READ_ONLY);
-			setTypeSelect.setItems(primitiveTypes);
+			setTypeSelect.setItems(setTypes);
 			setTypeSelect.setText(collectionDesc.getEntryType());
 			setTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			setTypeSelect.addSelectionListener(new SelectionAdapter() {
@@ -326,11 +326,13 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			
 			CollectionDescription collectionDesc = (CollectionDescription) variableNode.getVariabelDescription();
 			
-			entryDetails = new EntryDetails(collectionDesc, this, style);
-			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-			entryDetails.setChangedCallback(entryType -> {
+			entryDetails = new EntryDetails(collectionDesc, this, style, entryType -> {
 				updateListDescription();
 			});
+			
+			//if (collectionDesc.getEntryType())
+			
+			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		}
 		
 		private void updateListDescription() {
@@ -347,19 +349,13 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		private Button templateRadio;
 		private Combo listTypeSelect;
 		
-		private Consumer<String> onChanged;
-		
-		public void setChangedCallback(Consumer<String> onChanged) {
-			this.onChanged = onChanged;
-		}
-		
 		public String getSelectedEntryType() {
 			return listTypeSelect.getText();
 		}
 
-		public EntryDetails(CollectionDescription collectionDesc, Composite parent, int style) {
+		public EntryDetails(CollectionDescription collectionDesc, Composite parent, int style, Consumer<String> changeCallback) {
 			super(parent, style);
-	
+			
 			VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(collectionDesc);
 			NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(collectionDesc);
 			boolean isTemplateType = variableType == null && numberType == null;
@@ -381,7 +377,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 				public void widgetSelected(SelectionEvent arg0) {
 					listTypeSelect.setItems(listTypes);
 					listTypeSelect.setText(VariableType.STRING.toString());
-					onChanged.accept(listTypeSelect.getText());
+					changeCallback.accept(listTypeSelect.getText());
 				}
 			});
 			
@@ -394,7 +390,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					List<String> templateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
 					listTypeSelect.setItems(templateNames.toArray(new String[templateNames.size()]));
 					listTypeSelect.setText(templateNames.get(0));
-					onChanged.accept(listTypeSelect.getText());
+					changeCallback.accept(listTypeSelect.getText());
 				}
 			});
 			
@@ -408,7 +404,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			listTypeSelect.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					onChanged.accept(listTypeSelect.getText());
+					changeCallback.accept(listTypeSelect.getText());
 				}
 			});
 		}

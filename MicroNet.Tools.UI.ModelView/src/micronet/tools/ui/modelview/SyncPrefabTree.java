@@ -36,6 +36,7 @@ import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.VariableDescription;
+import micronet.tools.ui.modelview.variables.VariableType;
 
 public class SyncPrefabTree {
 	
@@ -176,6 +177,7 @@ public class SyncPrefabTree {
 				}
 			}
 			break;
+		case SET:
 		case LIST:
 			JsonArray listArray = element.getAsJsonArray();
 			if (listArray == null)
@@ -190,6 +192,10 @@ public class SyncPrefabTree {
 				PrefabVariableEntryNode childVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
 				childVariable.setName(entryDesc.getType().toString() + index++);
 				variableNode.addChild(childVariable);
+				
+				if (variableNode.getVariableType() == VariableType.SET)
+					childVariable.setEditable(false);
+				
 				try {
 					deserializePrefabVariable(childVariable, listEntry, sharedDir);
 				} catch (Exception e) {
@@ -224,8 +230,6 @@ public class SyncPrefabTree {
 				variableNode.setVariableValue(element.getAsShort());
 				break;
 			}
-		case SET:
-			break;
 		case STRING:
 			variableNode.setVariableValue(element.getAsString());
 			break;
@@ -278,6 +282,7 @@ public class SyncPrefabTree {
 			}
 			return componentObject;
 		case LIST:
+		case SET:
 			if (!variableNode.hasChildren())
 				return null;
 			JsonArray listArray = new JsonArray();
@@ -293,8 +298,6 @@ public class SyncPrefabTree {
 				}
 			}
 			return listArray;
-		case SET:
-			break;
 		case MAP:
 			break;
 		default:

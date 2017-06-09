@@ -9,6 +9,8 @@ public class PrefabVariableNode extends ModelNode {
 	private String contributingTemplate = "";
 	private VariableDescription variableDescription;
 	
+	private boolean editable = true;
+	
 	private Object variableValue = null;
 	
 	public PrefabVariableNode(String name, VariableDescription variableDescription) {
@@ -44,5 +46,13 @@ public class PrefabVariableNode extends ModelNode {
 
 	public Object getVariableValue() {
 		return variableValue;
+	}
+	
+	public boolean isEditable() {
+		return editable;
+	}
+
+	public void setEditable(boolean editable) {
+		this.editable = editable;
 	}
 }
