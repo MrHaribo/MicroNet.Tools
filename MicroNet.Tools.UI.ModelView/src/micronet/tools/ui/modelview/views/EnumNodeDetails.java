@@ -22,14 +22,12 @@ import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.ui.modelview.actions.EnumRemoveAction;
 import micronet.tools.ui.modelview.nodes.EnumNode;
-import micronet.tools.ui.modelview.nodes.ModelNode;
 
 public class EnumNodeDetails extends NodeRemovableDetails {
 
-	protected Action refreshViewerAction;
-	
-	private Action removeEnumAction;
+	private EnumRemoveAction removeEnumAction;
 	
 	private String editString = "Edit";
 	private String saveString = "Save";
@@ -42,7 +40,7 @@ public class EnumNodeDetails extends NodeRemovableDetails {
 		
 		this.enumNode = enumNode;
 		
-		removeEnumAction = new RemoveEnumAction();
+		removeEnumAction = new EnumRemoveAction(getShell(), enumNode);
 		removeEnumAction.setText("Remove Enum");
 		removeEnumAction.setToolTipText("Removed the Enum");
 		setRemoveNodeAction(removeEnumAction);
@@ -117,34 +115,9 @@ public class EnumNodeDetails extends NodeRemovableDetails {
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		SyncEnumTree.saveEnumNode(enumNode, sharedDir);
 	}
-	
-	private class RemoveEnumAction extends Action {
-		@Override
-		public void run() {
-			
-			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-			Map<String, Set<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
-			if (enumUsage.containsKey(enumNode.getName())) {
-				MessageDialog.openInformation(EnumNodeDetails.this.getShell(), 
-						"Enum in Use", "Enum " + enumNode.getName() +
-						" cant be removed because it is in use by: " +
-						String.join(",", enumUsage.get(enumNode.getName())));
-				return;
-			}
-			
-			if (!MessageDialog.openQuestion(EnumNodeDetails.this.getShell(), "Remove Node", "Do you really want to remove: " + enumNode.getName()))
-				return;
-			
-			((ModelNode)enumNode.getParent()).removeChild(enumNode);
-			SyncEnumTree.removeEnum(enumNode, sharedDir);
-
-			if (refreshViewerAction != null)
-				refreshViewerAction.run();
-		}
-	}
 
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		this.refreshViewerAction = refreshViewerAction;
+		removeEnumAction.setRefreshViewerAction(refreshViewerAction);
 	}
 	
 }

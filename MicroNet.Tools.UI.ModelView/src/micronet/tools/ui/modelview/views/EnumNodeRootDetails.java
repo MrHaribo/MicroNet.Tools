@@ -8,17 +8,17 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-import micronet.tools.ui.modelview.actions.AddEnumAction;
+import micronet.tools.ui.modelview.actions.EnumAddAction;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 
 public class EnumNodeRootDetails extends Composite {
 
-	private AddEnumAction addEnumAction;
+	private EnumAddAction addEnumAction;
 	
 	public EnumNodeRootDetails(EnumRootNode enumRootNode, Composite parent, int style) {
 		super(parent, style);
 		
-		addEnumAction = new AddEnumAction(getShell(), enumRootNode);
+		addEnumAction = new EnumAddAction(getShell(), enumRootNode);
 		addEnumAction.setText("Add Enum");
 		addEnumAction.setToolTipText("Adds a new Enum.");
 		addEnumAction.setImageDescriptor(ModelView.IMG_ADD);

@@ -11,12 +11,12 @@ import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 
-public class AddEnumAction extends ModelAction {
+public class EnumAddAction extends ModelAction {
 	
 	private Shell shell;
 	private EnumRootNode enumRootNode;
 	
-	public AddEnumAction(Shell shell, EnumRootNode enumRootNode) {
+	public EnumAddAction(Shell shell, EnumRootNode enumRootNode) {
 		this.shell = shell;
 		this.enumRootNode = enumRootNode;
 	}
