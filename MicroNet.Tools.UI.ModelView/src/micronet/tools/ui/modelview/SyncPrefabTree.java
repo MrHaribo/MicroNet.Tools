@@ -184,9 +184,8 @@ public class SyncPrefabTree {
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
 			VariableDescription entryDesc = ModelConstants.getEntryDescription(listDescription);
 			
-			int index = 0;
 			for (JsonElement listEntry : listArray) {
-				PrefabVariableNode childVariable = new PrefabVariableNode("entry" + index++, entryDesc);
+				PrefabVariableNode childVariable = new PrefabVariableNode("entry", entryDesc);
 				variableNode.addChild(childVariable);
 				try {
 					deserializePrefabVariable(childVariable, listEntry, sharedDir);

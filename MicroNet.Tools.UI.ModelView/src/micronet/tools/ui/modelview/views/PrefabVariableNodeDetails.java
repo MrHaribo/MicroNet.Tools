@@ -173,22 +173,18 @@ public class PrefabVariableNodeDetails extends Composite {
 			entryDesc = ModelConstants.getEntryDescription(listDescription);
 			
 			Button button = new Button(this, SWT.NONE);
+			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
 			button.setText("Add Entry");
 			button.addSelectionListener(new SelectionAdapter() {
 				
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
-					// TODO Auto-generated method stub
-					int listIndex = variableNode.getChildren().length + 1;
-					String entryName = "entry" + listIndex;
-					
-					PrefabVariableNode prefabVariable = new PrefabVariableNode(entryName, entryDesc);
+					PrefabVariableNode prefabVariable = new PrefabVariableNode("entry", entryDesc);
 					variableNode.addChild(prefabVariable);
 					refreshPrefabTree.run();
 				}
 			});
 		}
-		
 	}
 	
 	private class ComponentEditor extends Composite{
