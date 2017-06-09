@@ -29,6 +29,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IActionBars;
@@ -67,9 +68,9 @@ public class ModelView extends ViewPart {
 	 */
 	public static final String ID = "micronet.tools.ui.modelview.views.ModelView";
 
-	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
-	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
-	private final ImageDescriptor IMG_MICRONET = getImageDescriptor("micronet_icon.png");
+	public static final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
+	public static final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
+	public static final ImageDescriptor IMG_MICRONET = getImageDescriptor("micronet_icon.png");
 
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
@@ -78,9 +79,9 @@ public class ModelView extends ViewPart {
 	
 	private Action addChildTemplateAction;
 	private Action addChildVariableAction;
-	private Action reftreshPrefabTree;
+	private Action refreshViewerAction;
 	
-	private Action addEnumAction;
+	//private Action addEnumAction;
 	
 	private Action addPrefabAction;
 	private Action refreshPrefabTreeAction;
@@ -193,25 +194,25 @@ public class ModelView extends ViewPart {
 				} else if (selectedNode instanceof EntityTemplateNode) {
 					TemplateNodeDetails templateDetails = new TemplateNodeDetails((EntityTemplateNode)selectedNode, detailsContainer, SWT.NONE);
 					templateDetails.setOnAddChildTemplate(addChildTemplateAction);
-					templateDetails.setOnRemove(removeNodeAction);
+					templateDetails.setRemoveNodeAction(removeNodeAction);
 					templateDetails.setOnAddChildVariable(addChildVariableAction);
 					currentDetailPanel = templateDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
 					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
-					variableDetails.setOnRemove(removeNodeAction);
-					variableDetails.setOnVariableChanged(reftreshPrefabTree);
+					variableDetails.setRemoveNodeAction(removeNodeAction);
+					variableDetails.setOnVariableChanged(refreshViewerAction);
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
-					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(detailsContainer, SWT.NONE);
-					enumRootDetails.setOnAddEnum(addEnumAction);
+					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(enumRoot, detailsContainer, SWT.NONE);
+					enumRootDetails.setRefreshViewerAction(refreshViewerAction);
 					currentDetailPanel = enumRootDetails;
 				} else if (selectedNode instanceof EnumNode) {
 					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.NONE);
-					enumDetails.setOnRemove(removeNodeAction);
+					enumDetails.setRemoveNodeAction(removeNodeAction);
 					currentDetailPanel = enumDetails;
 				} else if (selectedNode instanceof PrefabNode) {
 					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
-					prefabDetails.setOnRemove(removeNodeAction);
+					prefabDetails.setRemoveNodeAction(removeNodeAction);
 					prefabDetails.setOnAddPrefab(addPrefabAction);
 					prefabDetails.setOnSavePrefab(savePrefabTreeAction);
 					currentDetailPanel = prefabDetails;
@@ -469,37 +470,6 @@ public class ModelView extends ViewPart {
 		addChildVariableAction.setToolTipText("Adds a Variable to the Selected Template");
 		addChildVariableAction.setImageDescriptor(IMG_ADD);
 		
-		addEnumAction = new Action() {
-			public void run() {
-				if (selectedNode instanceof EnumRootNode) {
-					EnumRootNode enumRootNode = (EnumRootNode) selectedNode;
-
-					String name = promptName("Add new Enum", "NewEnum",	"Enter Name for the new Enum");
-					if (name == null)
-						return;
-					
-					if (!ModelConstants.isValidJavaIdentifier(name)) {
-						showMessage("\"" + name + "\" is an invalid name.");
-						return;
-					}
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					if (SyncEnumTree.enumExists(name, sharedDir)) {
-						showMessage("Enum with the same name already exists. Choose a unique name.");
-						return;
-					}
-
-					enumRootNode.addChild(new EnumNode(name));
-
-					SyncEnumTree.saveEnumTree(enumRootNode, sharedDir);
-					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
-					viewer.refresh();
-				}
-			}
-		};
-		addEnumAction.setText("Add Enum");
-		addEnumAction.setToolTipText("Adds a new Enum.");
-		addEnumAction.setImageDescriptor(IMG_ADD);
-		
 		addPrefabAction = new Action() {
 			public void run() {
 				if (selectedNode instanceof PrefabNode || selectedNode instanceof PrefabRootNode) {
@@ -566,16 +536,22 @@ public class ModelView extends ViewPart {
 		savePrefabTreeAction.setToolTipText("Saves the Prefab Tree to disk.");
 		savePrefabTreeAction.setImageDescriptor(IMG_ADD);
 		
-		reftreshPrefabTree = new Action() {
+		refreshViewerAction = new Action() {
+			@Override
+			public void runWithEvent(Event event) {
+				if ((boolean)event.data) {
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+				}
+				run();
+			}
 			public void run() {
-				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-				prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
 				viewer.refresh();
 			}
 		};
-		reftreshPrefabTree.setText("Refresh Prefab Tree");
-		reftreshPrefabTree.setToolTipText("Refreshed the prefab tree.");
-		reftreshPrefabTree.setImageDescriptor(IMG_ADD);
+		refreshViewerAction.setText("Refresh Model Tree");
+		refreshViewerAction.setToolTipText("Refreshes the template, enum and prefab tree.");
+		refreshViewerAction.setImageDescriptor(IMG_ADD);
 	}
 
 	private void showMessage(String message) {
@@ -594,8 +570,7 @@ public class ModelView extends ViewPart {
 		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
 	}
 
-	private static ImageDescriptor getImageDescriptor(String file) {
-		// assume that the current class is called View.java
+	public static ImageDescriptor getImageDescriptor(String file) {
 		Bundle bundle = FrameworkUtil.getBundle(ModelView.class);
 		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
 		return ImageDescriptor.createFromURL(url);

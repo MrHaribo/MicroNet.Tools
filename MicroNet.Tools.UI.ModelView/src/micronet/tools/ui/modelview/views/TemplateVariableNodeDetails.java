@@ -34,7 +34,7 @@ import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
-public class TemplateVariableNodeDetails extends NodeDetails {
+public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 	
 	private static String[] primitiveTypes = {
 		VariableType.CHAR.toString(),

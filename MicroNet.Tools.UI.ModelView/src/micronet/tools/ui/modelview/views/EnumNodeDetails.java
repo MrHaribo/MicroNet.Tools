@@ -23,7 +23,7 @@ import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 
-public class EnumNodeDetails extends NodeDetails {
+public class EnumNodeDetails extends NodeRemovableDetails {
 	
 	private String editString = "Edit";
 	private String saveString = "Save";

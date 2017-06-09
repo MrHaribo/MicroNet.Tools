@@ -17,7 +17,7 @@ import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 
-public class TemplateNodeDetails extends NodeDetails {
+public class TemplateNodeDetails extends NodeRemovableDetails {
 
 	private Action onAddChildTemplate;
 	private Action onAddChildVariable;

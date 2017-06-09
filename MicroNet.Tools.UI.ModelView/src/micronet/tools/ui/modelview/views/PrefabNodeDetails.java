@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 
-public class PrefabNodeDetails extends NodeDetails {
+public class PrefabNodeDetails extends NodeRemovableDetails {
 	private Action onAddPrefab;
 	private Action onSavePrefabTreeAction;
 	
