@@ -80,9 +80,9 @@ public class TemplateNodeDetails extends NodeDetails {
 
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		addChildTemplateAction.setRefreshViewerAction(refreshViewerAction);
-		removeChildTemplateAction.setRefreshViewerAction(refreshViewerAction);
-		addChildVariableAction.setRefreshViewerAction(refreshViewerAction);
+		addChildTemplateAction.setRefreshViewerAction(refreshViewerAction, false);
+		removeChildTemplateAction.setRefreshViewerAction(refreshViewerAction, true);
+		addChildVariableAction.setRefreshViewerAction(refreshViewerAction, true);
 	}
 	
 	@Override

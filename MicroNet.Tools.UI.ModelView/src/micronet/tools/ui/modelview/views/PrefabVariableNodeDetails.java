@@ -11,12 +11,12 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
@@ -33,9 +33,7 @@ import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
-import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableDescription;
-import micronet.tools.ui.modelview.variables.VariableType;
 
 public class PrefabVariableNodeDetails extends Composite implements IDetails {
 
@@ -45,7 +43,20 @@ public class PrefabVariableNodeDetails extends Composite implements IDetails {
 	
 	private Button nullCheckBox;
 	
-	private Action refreshPrefabTree;
+	private Action refreshViewerAction;
+	
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		this.refreshViewerAction = refreshViewerAction;
+	}
+	
+	private void refreshViewer() {
+		if (refreshViewerAction != null) {
+			Event event = new Event();
+			event.data = false;
+			refreshViewerAction.runWithEvent(event);
+		}
+	}
 	
 	public PrefabVariableNodeDetails(PrefabVariableNode variableNode, Composite parent, int style) {
 		super(parent, style);
@@ -121,10 +132,6 @@ public class PrefabVariableNodeDetails extends Composite implements IDetails {
 			
 		}
 	}
-
-	public void setOnPrefabTreeChanged(Action prefabTreeChanged) {
-		this.refreshPrefabTree = prefabTreeChanged;
-	}
 	
 	private class NullPanel extends Composite {
 
@@ -151,7 +158,7 @@ public class PrefabVariableNodeDetails extends Composite implements IDetails {
 						detailsPanel.dispose();
 					}
 					parent.layout();
-					refreshPrefabTree.run();
+					refreshViewer();
 				}
 			});
 		}
@@ -181,7 +188,7 @@ public class PrefabVariableNodeDetails extends Composite implements IDetails {
 				public void widgetSelected(SelectionEvent arg0) {
 					PrefabVariableNode prefabVariable = new PrefabVariableNode("entry", entryDesc);
 					variableNode.addChild(prefabVariable);
-					refreshPrefabTree.run();
+					refreshViewer();
 				}
 			});
 		}
@@ -462,11 +469,5 @@ public class PrefabVariableNodeDetails extends Composite implements IDetails {
 				}
 			});
 		}
-	}
-
-	@Override
-	public void setRefreshViewerAction(Action refreshViewerAction) {
-		// TODO Auto-generated method stub
-		
 	}
 }

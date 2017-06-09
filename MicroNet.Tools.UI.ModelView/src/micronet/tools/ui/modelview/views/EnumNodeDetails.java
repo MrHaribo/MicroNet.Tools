@@ -105,7 +105,7 @@ public class EnumNodeDetails extends NodeDetails {
 	
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		removeEnumAction.setRefreshViewerAction(refreshViewerAction);
+		removeEnumAction.setRefreshViewerAction(refreshViewerAction, true);
 	}
 	
 	private void saveEnumNode() {

@@ -37,6 +37,6 @@ public class TemplateNodeRootDetails extends Composite implements IDetails {
 
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		createTemplateAction.setRefreshViewerAction(refreshViewerAction);
+		createTemplateAction.setRefreshViewerAction(refreshViewerAction, false);
 	}
 }

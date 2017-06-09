@@ -37,6 +37,6 @@ public class EnumNodeRootDetails extends Composite implements IDetails {
 	
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		addEnumAction.setRefreshViewerAction(refreshViewerAction);
+		addEnumAction.setRefreshViewerAction(refreshViewerAction, false);
 	}
 }

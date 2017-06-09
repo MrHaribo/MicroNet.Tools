@@ -8,14 +8,22 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
+import micronet.tools.core.ModelProvider;
+import micronet.tools.ui.modelview.SyncPrefabTree;
+import micronet.tools.ui.modelview.actions.PrefabCreateAction;
+import micronet.tools.ui.modelview.nodes.PrefabRootNode;
+
 public class PrefabNodeRootDetails extends Composite implements IDetails {
 
-	private Action onAddPrefab;
-	private Action onSavePrefabTreeAction;
-
-	public PrefabNodeRootDetails(Composite parent, int style) {
+	private PrefabCreateAction addPrefabAction;
+	
+	public PrefabNodeRootDetails(PrefabRootNode prefabRoot, Composite parent, int style) {
 		super(parent, style);
 
+		addPrefabAction = new PrefabCreateAction(getShell(), prefabRoot);
+		addPrefabAction.setText("Add Prefab");
+		addPrefabAction.setToolTipText("Adds a new Prefab.");
+		
 		setLayout(new FillLayout(SWT.VERTICAL));
 
 		Button button = new Button(this, SWT.PUSH);
@@ -23,7 +31,7 @@ public class PrefabNodeRootDetails extends Composite implements IDetails {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onAddPrefab.run();
+				addPrefabAction.run();
 			}
 		});
 		
@@ -32,22 +40,14 @@ public class PrefabNodeRootDetails extends Composite implements IDetails {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onSavePrefabTreeAction.run();
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+				SyncPrefabTree.savePrefab(prefabRoot, sharedDir);
 			}
 		});
 	}
-
-	public void setOnAddPrefab(Action onAddPrefab) {
-		this.onAddPrefab = onAddPrefab;
-	}
-
-	public void setOnSavePrefab(Action savePrefabTreeAction) {
-		this.onSavePrefabTreeAction = savePrefabTreeAction;
-	}
-
+	
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		// TODO Auto-generated method stub
-		
+		addPrefabAction.setRefreshViewerAction(refreshViewerAction, false);
 	}
 }

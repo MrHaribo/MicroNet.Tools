@@ -10,14 +10,27 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
+import micronet.tools.core.ModelProvider;
+import micronet.tools.ui.modelview.SyncPrefabTree;
+import micronet.tools.ui.modelview.actions.PrefabCreateAction;
+import micronet.tools.ui.modelview.actions.PrefabRemoveAction;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 
 public class PrefabNodeDetails extends NodeDetails {
-	private Action onAddPrefab;
-	private Action onSavePrefabTreeAction;
+	
+	private PrefabRemoveAction removePrefabAction;
+	private PrefabCreateAction createChildPrefabAction;
 	
 	public PrefabNodeDetails(PrefabNode prefabNode, Composite parent, int style) {
 		super(prefabNode, parent, style, true);
+		
+		createChildPrefabAction = new PrefabCreateAction(getShell(), prefabNode);
+		createChildPrefabAction.setText("Add Prefab");
+		createChildPrefabAction.setToolTipText("Adds a new Child Prefab.");
+		
+		removePrefabAction = new PrefabRemoveAction(getShell(), prefabNode);
+		removePrefabAction.setText("Add Prefab");
+		removePrefabAction.setToolTipText("Adds a new Child Prefab.");
 		
 		setLayout(new GridLayout(1, false));
 		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -31,7 +44,7 @@ public class PrefabNodeDetails extends NodeDetails {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onAddPrefab.run();
+				createChildPrefabAction.run();
 			}
 		});
 		
@@ -40,27 +53,20 @@ public class PrefabNodeDetails extends NodeDetails {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onSavePrefabTreeAction.run();
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+				SyncPrefabTree.savePrefab(prefabNode, sharedDir);
 			}
 		});
-	}
-	
-	public void setOnAddPrefab(Action onAddPrefab) {
-		this.onAddPrefab = onAddPrefab;
-	}
-	
-	public void setOnSavePrefab(Action savePrefabTreeAction) {
-		this.onSavePrefabTreeAction = savePrefabTreeAction;
 	}
 
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
-		// TODO Auto-generated method stub
-		
+		removePrefabAction.setRefreshViewerAction(refreshViewerAction, false);
+		createChildPrefabAction.setRefreshViewerAction(refreshViewerAction, false);
 	}
 	
 	@Override
 	protected void removeNode() {
-		
+		removePrefabAction.run();
 	}
 }

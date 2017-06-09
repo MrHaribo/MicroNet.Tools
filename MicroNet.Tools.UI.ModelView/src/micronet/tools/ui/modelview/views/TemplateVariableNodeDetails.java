@@ -15,6 +15,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
@@ -76,7 +77,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
 		this.refreshViewerAction = refreshViewerAction;
-		removeVariableAction.setRefreshViewerAction(refreshViewerAction);
+		removeVariableAction.setRefreshViewerAction(refreshViewerAction, true);
 	}
 	
 	@Override
@@ -476,9 +477,12 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			});
 		}
 	}
-	
+
 	private void refreshViewer() {
-		if (refreshViewerAction != null)
-			refreshViewerAction.run();
+		if (refreshViewerAction != null) {
+			Event event = new Event();
+			event.data = true;
+			refreshViewerAction.runWithEvent(event);
+		}
 	}
 }

@@ -2,19 +2,13 @@ package micronet.tools.ui.modelview.views;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.InputDialog;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -22,13 +16,11 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.jface.viewers.TreeViewer;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
@@ -36,7 +28,6 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
@@ -61,8 +52,6 @@ import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
-import micronet.tools.ui.modelview.variables.VariableDescription;
-import micronet.tools.ui.modelview.variables.VariableType;
 
 public class ModelView extends ViewPart {
 
@@ -78,15 +67,7 @@ public class ModelView extends ViewPart {
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
 	
-	private ModelAction removeNodeAction;
-	
-	//private ModelAction addChildTemplateAction;
-	private ModelAction addChildVariableAction;
 	private ModelAction refreshViewerAction;
-	
-	private ModelAction addPrefabAction;
-	private ModelAction refreshPrefabTreeAction;
-	private ModelAction savePrefabTreeAction;
 	
 	private ModelAction testGenAction;
 
@@ -205,17 +186,12 @@ public class ModelView extends ViewPart {
 					currentDetailPanel = enumDetails;
 				} else if (selectedNode instanceof PrefabNode) {
 					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
-					prefabDetails.setOnAddPrefab(addPrefabAction);
-					prefabDetails.setOnSavePrefab(savePrefabTreeAction);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabRootNode) {
-					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(detailsContainer, SWT.NONE);
-					prefabDetails.setOnAddPrefab(addPrefabAction);
-					prefabDetails.setOnSavePrefab(savePrefabTreeAction);
+					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(prefabRoot, detailsContainer, SWT.NONE);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabVariableNode) {
 					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE);
-					prefabDetails.setOnPrefabTreeChanged(refreshPrefabTreeAction);
 					currentDetailPanel = prefabDetails;
 				}
 				
@@ -290,13 +266,11 @@ public class ModelView extends ViewPart {
 				if (selectedNode == null || selectedNode.getParent() == null)
 					return;
 				
-
 				if (selectedNode instanceof EntityTemplateNode) {
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 					
 					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATE_ROOT_KEY))
 						return;
-
 					
 					ModelGenerator.generateModelEntity(entityTemplateNode);
 				}
@@ -305,140 +279,6 @@ public class ModelView extends ViewPart {
 		testGenAction.setText("Test Gen");
 		testGenAction.setToolTipText("Action 1 tooltip");
 		testGenAction.setImageDescriptor(IMG_MICRONET);
-		
-		removeNodeAction = new ModelAction() {
-			public void run() {
-				if (selectedNode == null || selectedNode.getParent() == null)
-					return;
-				
-				if (selectedNode instanceof EntityTemplateRootNode || selectedNode instanceof EnumRootNode) {
-					return;
-				}
-				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-				
-				 if (selectedNode instanceof PrefabNode) {
-					
-					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
-						return;
-
-					SyncPrefabTree.removePrefab((PrefabNode)selectedNode, sharedDir);
-					((ModelNode)selectedNode.getParent()).removeChild(selectedNode);
-				}
-				
-				prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
-				viewer.refresh();
-			}
-		};
-		removeNodeAction.setText("Action 1");
-		removeNodeAction.setToolTipText("Action 1 tooltip");
-		removeNodeAction.setImageDescriptor(IMG_REMOVE);
-
-//		addChildTemplateAction = new ModelAction() {
-//			public void run() {
-//				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
-//				if (name == null)
-//					return;
-//				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-//
-//				if (!ModelConstants.isValidJavaIdentifier(name)) {
-//					showMessage("\"" + name + "\" is an invalid name.");
-//					return;
-//				}
-//				
-//				if (ModelConstants.isPrimitiveTypeName(name)) {
-//					showMessage("Primitive Typenames are reserved.");
-//					return;
-//				}
-//
-//				if (SyncTemplateTree.templateExists(name, sharedDir)) {
-//					showMessage("Template with the name \"" + name + "\" already exists. Choose a unique name.");
-//					return;
-//				}
-//				
-//				if (selectedNode == null)
-//					selectedNode = entityTemplateRoot;
-//
-//				if (selectedNode instanceof EntityTemplateNode) {
-//					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
-//					entityTemplateNode.addChild(new EntityTemplateNode(name));
-//
-//					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
-//					
-//					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
-//					viewer.refresh();
-//				}
-//			}
-//		};
-//		addChildTemplateAction.setText("Add Child Template");
-//		addChildTemplateAction.setToolTipText("Adds a Child Template to the currently selected Template.");
-//		addChildTemplateAction.setImageDescriptor(IMG_ADD);
-
-		
-		addPrefabAction = new ModelAction() {
-			public void run() {
-				if (selectedNode instanceof PrefabNode || selectedNode instanceof PrefabRootNode) {
-
-					String name = promptName("Add new Prefab Node", "NewPrefab", "Enter Name for the new Prefab");
-					if (name == null)
-						return;
-					
-					if (!ModelConstants.isValidJavaIdentifier(name)) {
-						showMessage("\"" + name + "\" is an invalid name.");
-						return;
-					}
-					
-					for (INode childNode : selectedNode.getChildren()) {
-						if (childNode.getName().toLowerCase().equals(name.toLowerCase())) {
-							showMessage("Sibling Prefab with the same name already exists. Choose a unique name.");
-							return;
-						}
-					}
-					
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					List<String> allTemplateNames = SyncTemplateTree.getAllTemplateNames(sharedDir);
-					
-					ElementListSelectionDialog dialog = new ElementListSelectionDialog(viewer.getControl().getShell(), new LabelProvider());
-					dialog.setElements(allTemplateNames.toArray());
-					dialog.setTitle("Select A type for the Prefab");
-					if (dialog.open() != Window.OK)
-						return;
-					
-					Object[] selectedType = dialog.getResult();
-					if (selectedType.length == 0 || selectedType.length > 1)
-						return;
-					
-					PrefabNode prefabNode = new PrefabNode(name, selectedType[0].toString());
-					selectedNode.addChild(prefabNode);
-					SyncPrefabTree.savePrefab(selectedNode, sharedDir);
-
-					viewer.refresh();
-				}
-			}
-		};
-		addPrefabAction.setText("Add Prefab");
-		addPrefabAction.setToolTipText("Adds a new Prefab.");
-		addPrefabAction.setImageDescriptor(IMG_ADD);
-		
-		refreshPrefabTreeAction = new ModelAction() {
-			public void run() {
-				viewer.refresh();
-			}
-		};
-		refreshPrefabTreeAction.setText("Refresh Prefab Tree");
-		refreshPrefabTreeAction.setToolTipText("Refreshes the Prefab tree.");
-		refreshPrefabTreeAction.setImageDescriptor(IMG_ADD);
-		
-		savePrefabTreeAction = new ModelAction() {
-			public void run() {
-				if (selectedNode != null) {
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncPrefabTree.savePrefab(selectedNode, sharedDir);
-				}
-			}
-		};
-		savePrefabTreeAction.setText("Save Prefab Tree");
-		savePrefabTreeAction.setToolTipText("Saves the Prefab Tree to disk.");
-		savePrefabTreeAction.setImageDescriptor(IMG_ADD);
 		
 		refreshViewerAction = new ModelAction() {
 			@Override
@@ -456,22 +296,6 @@ public class ModelView extends ViewPart {
 		refreshViewerAction.setText("Refresh Model Tree");
 		refreshViewerAction.setToolTipText("Refreshes the template, enum and prefab tree.");
 		refreshViewerAction.setImageDescriptor(IMG_ADD);
-	}
-
-	private void showMessage(String message) {
-		MessageDialog.openInformation(viewer.getControl().getShell(), "Model View", message);
-	}
-
-	private String promptName(String title, String initialValue, String message) {
-		InputDialog dlg = new InputDialog(Display.getCurrent().getActiveShell(), title, message, initialValue, null);
-		if (dlg.open() == Window.OK) {
-			return dlg.getValue();
-		}
-		return null;
-	}
-
-	private boolean promptQuestion(String title, String message) {
-		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
 	}
 
 	public static ImageDescriptor getImageDescriptor(String file) {
