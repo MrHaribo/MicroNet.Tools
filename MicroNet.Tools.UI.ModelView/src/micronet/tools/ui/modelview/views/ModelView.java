@@ -533,7 +533,8 @@ public class ModelView extends ViewPart {
 					if (selectedType.length == 0 || selectedType.length > 1)
 						return;
 					
-					selectedNode.addChild(new PrefabNode(name, selectedType[0].toString()));
+					PrefabNode prefabNode = new PrefabNode(name, selectedType[0].toString());
+					selectedNode.addChild(prefabNode);
 					SyncPrefabTree.savePrefab(selectedNode, sharedDir);
 
 					viewer.refresh();

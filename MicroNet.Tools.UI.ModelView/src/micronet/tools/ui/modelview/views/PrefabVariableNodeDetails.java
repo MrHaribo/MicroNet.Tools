@@ -7,8 +7,6 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyAdapter;
-import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -32,7 +30,6 @@ import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
-import micronet.tools.ui.modelview.variables.NumberType;
 
 public class PrefabVariableNodeDetails extends Composite {
 
@@ -81,7 +78,7 @@ public class PrefabVariableNodeDetails extends Composite {
 		if (variableNode.getVariableValue() != null)
 			updateVariableDetails();
 	}
-	
+
 	private void updateVariableDetails() {
 
 		
@@ -143,9 +140,11 @@ public class PrefabVariableNodeDetails extends Composite {
 						updateVariableDetails();
 					} else if (detailsPanel != null) {
 						variableNode.setVariableValue(null);
+						variableNode.clearChildren();
 						detailsPanel.dispose();
 					}
 					parent.layout();
+					refreshPrefabTree.run();
 				}
 			});
 		}
@@ -167,35 +166,12 @@ public class PrefabVariableNodeDetails extends Composite {
 			label = new Label(this, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			label.setText(componentDesc.getComponentType());
-			
-			label = new Label(this, SWT.NONE);
-			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-			label.setText("Initialized:");
-			
-			Label initializedLabel = new Label(this, SWT.NONE);
-			initializedLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-			initializedLabel.setText(variableNode.hasChildren() ? "true" : "false");
-			
-			Button button = new Button (this, SWT.NONE);
-			button.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-			button.setText(variableNode.hasChildren() ? "Clear" : "Init");
-			button.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					if (!variableNode.hasChildren()) {
-						String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-						EntityTemplateNode templateNodeMirror = SyncTemplateTree.loadTemplateType(componentDesc.getComponentType(), sharedDir );
-						createVariables(templateNodeMirror);
-					} else {
-						variableNode.clearChildren();
-					}
-					
-					initializedLabel.setText(variableNode.hasChildren() ? "true" : "false");
-					button.setText(variableNode.hasChildren() ? "Clear" : "Init");
-					refreshPrefabTree.run();
-				}
-			});
-			
+
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			EntityTemplateNode templateNodeMirror = SyncTemplateTree.loadTemplateType(componentDesc.getComponentType(), sharedDir);
+			createVariables(templateNodeMirror);
+
+			variableNode.setVariableValue(new Object());
 		}
 		
 		private void createVariables(EntityTemplateNode templateNodeMirror) {

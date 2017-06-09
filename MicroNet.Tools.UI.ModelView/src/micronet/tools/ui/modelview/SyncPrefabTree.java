@@ -7,11 +7,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.TreeMap;
@@ -26,12 +23,14 @@ import com.google.gson.JsonPrimitive;
 
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
+import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
+import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 
 public class SyncPrefabTree {
@@ -87,7 +86,7 @@ public class SyncPrefabTree {
 			File prefabDataDir = getPrefabDataDir(sharedDir);
 			File dataFile = new File(prefabDataDir + "/" + metaFile.getName());
 			
-			PrefabNode prefabNode = parsePrefab(prefabName, prefabType, dataFile);
+			PrefabNode prefabNode = parsePrefab(prefabName, prefabType, dataFile, sharedDir);
 			prefabMap.put(prefabID, prefabNode);
 			System.out.println("h23");
 		}
@@ -105,7 +104,7 @@ public class SyncPrefabTree {
 		return rootNode;
 	}
 	
-	private static PrefabNode parsePrefab(String prefabName, String prefabType, File file) {
+	private static PrefabNode parsePrefab(String prefabName, String prefabType, File file, String sharedDir) {
 		
 		String data = loadFile(file);
 		if (data == null)
@@ -116,12 +115,12 @@ public class SyncPrefabTree {
 		
 		PrefabNode prefabNode = new PrefabNode(prefabName, prefabType);
 		
-		deserializePrefabVariables(prefabObject, prefabNode);
+		deserializePrefabVariables(prefabObject, prefabNode, sharedDir);
 		
 		return prefabNode;
 	}
 	
-	private static void deserializePrefabVariables(JsonObject prefabObject, PrefabNode prefabNode) {
+	private static void deserializePrefabVariables(JsonObject prefabObject, PrefabNode prefabNode, String sharedDir) {
 		
 		for (INode childNode : prefabNode.getChildren()) {
 			
@@ -134,7 +133,7 @@ public class SyncPrefabTree {
 					continue;
 				
 				try {
-					deserializePrefabVariable(variableNode, element);
+					deserializePrefabVariable(variableNode, element, sharedDir);
 				} catch (Exception e) {
 					variableNode.setVariableValue(null);
 				}
@@ -142,7 +141,7 @@ public class SyncPrefabTree {
 		}
 	}
 	
-	private static void deserializePrefabVariable(PrefabVariableNode variableNode, JsonElement element) {
+	private static void deserializePrefabVariable(PrefabVariableNode variableNode, JsonElement element, String sharedDir) {
 
 		switch (variableNode.getVariableType()) {
 		case BOOLEAN:
@@ -152,6 +151,25 @@ public class SyncPrefabTree {
 			variableNode.setVariableValue(element.getAsCharacter());
 			break;
 		case COMPONENT:
+			JsonObject componentObject = element.getAsJsonObject();
+			if (componentObject == null)
+				break;
+			variableNode.setVariableValue(new Object());
+			
+			ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariableDescription();
+			
+			EntityTemplateNode templateType = SyncTemplateTree.loadTemplateType(componentDesc.getComponentType(), sharedDir);
+			
+			for (INode child : templateType.getChildren()) {
+				if (child instanceof EntityVariableNode) {
+					PrefabVariableNode childVariable = new PrefabVariableNode((EntityVariableNode)child, templateType.getName());
+					variableNode.addChild(childVariable);
+					JsonElement childVariableObject = componentObject.get(child.getName());
+					if (childVariableObject != null) {
+						deserializePrefabVariable(childVariable, childVariableObject, sharedDir);
+					}
+				}
+			}
 			break;
 		case ENUM:
 			variableNode.setVariableValue(element.getAsString());
@@ -187,12 +205,14 @@ public class SyncPrefabTree {
 		case SET:
 			break;
 		case STRING:
+			variableNode.setVariableValue(element.getAsString());
 			break;
 		}
 	}
 
 	private static JsonElement serializePrefabVariable(PrefabVariableNode variableNode) {
 		
+		//TODO: Barrier for Stack Overflow
 		switch (variableNode.getVariableType()) {
 		case BOOLEAN:
 			return new JsonPrimitive((boolean)variableNode.getVariableValue());
@@ -220,11 +240,21 @@ public class SyncPrefabTree {
 			default:
 				return null;
 			}
+		case COMPONENT:
+			if (!variableNode.hasChildren())
+				return null;
+			JsonObject componentObject = new JsonObject();
+			for (INode child : variableNode.getChildren()) {
+				if (child instanceof PrefabVariableNode) {
+					PrefabVariableNode childVariable = (PrefabVariableNode) child;
+					JsonElement childVariableObject = serializePrefabVariable(childVariable);
+					componentObject.add(child.getName(), childVariableObject);
+				}
+			}
+			return componentObject;
 		case REF:
 			break;
 		case SET:
-			break;
-		case COMPONENT:
 			break;
 		case LIST:
 			break;
@@ -279,6 +309,9 @@ public class SyncPrefabTree {
 						continue;
 					
 					JsonElement variableElement = serializePrefabVariable(variableNode);
+					if (variableElement == null)
+						continue;
+					
 					prefabObject.add(variableNode.getName(), variableElement);
 				}
 			}
