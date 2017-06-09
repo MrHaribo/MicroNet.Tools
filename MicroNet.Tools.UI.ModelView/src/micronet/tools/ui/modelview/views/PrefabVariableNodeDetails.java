@@ -11,6 +11,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -21,15 +22,20 @@ import org.eclipse.swt.widgets.Text;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
+import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
+import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
+import micronet.tools.ui.modelview.variables.NumberType;
+import micronet.tools.ui.modelview.variables.VariableDescription;
+import micronet.tools.ui.modelview.variables.VariableType;
 
 public class PrefabVariableNodeDetails extends Composite {
 
@@ -102,12 +108,11 @@ public class PrefabVariableNodeDetails extends Composite {
 			detailsPanel = new ComponentEditor(this, SWT.NONE);
 			break;
 		case LIST:
-			break;
-		case MAP:
-			break;
-		case REF:
+			detailsPanel = new ListEditor(this, SWT.NONE);
 			break;
 		case SET:
+			break;
+		case MAP:
 			break;
 		default:
 			break;
@@ -148,6 +153,51 @@ public class PrefabVariableNodeDetails extends Composite {
 				}
 			});
 		}
+	}
+	
+	private class ListEditor extends Composite {
+
+		private VariableDescription entryDesc = null;
+
+		public ListEditor(Composite parent, int style) {
+			super(parent, style);
+			setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			setLayout(new GridLayout(2, false));
+			
+			variableNode.setVariableValue(new Object());
+			
+			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
+			
+			if (ModelConstants.isTemplateCollection(listDescription)) {
+				entryDesc = new ComponentDescription(listDescription.getEntryType());
+			} else {
+				NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(listDescription);
+				VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(listDescription);
+				
+				if (numberType != null) {
+					entryDesc = new NumberDescription(Enum.valueOf(NumberType.class, listDescription.getEntryType()));
+				} else if (variableType != null) {
+					entryDesc = new VariableDescription(Enum.valueOf(VariableType.class, listDescription.getEntryType()));
+				}
+			}
+			
+			Button button = new Button(this, SWT.NONE);
+			button.setText("Add Entry");
+			button.addSelectionListener(new SelectionAdapter() {
+				
+				@Override
+				public void widgetSelected(SelectionEvent arg0) {
+					// TODO Auto-generated method stub
+					int listIndex = variableNode.getChildren().length + 1;
+					String entryName = "entry" + listIndex;
+					
+					PrefabVariableNode prefabVariable = new PrefabVariableNode(entryName, entryDesc);
+					variableNode.addChild(prefabVariable);
+					refreshPrefabTree.run();
+				}
+			});
+		}
+		
 	}
 	
 	private class ComponentEditor extends Composite{

@@ -119,11 +119,6 @@ public class ModelGenerator {
 						setter = generateSetter(numberType, variableName);
 						getter = generateGetter(numberType, variableName);
 						break;
-					case REF:
-						field = FieldSpec.builder(Object.class, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(Object.class, variableName);
-						getter = generateGetter(Object.class, variableName);
-						break;
 					case SET:
 						CollectionDescription setDesc = (CollectionDescription) variableNode.getVariabelDescription();
 						ClassName setClassName = ClassName.get(Set.class);
@@ -219,8 +214,6 @@ public class ModelGenerator {
 				return ClassName.get(Boolean.class);
 			case CHAR:
 				return ClassName.get(Character.class);
-			case REF:
-				return ClassName.get(Object.class);
 			case STRING:
 				return ClassName.get(String.class);
 			default:

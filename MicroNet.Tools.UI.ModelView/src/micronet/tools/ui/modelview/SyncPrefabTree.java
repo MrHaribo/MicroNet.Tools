@@ -202,8 +202,6 @@ public class SyncPrefabTree {
 				variableNode.setVariableValue(element.getAsShort());
 				break;
 			}
-		case REF:
-			break;
 		case SET:
 			break;
 		case STRING:
@@ -257,8 +255,6 @@ public class SyncPrefabTree {
 				}
 			}
 			return componentObject;
-		case REF:
-			break;
 		case SET:
 			break;
 		case LIST:

@@ -116,7 +116,7 @@ public class SyncTemplateTree {
 					if (ModelConstants.isTemplateCollection(collectionDesc))
 						usedKey = collectionDesc.getEntryType();
 					break;
-				case ENUM: case SET: case REF: case BOOLEAN: case CHAR: case STRING: case NUMBER: default:
+				case ENUM: case SET: case BOOLEAN: case CHAR: case STRING: case NUMBER: default:
 					break;
 				}
 				
@@ -445,7 +445,6 @@ public class SyncTemplateTree {
 			break;
 		case BOOLEAN:
 		case CHAR:
-		case REF:
 		case STRING:
 			variabelDescription = new VariableDescription(variableType);
 			break;
@@ -486,7 +485,6 @@ public class SyncTemplateTree {
 			break;
 		case BOOLEAN:
 		case CHAR:
-		case REF:
 		case STRING:
 		default:
 			return variableDesc;

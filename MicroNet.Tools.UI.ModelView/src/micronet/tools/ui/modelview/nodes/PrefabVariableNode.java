@@ -6,10 +6,15 @@ import micronet.tools.ui.modelview.variables.VariableType;
 
 public class PrefabVariableNode extends ModelNode {
 
-	private String contributingTemplate;
+	private String contributingTemplate = "";
 	private VariableDescription variableDescription;
 	
 	private Object variableValue = null;
+	
+	public PrefabVariableNode(String name, VariableDescription variableDescription) {
+		super(name);
+		this.variableDescription = variableDescription;
+	}
 	
 	public PrefabVariableNode(EntityVariableNode variableNodeMirror, String contributingTemplate) {
 		super(variableNodeMirror.getName());

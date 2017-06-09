@@ -49,7 +49,6 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 	};
 	
 	private static String[] listTypes = {
-		VariableType.REF.toString(),
 		VariableType.BOOLEAN.toString(),
 		VariableType.CHAR.toString(),
 		VariableType.STRING.toString(),
@@ -125,9 +124,6 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 						}
 						variableNode.setVariabelDescription(new EnumDescription(loadEnumTree.getChildren()[0].getName()));
 						break;
-					case REF:
-						variableNode.setVariabelDescription(new VariableDescription(VariableType.REF));
-						break;
 					case STRING:
 						variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
 						break;
@@ -173,7 +169,6 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		case COMPONENT:
 			detailsPanel = new ComponentDetails(detailsContainer, SWT.NONE);
 			break;
-		case REF:
 		case STRING:
 		case BOOLEAN:
 		case CHAR:

@@ -10,5 +10,4 @@ public enum VariableType {
 	SET,
 	MAP,
 	COMPONENT,
-	REF,
 }
