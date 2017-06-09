@@ -208,7 +208,7 @@ public class ModelView extends ViewPart {
 					currentDetailPanel = enumRootDetails;
 				} else if (selectedNode instanceof EnumNode) {
 					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.NONE);
-					enumDetails.setRemoveNodeAction(removeNodeAction);
+					enumDetails.setRefreshViewerAction(refreshViewerAction);
 					currentDetailPanel = enumDetails;
 				} else if (selectedNode instanceof PrefabNode) {
 					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
@@ -321,23 +321,7 @@ public class ModelView extends ViewPart {
 				}
 				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 				
-				if (selectedNode instanceof EnumNode) {
-					
-					Map<String, Set<String>> enumUsage = SyncTemplateTree.getEnumUsage(sharedDir);
-					if (enumUsage.containsKey(selectedNode.getName())) {
-						showMessage("Enum " + selectedNode.getName() + " cant be removed because it is in use by: " +
-								String.join(",", enumUsage.get(selectedNode.getName())));
-						return;
-					}
-					
-					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
-						return;
-					
-					SyncEnumTree.removeEnum(selectedNode, sharedDir);
-
-					enumRoot.removeChild(selectedNode);
-					
-				} else if (selectedNode instanceof EntityTemplateNode) {
+				 if (selectedNode instanceof EntityTemplateNode) {
 					
 					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
 

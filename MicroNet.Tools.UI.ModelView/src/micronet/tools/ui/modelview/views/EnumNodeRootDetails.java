@@ -19,7 +19,7 @@ import micronet.tools.ui.modelview.nodes.EnumRootNode;
 
 public class EnumNodeRootDetails extends Composite {
 
-	private Action refreshViewerAction;
+	protected Action refreshViewerAction;
 	
 	private Action addEnumAction;
 	
@@ -55,7 +55,6 @@ public class EnumNodeRootDetails extends Composite {
 		
 		@Override
 		public void run() {
-
 			
 			InputDialog dlg = new InputDialog(EnumNodeRootDetails.this.getShell(), "Add new Enum", "Enter Name for the new Enum", "NewEnum", null);
 			if (dlg.open() == Window.OK) {
