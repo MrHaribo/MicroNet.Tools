@@ -165,8 +165,10 @@ public class SyncPrefabTree {
 					PrefabVariableNode childVariable = new PrefabVariableNode((EntityVariableNode)child, templateType.getName());
 					variableNode.addChild(childVariable);
 					JsonElement childVariableObject = componentObject.get(child.getName());
-					if (childVariableObject != null) {
+					try {
 						deserializePrefabVariable(childVariable, childVariableObject, sharedDir);
+					} catch (Exception e) {
+						childVariable.setVariableValue(null);
 					}
 				}
 			}
@@ -247,8 +249,11 @@ public class SyncPrefabTree {
 			for (INode child : variableNode.getChildren()) {
 				if (child instanceof PrefabVariableNode) {
 					PrefabVariableNode childVariable = (PrefabVariableNode) child;
-					JsonElement childVariableObject = serializePrefabVariable(childVariable);
-					componentObject.add(child.getName(), childVariableObject);
+					try {
+						JsonElement childVariableObject = serializePrefabVariable(childVariable);
+						componentObject.add(child.getName(), childVariableObject);
+					} catch (Exception e) {
+					}
 				}
 			}
 			return componentObject;
@@ -308,11 +313,11 @@ public class SyncPrefabTree {
 					if (variableNode.getVariableValue() == null) 
 						continue;
 					
-					JsonElement variableElement = serializePrefabVariable(variableNode);
-					if (variableElement == null)
-						continue;
-					
-					prefabObject.add(variableNode.getName(), variableElement);
+					try {
+						JsonElement variableElement = serializePrefabVariable(variableNode);
+						prefabObject.add(variableNode.getName(), variableElement);
+					} catch (Exception e) {
+					}
 				}
 			}
 			
