@@ -37,7 +37,7 @@ import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
-public class PrefabVariableNodeDetails extends Composite {
+public class PrefabVariableNodeDetails extends Composite implements IDetails {
 
 	private PrefabVariableNode variableNode;
 	
@@ -462,5 +462,11 @@ public class PrefabVariableNodeDetails extends Composite {
 				}
 			});
 		}
+	}
+
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		// TODO Auto-generated method stub
+		
 	}
 }

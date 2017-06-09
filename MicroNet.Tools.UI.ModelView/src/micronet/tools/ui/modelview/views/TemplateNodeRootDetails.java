@@ -8,12 +8,19 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-public class TemplateNodeRootDetails extends Composite {
+import micronet.tools.ui.modelview.actions.TemplateCreateAction;
+import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 
-	private Action onAddChildTemplate;
+public class TemplateNodeRootDetails extends Composite implements IDetails {
+
+	private TemplateCreateAction createTemplateAction;
 	
-	public TemplateNodeRootDetails(Composite parent, int style) {
+	public TemplateNodeRootDetails(EntityTemplateRootNode templateRoot, Composite parent, int style) {
 		super(parent, style);
+		
+		createTemplateAction = new TemplateCreateAction(getShell(), templateRoot); 
+		createTemplateAction.setText("Create Template");
+		createTemplateAction.setToolTipText("Create a new Template.");
 		
 		setLayout(new FillLayout(SWT.VERTICAL));
 		
@@ -23,12 +30,13 @@ public class TemplateNodeRootDetails extends Composite {
 			
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onAddChildTemplate.run();
+				createTemplateAction.run();
 			}
 		});
 	}
 
-	public void setOnAddChildTemplate(Action onAddChildTemplate) {
-		this.onAddChildTemplate = onAddChildTemplate;
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		createTemplateAction.setRefreshViewerAction(refreshViewerAction);
 	}
 }

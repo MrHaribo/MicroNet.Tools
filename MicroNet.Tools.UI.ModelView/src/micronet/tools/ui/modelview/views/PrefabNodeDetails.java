@@ -12,12 +12,12 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 
-public class PrefabNodeDetails extends NodeRemovableDetails {
+public class PrefabNodeDetails extends NodeDetails {
 	private Action onAddPrefab;
 	private Action onSavePrefabTreeAction;
 	
 	public PrefabNodeDetails(PrefabNode prefabNode, Composite parent, int style) {
-		super(prefabNode, parent, style);
+		super(prefabNode, parent, style, true);
 		
 		setLayout(new GridLayout(1, false));
 		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -51,5 +51,16 @@ public class PrefabNodeDetails extends NodeRemovableDetails {
 	
 	public void setOnSavePrefab(Action savePrefabTreeAction) {
 		this.onSavePrefabTreeAction = savePrefabTreeAction;
+	}
+
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	protected void removeNode() {
+		
 	}
 }

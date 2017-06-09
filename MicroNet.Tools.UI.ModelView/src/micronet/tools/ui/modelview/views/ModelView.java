@@ -48,6 +48,9 @@ import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncPrefabTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.ui.modelview.actions.EnumCreateAction;
+import micronet.tools.ui.modelview.actions.ModelAction;
+import micronet.tools.ui.modelview.actions.TemplateCreateAction;
 import micronet.tools.ui.modelview.codegen.ModelGenerator;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
@@ -75,17 +78,17 @@ public class ModelView extends ViewPart {
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
 	
-	private Action removeNodeAction;
+	private ModelAction removeNodeAction;
 	
-	private Action addChildTemplateAction;
-	private Action addChildVariableAction;
-	private Action refreshViewerAction;
+	//private ModelAction addChildTemplateAction;
+	private ModelAction addChildVariableAction;
+	private ModelAction refreshViewerAction;
 	
-	private Action addPrefabAction;
-	private Action refreshPrefabTreeAction;
-	private Action savePrefabTreeAction;
+	private ModelAction addPrefabAction;
+	private ModelAction refreshPrefabTreeAction;
+	private ModelAction savePrefabTreeAction;
 	
-	private Action testGenAction;
+	private ModelAction testGenAction;
 
 	private ModelNode selectedNode;
 
@@ -186,31 +189,22 @@ public class ModelView extends ViewPart {
 				selectedNode = (ModelNode) selection.getFirstElement();
 
 				if (selectedNode instanceof EntityTemplateRootNode) {
-					TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(detailsContainer,	SWT.NONE);
-					templateRootDetails.setOnAddChildTemplate(addChildTemplateAction);
+					TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(entityTemplateRoot, detailsContainer,	SWT.NONE);
 					currentDetailPanel = templateRootDetails;
 				} else if (selectedNode instanceof EntityTemplateNode) {
 					TemplateNodeDetails templateDetails = new TemplateNodeDetails((EntityTemplateNode)selectedNode, detailsContainer, SWT.NONE);
-					templateDetails.setOnAddChildTemplate(addChildTemplateAction);
-					templateDetails.setRemoveNodeAction(removeNodeAction);
-					templateDetails.setOnAddChildVariable(addChildVariableAction);
 					currentDetailPanel = templateDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
 					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
-					variableDetails.setRemoveNodeAction(removeNodeAction);
-					variableDetails.setOnVariableChanged(refreshViewerAction);
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
 					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(enumRoot, detailsContainer, SWT.NONE);
-					enumRootDetails.setRefreshViewerAction(refreshViewerAction);
 					currentDetailPanel = enumRootDetails;
 				} else if (selectedNode instanceof EnumNode) {
 					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.NONE);
-					enumDetails.setRefreshViewerAction(refreshViewerAction);
 					currentDetailPanel = enumDetails;
 				} else if (selectedNode instanceof PrefabNode) {
 					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
-					prefabDetails.setRemoveNodeAction(removeNodeAction);
 					prefabDetails.setOnAddPrefab(addPrefabAction);
 					prefabDetails.setOnSavePrefab(savePrefabTreeAction);
 					currentDetailPanel = prefabDetails;
@@ -224,6 +218,9 @@ public class ModelView extends ViewPart {
 					prefabDetails.setOnPrefabTreeChanged(refreshPrefabTreeAction);
 					currentDetailPanel = prefabDetails;
 				}
+				
+				if (currentDetailPanel instanceof IDetails)
+					((IDetails)currentDetailPanel).setRefreshViewerAction(refreshViewerAction);
 
 				detailsContainer.layout(true);
 				detailsContainer.getParent().layout(true);
@@ -267,14 +264,14 @@ public class ModelView extends ViewPart {
 	}
 
 	private void fillLocalPullDown(IMenuManager manager) {
-		manager.add(removeNodeAction);
+		manager.add(refreshViewerAction);
 		manager.add(new Separator());
-		manager.add(addChildTemplateAction);
+		manager.add(new TemplateCreateAction(viewer.getControl().getShell(), entityTemplateRoot));
+		manager.add(new EnumCreateAction(viewer.getControl().getShell(), enumRoot));
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
-		manager.add(removeNodeAction);
-		manager.add(addChildTemplateAction);
+		//manager.add(removeNodeAction);
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 		// Other plug-ins can contribute there actions here
@@ -288,7 +285,7 @@ public class ModelView extends ViewPart {
 	}
 
 	private void makeActions() {
-		testGenAction = new Action() {
+		testGenAction = new ModelAction() {
 			public void run() {
 				if (selectedNode == null || selectedNode.getParent() == null)
 					return;
@@ -309,7 +306,7 @@ public class ModelView extends ViewPart {
 		testGenAction.setToolTipText("Action 1 tooltip");
 		testGenAction.setImageDescriptor(IMG_MICRONET);
 		
-		removeNodeAction = new Action() {
+		removeNodeAction = new ModelAction() {
 			public void run() {
 				if (selectedNode == null || selectedNode.getParent() == null)
 					return;
@@ -319,42 +316,7 @@ public class ModelView extends ViewPart {
 				}
 				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 				
-				 if (selectedNode instanceof EntityTemplateNode) {
-					
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
-
-					for (INode node : entityTemplateNode.getChildren()) {
-						if (node instanceof EntityTemplateNode) {
-							showMessage("Cannot Remove Template with Children");
-							return;
-						}
-					}
-					
-					Map<String, Set<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
-					if (templateUsage.containsKey(entityTemplateNode.getName())) {
-						showMessage("Template " + entityTemplateNode.getName() + " cant be removed because it is in use by: " +
-								String.join(",", templateUsage.get(entityTemplateNode.getName())));
-						return;
-					}
-					
-					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
-						return;
-
-					SyncTemplateTree.removeTemplate(selectedNode, sharedDir);
-					
-					((EntityTemplateNode) selectedNode.getParent()).removeChild(selectedNode);
-					
-				} else if (selectedNode instanceof EntityVariableNode) {
-					
-					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
-						return;
-
-					EntityTemplateNode parentTemplate = (EntityTemplateNode)selectedNode.getParent();
-					
-					parentTemplate.removeChild(selectedNode);
-					SyncTemplateTree.saveTemplateTree(parentTemplate, sharedDir);
-					
-				} else if (selectedNode instanceof PrefabNode) {
+				 if (selectedNode instanceof PrefabNode) {
 					
 					if (!promptQuestion("Remove Node", "Do you really want to remove: " + selectedNode.getName()))
 						return;
@@ -371,88 +333,48 @@ public class ModelView extends ViewPart {
 		removeNodeAction.setToolTipText("Action 1 tooltip");
 		removeNodeAction.setImageDescriptor(IMG_REMOVE);
 
-		addChildTemplateAction = new Action() {
-			public void run() {
-				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
-				if (name == null)
-					return;
-				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+//		addChildTemplateAction = new ModelAction() {
+//			public void run() {
+//				String name = promptName("Add EntityTemplate", "NewType", "Enter Name for new EntityTemplate.");
+//				if (name == null)
+//					return;
+//				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+//
+//				if (!ModelConstants.isValidJavaIdentifier(name)) {
+//					showMessage("\"" + name + "\" is an invalid name.");
+//					return;
+//				}
+//				
+//				if (ModelConstants.isPrimitiveTypeName(name)) {
+//					showMessage("Primitive Typenames are reserved.");
+//					return;
+//				}
+//
+//				if (SyncTemplateTree.templateExists(name, sharedDir)) {
+//					showMessage("Template with the name \"" + name + "\" already exists. Choose a unique name.");
+//					return;
+//				}
+//				
+//				if (selectedNode == null)
+//					selectedNode = entityTemplateRoot;
+//
+//				if (selectedNode instanceof EntityTemplateNode) {
+//					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
+//					entityTemplateNode.addChild(new EntityTemplateNode(name));
+//
+//					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
+//					
+//					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
+//					viewer.refresh();
+//				}
+//			}
+//		};
+//		addChildTemplateAction.setText("Add Child Template");
+//		addChildTemplateAction.setToolTipText("Adds a Child Template to the currently selected Template.");
+//		addChildTemplateAction.setImageDescriptor(IMG_ADD);
 
-				if (!ModelConstants.isValidJavaIdentifier(name)) {
-					showMessage("\"" + name + "\" is an invalid name.");
-					return;
-				}
-				
-				if (ModelConstants.isPrimitiveTypeName(name)) {
-					showMessage("Primitive Typenames are reserved.");
-					return;
-				}
-
-				if (SyncTemplateTree.templateExists(name, sharedDir)) {
-					showMessage("Template with the name \"" + name + "\" already exists. Choose a unique name.");
-					return;
-				}
-				
-				if (selectedNode == null)
-					selectedNode = entityTemplateRoot;
-
-				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
-					entityTemplateNode.addChild(new EntityTemplateNode(name));
-
-					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
-					
-					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
-					viewer.refresh();
-				}
-			}
-		};
-		addChildTemplateAction.setText("Add Child Template");
-		addChildTemplateAction.setToolTipText("Adds a Child Template to the currently selected Template.");
-		addChildTemplateAction.setImageDescriptor(IMG_ADD);
-
-		addChildVariableAction = new Action() {
-			public void run() {
-				
-				if (selectedNode instanceof EntityTemplateRootNode)
-					return;
-				
-				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
-
-					String name = promptName("Add Variable", "NewVariable",	"Add a new Variable to " + selectedNode.getName());
-					if (name == null)
-						return;
-					
-					if (!ModelConstants.isValidJavaIdentifier(name)) {
-						showMessage("\"" + name + "\" is an invalid name.");
-						return;
-					}
-
-					for (INode child : entityTemplateNode.getChildren()) {
-						if (child.getName().equals(name)) {
-							showMessage("Variable with the same name already exists. Choose a unique name.");
-							return;
-						}
-					}
-
-					EntityVariableNode variableNode = new EntityVariableNode(name);
-					variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
-					entityTemplateNode.addChild(variableNode);
-
-					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-					SyncTemplateTree.saveTemplateTree(entityTemplateNode, sharedDir);
-					
-					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
-					viewer.refresh();
-				}
-			}
-		};
-		addChildVariableAction.setText("Add Variable");
-		addChildVariableAction.setToolTipText("Adds a Variable to the Selected Template");
-		addChildVariableAction.setImageDescriptor(IMG_ADD);
 		
-		addPrefabAction = new Action() {
+		addPrefabAction = new ModelAction() {
 			public void run() {
 				if (selectedNode instanceof PrefabNode || selectedNode instanceof PrefabRootNode) {
 
@@ -497,7 +419,7 @@ public class ModelView extends ViewPart {
 		addPrefabAction.setToolTipText("Adds a new Prefab.");
 		addPrefabAction.setImageDescriptor(IMG_ADD);
 		
-		refreshPrefabTreeAction = new Action() {
+		refreshPrefabTreeAction = new ModelAction() {
 			public void run() {
 				viewer.refresh();
 			}
@@ -506,7 +428,7 @@ public class ModelView extends ViewPart {
 		refreshPrefabTreeAction.setToolTipText("Refreshes the Prefab tree.");
 		refreshPrefabTreeAction.setImageDescriptor(IMG_ADD);
 		
-		savePrefabTreeAction = new Action() {
+		savePrefabTreeAction = new ModelAction() {
 			public void run() {
 				if (selectedNode != null) {
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
@@ -518,7 +440,7 @@ public class ModelView extends ViewPart {
 		savePrefabTreeAction.setToolTipText("Saves the Prefab Tree to disk.");
 		savePrefabTreeAction.setImageDescriptor(IMG_ADD);
 		
-		refreshViewerAction = new Action() {
+		refreshViewerAction = new ModelAction() {
 			@Override
 			public void runWithEvent(Event event) {
 				if ((boolean)event.data) {

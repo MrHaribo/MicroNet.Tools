@@ -15,15 +15,31 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.ui.modelview.actions.TemplateCreateAction;
+import micronet.tools.ui.modelview.actions.TemplateRemoveAction;
+import micronet.tools.ui.modelview.actions.TemplateVariableCreateAction;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 
-public class TemplateNodeDetails extends NodeRemovableDetails {
+public class TemplateNodeDetails extends NodeDetails {
 
-	private Action onAddChildTemplate;
-	private Action onAddChildVariable;
+	private TemplateCreateAction addChildTemplateAction;
+	private TemplateRemoveAction removeChildTemplateAction;
+	private TemplateVariableCreateAction addChildVariableAction;
 	
 	public TemplateNodeDetails(EntityTemplateNode templateNode, Composite parent, int style) {
-		super(templateNode, parent, style);
+		super(templateNode, parent, style, true);
+		
+		removeChildTemplateAction = new TemplateRemoveAction(getShell(), templateNode);
+		removeChildTemplateAction.setText("Remove Template");
+		removeChildTemplateAction.setToolTipText("Remove the Template.");
+		
+		addChildTemplateAction = new TemplateCreateAction(getShell(), templateNode); 
+		addChildTemplateAction.setText("Create Template");
+		addChildTemplateAction.setToolTipText("Create a new Template.");
+		
+		addChildVariableAction = new TemplateVariableCreateAction(getShell(), templateNode);
+		addChildVariableAction.setText("Add Variable");
+		addChildVariableAction.setToolTipText("Adds a Variable to the Selected Template");
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
@@ -33,7 +49,7 @@ public class TemplateNodeDetails extends NodeRemovableDetails {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onAddChildTemplate.run();
+				addChildTemplateAction.run();
 			}
 		});
 		
@@ -42,7 +58,7 @@ public class TemplateNodeDetails extends NodeRemovableDetails {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				onAddChildVariable.run();
+				addChildVariableAction.run();
 			}
 		});
 		
@@ -62,11 +78,15 @@ public class TemplateNodeDetails extends NodeRemovableDetails {
 		}
 	}
 
-	public void setOnAddChildTemplate(Action onAddChildTemplate) {
-		this.onAddChildTemplate = onAddChildTemplate;
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		addChildTemplateAction.setRefreshViewerAction(refreshViewerAction);
+		removeChildTemplateAction.setRefreshViewerAction(refreshViewerAction);
+		addChildVariableAction.setRefreshViewerAction(refreshViewerAction);
 	}
-
-	public void setOnAddChildVariable(Action onAddChildVariable) {
-		this.onAddChildVariable = onAddChildVariable;
+	
+	@Override
+	protected void removeNode() {
+		removeChildTemplateAction.run();
 	}
 }

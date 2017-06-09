@@ -22,6 +22,7 @@ import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.ui.modelview.actions.TemplateVariableRemoveAction;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
@@ -34,7 +35,7 @@ import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
-public class TemplateVariableNodeDetails extends NodeRemovableDetails {
+public class TemplateVariableNodeDetails extends NodeDetails {
 	
 	private static String[] primitiveTypes = {
 		VariableType.CHAR.toString(),
@@ -68,16 +69,30 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 	
 	private EntityVariableNode variableNode;
 	
-	private Action onVariableChanged;
+	private Action refreshViewerAction;
 	
-	public void setOnVariableChanged(Action onVariableChanged) {
-		this.onVariableChanged = onVariableChanged;
+	private TemplateVariableRemoveAction removeVariableAction;
+	
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		this.refreshViewerAction = refreshViewerAction;
+		removeVariableAction.setRefreshViewerAction(refreshViewerAction);
+	}
+	
+	@Override
+	protected void removeNode() {
+		removeVariableAction.run();
 	}
 
 	public TemplateVariableNodeDetails(EntityVariableNode variableNode, Composite parent, int style) {
-		super(variableNode, parent, style);
+		super(variableNode, parent, style, true);
 		
 		this.variableNode = variableNode;
+		
+		removeVariableAction = new TemplateVariableRemoveAction(getShell(), variableNode);
+		removeVariableAction.setText("Remove Template");
+		removeVariableAction.setToolTipText("Remove the Template.");
+
 		
 		detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
@@ -137,7 +152,6 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 					}
 				}
 				updateVariableDetails();
-				onVariableChanged.run();
 			}
 		});
 		
@@ -186,6 +200,8 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
+		
+		refreshViewer();
 	}
 	
 	private class EnumDetails extends Composite {
@@ -260,7 +276,7 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 			variableNode.setVariabelDescription(mapDesc);
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
-			onVariableChanged.run();
+			refreshViewer();
 		}
 	}
 	
@@ -294,7 +310,7 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 			variableNode.setVariabelDescription(new CollectionDescription(VariableType.SET, setTypeSelect.getText()));
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
-			onVariableChanged.run();
+			refreshViewer();
 		}
 	}
 	
@@ -320,7 +336,7 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 			variableNode.setVariabelDescription(new CollectionDescription(VariableType.LIST, entryDetails.getSelectedEntryType()));
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 			SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
-			onVariableChanged.run();
+			refreshViewer();
 		}
 	}
 	
@@ -425,7 +441,7 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 					variableNode.setVariabelDescription(new ComponentDescription(componentTypeSelect.getText()));
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
-					onVariableChanged.run();
+					refreshViewer();
 				}
 			});
 		}
@@ -455,10 +471,14 @@ public class TemplateVariableNodeDetails extends NodeRemovableDetails {
 					variableNode.setVariabelDescription(new NumberDescription(newType));
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.saveTemplateTree((EntityTemplateNode)variableNode.getParent(), sharedDir);
-					onVariableChanged.run();
+					refreshViewer();
 				}
 			});
 		}
-		
+	}
+	
+	private void refreshViewer() {
+		if (refreshViewerAction != null)
+			refreshViewerAction.run();
 	}
 }

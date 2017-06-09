@@ -34,8 +34,7 @@ public class EnumRemoveAction extends ModelAction {
 			return;
 		}
 
-		if (!MessageDialog.openQuestion(shell.getShell(), "Remove Node",
-				"Do you really want to remove: " + enumNode.getName()))
+		if (!MessageDialog.openQuestion(shell, "Remove Node", "Do you really want to remove: " + enumNode.getName()))
 			return;
 
 		((ModelNode) enumNode.getParent()).removeChild(enumNode);

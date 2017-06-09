@@ -25,7 +25,7 @@ import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.actions.EnumRemoveAction;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 
-public class EnumNodeDetails extends NodeRemovableDetails {
+public class EnumNodeDetails extends NodeDetails {
 
 	private EnumRemoveAction removeEnumAction;
 	
@@ -36,14 +36,13 @@ public class EnumNodeDetails extends NodeRemovableDetails {
 	private EnumNode enumNode;
 	
 	public EnumNodeDetails(EnumNode enumNode, Composite parent, int style) {
-		super(enumNode, parent, style);
+		super(enumNode, parent, style, true);
 		
 		this.enumNode = enumNode;
 		
 		removeEnumAction = new EnumRemoveAction(getShell(), enumNode);
 		removeEnumAction.setText("Remove Enum");
 		removeEnumAction.setToolTipText("Removed the Enum");
-		setRemoveNodeAction(removeEnumAction);
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
@@ -99,6 +98,16 @@ public class EnumNodeDetails extends NodeRemovableDetails {
 		}
 	}
 	
+	@Override
+	protected void removeNode() {
+		removeEnumAction.run();
+	}
+	
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		removeEnumAction.setRefreshViewerAction(refreshViewerAction);
+	}
+	
 	private void saveEnumNode() {
 		String text = textField.getText().replaceAll("\\s+","");
 		
@@ -115,9 +124,4 @@ public class EnumNodeDetails extends NodeRemovableDetails {
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		SyncEnumTree.saveEnumNode(enumNode, sharedDir);
 	}
-
-	public void setRefreshViewerAction(Action refreshViewerAction) {
-		removeEnumAction.setRefreshViewerAction(refreshViewerAction);
-	}
-	
 }

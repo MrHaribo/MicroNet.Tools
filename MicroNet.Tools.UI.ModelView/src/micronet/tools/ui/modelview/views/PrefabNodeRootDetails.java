@@ -8,7 +8,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-public class PrefabNodeRootDetails extends Composite {
+public class PrefabNodeRootDetails extends Composite implements IDetails {
 
 	private Action onAddPrefab;
 	private Action onSavePrefabTreeAction;
@@ -43,5 +43,11 @@ public class PrefabNodeRootDetails extends Composite {
 
 	public void setOnSavePrefab(Action savePrefabTreeAction) {
 		this.onSavePrefabTreeAction = savePrefabTreeAction;
+	}
+
+	@Override
+	public void setRefreshViewerAction(Action refreshViewerAction) {
+		// TODO Auto-generated method stub
+		
 	}
 }
