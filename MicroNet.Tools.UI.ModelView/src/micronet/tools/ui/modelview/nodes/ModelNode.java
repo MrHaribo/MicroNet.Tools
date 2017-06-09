@@ -43,6 +43,10 @@ public abstract class ModelNode implements INode, IAdaptable  {
 		return children.toArray(new ModelNode[children.size()]);
 	}
 	
+	public int getChildIndex(INode node) {
+		return children.indexOf(node);
+	}
+	
 	public void clearChildren() {
 		children.clear();
 	}

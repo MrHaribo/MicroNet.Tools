@@ -30,6 +30,7 @@ import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
+import micronet.tools.ui.modelview.nodes.PrefabVariableEntryNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
@@ -184,8 +185,10 @@ public class SyncPrefabTree {
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
 			VariableDescription entryDesc = ModelConstants.getEntryDescription(listDescription);
 			
+			int index = 0;
 			for (JsonElement listEntry : listArray) {
-				PrefabVariableNode childVariable = new PrefabVariableNode("entry", entryDesc);
+				PrefabVariableEntryNode childVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
+				childVariable.setName(entryDesc.getType().toString() + index++);
 				variableNode.addChild(childVariable);
 				try {
 					deserializePrefabVariable(childVariable, listEntry, sharedDir);

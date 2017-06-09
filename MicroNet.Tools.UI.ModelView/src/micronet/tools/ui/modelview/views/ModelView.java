@@ -51,6 +51,7 @@ import micronet.tools.ui.modelview.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
+import micronet.tools.ui.modelview.nodes.PrefabVariableEntryNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 
 public class ModelView extends ViewPart {
@@ -190,8 +191,11 @@ public class ModelView extends ViewPart {
 				} else if (selectedNode instanceof PrefabRootNode) {
 					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(prefabRoot, detailsContainer, SWT.NONE);
 					currentDetailPanel = prefabDetails;
+				} else if (selectedNode instanceof PrefabVariableEntryNode) {
+					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE, true);
+					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabVariableNode) {
-					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE);
+					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE, false);
 					currentDetailPanel = prefabDetails;
 				}
 				

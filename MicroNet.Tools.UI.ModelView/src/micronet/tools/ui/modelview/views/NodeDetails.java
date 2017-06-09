@@ -32,16 +32,18 @@ public abstract class NodeDetails extends Composite implements IDetails {
 		descriptor = descriptor.setStyle(SWT.BOLD);
 		nameLabel.setFont(descriptor.createFont(nameLabel.getDisplay()));
 		
-		Button removeNodeButton = new Button(detailsContainer, SWT.PUSH);
-		removeNodeButton.setText("Remove");
-		removeNodeButton.setLayoutData(new GridData(SWT.RIGHT, SWT.TOP, false, false));
-		
-		removeNodeButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				removeNode();
-			}
-		});
+		if (removable) {
+			Button removeNodeButton = new Button(detailsContainer, SWT.PUSH);
+			removeNodeButton.setText("Remove");
+			removeNodeButton.setLayoutData(new GridData(SWT.RIGHT, SWT.TOP, false, false));
+			
+			removeNodeButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					removeNode();
+				}
+			});
+		}
 	}
 	
 	protected void removeNode() {

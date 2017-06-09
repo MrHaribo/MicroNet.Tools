@@ -34,13 +34,22 @@ public class PrefabNodeDetails extends NodeDetails {
 		
 		setLayout(new GridLayout(1, false));
 		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		Composite detailsContainer = new Composite(this, SWT.NONE);
+		detailsContainer.setLayout(new GridLayout(2, false));
+		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
-		Label nameLabel = new Label(this, SWT.NONE);
-		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		nameLabel.setText(prefabNode.getTemplateType());
+		Label label = new Label(detailsContainer, SWT.NONE);
+		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		label.setText("Template Type:");
 		
-		Button button = new Button(this, SWT.PUSH);
+		label = new Label(detailsContainer, SWT.NONE);
+		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		label.setText(prefabNode.getTemplateType());
+		
+		Button button = new Button(detailsContainer, SWT.PUSH);
 		button.setText("Create Child Prefab");
+		button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
@@ -48,8 +57,9 @@ public class PrefabNodeDetails extends NodeDetails {
 			}
 		});
 		
-		button = new Button(this, SWT.PUSH);
+		button = new Button(detailsContainer, SWT.PUSH);
 		button.setText("Save Prefab");
+		button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
