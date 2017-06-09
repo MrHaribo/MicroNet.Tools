@@ -3,7 +3,10 @@ package micronet.tools.ui.modelview;
 import java.io.File;
 
 import micronet.tools.ui.modelview.variables.CollectionDescription;
+import micronet.tools.ui.modelview.variables.ComponentDescription;
+import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.NumberType;
+import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
 public class ModelConstants {
@@ -80,6 +83,24 @@ public class ModelConstants {
 		} catch (IllegalArgumentException e) {
 		}
 		return numberType;
+	}
+	
+	public static VariableDescription getEntryDescription(CollectionDescription listDescription) {
+		VariableDescription variableDesc = null;
+		if (ModelConstants.isTemplateCollection(listDescription)) {
+			variableDesc = new ComponentDescription(listDescription.getEntryType());
+		} else {
+			NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(listDescription);
+			VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(listDescription);
+			
+			if (numberType != null) {
+				variableDesc = new NumberDescription(Enum.valueOf(NumberType.class, listDescription.getEntryType()));
+			} else if (variableType != null) {
+				variableDesc = new VariableDescription(Enum.valueOf(VariableType.class, listDescription.getEntryType()));
+			}
+		}
+		
+		return variableDesc;
 	}
 	
 	public static boolean isValidJavaIdentifier(String s) {

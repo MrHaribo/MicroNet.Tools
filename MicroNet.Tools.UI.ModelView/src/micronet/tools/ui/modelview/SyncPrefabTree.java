@@ -16,6 +16,7 @@ import java.util.concurrent.Semaphore;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -30,8 +31,10 @@ import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
+import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
+import micronet.tools.ui.modelview.variables.VariableDescription;
 
 public class SyncPrefabTree {
 	
@@ -157,7 +160,6 @@ public class SyncPrefabTree {
 			variableNode.setVariableValue(new Object());
 			
 			ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariableDescription();
-			
 			EntityTemplateNode templateType = SyncTemplateTree.loadTemplateType(componentDesc.getComponentType(), sharedDir);
 			
 			for (INode child : templateType.getChildren()) {
@@ -173,10 +175,28 @@ public class SyncPrefabTree {
 				}
 			}
 			break;
+		case LIST:
+			JsonArray listArray = element.getAsJsonArray();
+			if (listArray == null)
+				break;
+			variableNode.setVariableValue(new Object());
+			
+			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
+			VariableDescription entryDesc = ModelConstants.getEntryDescription(listDescription);
+			
+			int index = 0;
+			for (JsonElement listEntry : listArray) {
+				PrefabVariableNode childVariable = new PrefabVariableNode("entry" + index++, entryDesc);
+				variableNode.addChild(childVariable);
+				try {
+					deserializePrefabVariable(childVariable, listEntry, sharedDir);
+				} catch (Exception e) {
+					childVariable.setVariableValue(null);
+				}
+			}
+			break;
 		case ENUM:
 			variableNode.setVariableValue(element.getAsString());
-			break;
-		case LIST:
 			break;
 		case MAP:
 			break;
@@ -255,9 +275,23 @@ public class SyncPrefabTree {
 				}
 			}
 			return componentObject;
-		case SET:
-			break;
 		case LIST:
+			if (!variableNode.hasChildren())
+				return null;
+			JsonArray listArray = new JsonArray();
+			for (INode child : variableNode.getChildren()) {
+				if (child instanceof PrefabVariableNode) {
+					PrefabVariableNode childVariable = (PrefabVariableNode) child;
+					JsonElement childVariableObject = null;
+					try {
+						childVariableObject = serializePrefabVariable(childVariable);
+					} catch (Exception e) {
+					}
+					listArray.add(childVariableObject);
+				}
+			}
+			return listArray;
+		case SET:
 			break;
 		case MAP:
 			break;

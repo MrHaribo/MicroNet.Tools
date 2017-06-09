@@ -71,13 +71,15 @@ public class PrefabVariableNodeDetails extends Composite {
 		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		label.setText(variableNode.getVariableType().toString());
 		
-		label = new Label(this, SWT.NONE);
-		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		label.setText("Contributing template: ");
-		
-		label = new Label(this, SWT.NONE);
-		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		label.setText(variableNode.getContributingTemplate());
+		if (!variableNode.getContributingTemplate().equals("")) {
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			label.setText("Contributing template: ");
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			label.setText(variableNode.getContributingTemplate());
+		}
 		
 		new NullPanel(this, SWT.NONE);
 		
@@ -168,18 +170,7 @@ public class PrefabVariableNodeDetails extends Composite {
 			
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
 			
-			if (ModelConstants.isTemplateCollection(listDescription)) {
-				entryDesc = new ComponentDescription(listDescription.getEntryType());
-			} else {
-				NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(listDescription);
-				VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(listDescription);
-				
-				if (numberType != null) {
-					entryDesc = new NumberDescription(Enum.valueOf(NumberType.class, listDescription.getEntryType()));
-				} else if (variableType != null) {
-					entryDesc = new VariableDescription(Enum.valueOf(VariableType.class, listDescription.getEntryType()));
-				}
-			}
+			entryDesc = ModelConstants.getEntryDescription(listDescription);
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setText("Add Entry");
