@@ -81,8 +81,6 @@ public class ModelView extends ViewPart {
 	private Action addChildVariableAction;
 	private Action refreshViewerAction;
 	
-	//private Action addEnumAction;
-	
 	private Action addPrefabAction;
 	private Action refreshPrefabTreeAction;
 	private Action savePrefabTreeAction;
