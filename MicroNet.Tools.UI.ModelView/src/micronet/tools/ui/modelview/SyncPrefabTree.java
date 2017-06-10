@@ -93,7 +93,6 @@ public class SyncPrefabTree {
 			
 			PrefabNode prefabNode = parsePrefab(prefabName, prefabType, dataFile, sharedDir);
 			prefabMap.put(prefabID, prefabNode);
-			System.out.println("h23");
 		}
 		PrefabRootNode rootNode = new PrefabRootNode();
 		

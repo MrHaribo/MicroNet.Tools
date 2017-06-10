@@ -6,7 +6,6 @@ import java.util.List;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
@@ -26,7 +25,6 @@ import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
@@ -46,6 +44,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 
 	private PrefabVariableNode variableNode;
 	
+	private Composite detailsContainer = null;
 	private Composite detailsPanel = null;
 	
 	private Button nullCheckBox;
@@ -63,6 +62,13 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			event.data = false;
 			refreshViewerAction.runWithEvent(event);
 		}
+	}
+	
+	private void refreshDetailsContainer() {
+		if 	(detailsPanel != null && !detailsPanel.isDisposed())
+			detailsPanel.layout();
+		detailsContainer.layout();
+		detailsContainer.getParent().layout();
 	}
 	
 	@Override
@@ -85,36 +91,29 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 		
 		this.variableNode = variableNode;
 		
-		setLayout(new GridLayout(2, false));
-		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		detailsContainer = new Composite(this, SWT.NONE);
+		detailsContainer.setLayout(new GridLayout(2, false));
+		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
-		Label nameLabel = new Label(this, SWT.NONE);
-		nameLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-		nameLabel.setText(variableNode.getName());
-		
-		FontDescriptor descriptor = FontDescriptor.createFrom(nameLabel.getFont());
-		descriptor = descriptor.setStyle(SWT.BOLD);
-		nameLabel.setFont(descriptor.createFont(nameLabel.getDisplay()));
-		
-		Label label = new Label(this, SWT.NONE);
+		Label label = new Label(detailsContainer, SWT.NONE);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		label.setText("Variable Type: ");
 		
-		label = new Label(this, SWT.NONE);
+		label = new Label(detailsContainer, SWT.NONE);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		label.setText(variableNode.getVariableType().toString());
 		
 		if (!variableNode.getContributingTemplate().equals("")) {
-			label = new Label(this, SWT.NONE);
+			label = new Label(detailsContainer, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			label.setText("Contributing template: ");
 			
-			label = new Label(this, SWT.NONE);
+			label = new Label(detailsContainer, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			label.setText(variableNode.getContributingTemplate());
 		}
 		
-		new NullPanel(this, SWT.NONE);
+		new NullPanel(detailsContainer, SWT.NONE);
 		
 		if (variableNode.getVariableValue() != null)
 			updateVariableDetails();
@@ -125,28 +124,28 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 		
 		switch (variableNode.getVariableType()) {
 		case BOOLEAN:
-			detailsPanel = new BooleanEditor(this, SWT.NONE);
+			detailsPanel = new BooleanEditor(detailsContainer, SWT.NONE);
 			break;
 		case CHAR:
-			detailsPanel = new CharEditor(this, SWT.NONE);
+			detailsPanel = new CharEditor(detailsContainer, SWT.NONE);
 			break;
 		case ENUM:
-			detailsPanel = new EnumEditor(this, SWT.NONE);
+			detailsPanel = new EnumEditor(detailsContainer, SWT.NONE);
 			break;
 		case NUMBER:
-			detailsPanel = new NumberEditor(this, SWT.NONE);
+			detailsPanel = new NumberEditor(detailsContainer, SWT.NONE);
 			break;
 		case STRING:
-			detailsPanel = new StringEditor(this, SWT.NONE);
+			detailsPanel = new StringEditor(detailsContainer, SWT.NONE);
 			break;
 		case COMPONENT:
-			detailsPanel = new ComponentEditor(this, SWT.NONE);
+			detailsPanel = new ComponentEditor(detailsContainer, SWT.NONE);
 			break;
 		case LIST:
-			detailsPanel = new ListEditor(this, SWT.NONE);
+			detailsPanel = new ListEditor(detailsContainer, SWT.NONE);
 			break;
 		case SET:
-			detailsPanel = new SetEditor(this, SWT.NONE);
+			detailsPanel = new SetEditor(detailsContainer, SWT.NONE);
 			break;
 		case MAP:
 			break;
@@ -205,6 +204,53 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 		}
 	}
 	
+	private String promtKey(VariableDescription keyType) {
+		if (keyType.getType().equals(VariableType.ENUM)) {
+			
+			EnumDescription enumDesc = (EnumDescription) keyType;
+
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			EnumNode enumMirror = SyncEnumTree.loadEnum(enumDesc.getEnumType(), sharedDir);
+			List<String> values = enumMirror.getEnumConstants();
+			
+			if (values.size() == 0) {
+				MessageDialog.openConfirm(detailsContainer.getShell(), "No Enum Constants", "No enum Constants are defined in: " + enumMirror);
+				return null;
+			}
+			
+			ElementListSelectionDialog dialog = new ElementListSelectionDialog(getShell(), new LabelProvider());
+			dialog.setElements(values.toArray());
+			dialog.setTitle("Select A Enum Constant");
+			if (dialog.open() != Window.OK)
+				return null;
+			
+			Object[] selectedType = dialog.getResult();
+			if (selectedType.length == 0 || selectedType.length > 1)
+				return null;
+			return selectedType[0].toString();
+			
+		} else {
+			InputDialog dlg = new InputDialog(getShell(), "Add Set Entry", "Enter new Set Entry of Type: " + keyType, "over 9000", null);
+			if (dlg.open() == Window.OK) {
+				String value = dlg.getValue();
+				if (value == null)
+					return null;
+				
+				for (INode childNode : variableNode.getChildren()) {
+					if (childNode instanceof PrefabVariableNode) {
+						PrefabVariableNode existingVariable = (PrefabVariableNode) childNode;
+						if (existingVariable.getVariableValue().toString().equals(value)) {
+							MessageDialog.openInformation(getShell(), "Duplicate Set Entry", "Entry has already been added to the set");
+							return null;
+						}
+					}
+				}
+				return value;
+			}
+			return null;
+		}
+	}
+	
 	private class SetEditor extends Composite {
 
 		private VariableDescription entryDesc = null;
@@ -216,8 +262,8 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			
 			variableNode.setVariableValue(new Object());
 			
-			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
-			//entryDesc = ModelConstants.getEntryDescription(listDescription);
+			CollectionDescription setDescription = (CollectionDescription) variableNode.getVariableDescription();
+			entryDesc = setDescription.getEntryType();
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
@@ -226,59 +272,19 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 				
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
-
 					
-					String value = null;
-					
-					if (entryDesc.getType().equals(VariableType.ENUM)) {
-						
-						EnumDescription enumDesc = (EnumDescription) entryDesc;
-
-						String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-						EnumNode enumMirror = SyncEnumTree.loadEnum(enumDesc.getEnumType(), sharedDir);
-						List<String> values = enumMirror.getEnumConstants();
-						
-						
-						ElementListSelectionDialog dialog = new ElementListSelectionDialog(getShell(), new LabelProvider());
-						dialog.setElements(values.toArray());
-						dialog.setTitle("Select A Enum Constant");
-						if (dialog.open() != Window.OK)
-							return;
-						
-						Object[] selectedType = dialog.getResult();
-						if (selectedType.length == 0 || selectedType.length > 1)
-							return;
-						value = selectedType[0].toString();
-						
-					} else {
-						InputDialog dlg = new InputDialog(getShell(), "Add Set Entry", "Enter new Set Entry of Type: " + entryDesc.getType(), "NewPrefab", null);
-						if (dlg.open() == Window.OK) {
-							value = dlg.getValue();
-							if (value == null)
-								return;
-							
-							for (INode childNode : variableNode.getChildren()) {
-								if (childNode instanceof PrefabVariableNode) {
-									PrefabVariableNode existingVariable = (PrefabVariableNode) childNode;
-									if (existingVariable.getVariableValue().toString().equals(value)) {
-										MessageDialog.openInformation(getShell(), "Duplicate Set Entry", "Entry has already been added to the set");
-										return;
-									}
-								}
-							}
-						}
-					}
-					
+					String value = promtKey(entryDesc);
 					if (value == null)
 						return;
 					
 					Object variableValue = parseVariableValue(entryDesc, value);
 					
-//					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
-//					prefabVariable.setName(entryDesc.getType().toString() + variableNode.getChildren().length);
-//					prefabVariable.setVariableValue(variableValue);
-//					prefabVariable.setEditable(false);
-//					variableNode.addChild(prefabVariable);
+					String name = entryDesc.getType().toString() + variableNode.getChildren().length;
+					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(name, entryDesc);
+					prefabVariable.setName(name);
+					prefabVariable.setVariableValue(variableValue);
+					prefabVariable.setEditable(false);
+					variableNode.addChild(prefabVariable);
 					
 					refreshViewer();
 				}
@@ -288,8 +294,6 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 	
 	private class ListEditor extends Composite {
 
-		private VariableDescription entryDesc = null;
-
 		public ListEditor(Composite parent, int style) {
 			super(parent, style);
 			setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
@@ -298,8 +302,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			variableNode.setVariableValue(new Object());
 			
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
-			
-			//entryDesc = ModelConstants.getEntryDescription(listDescription);
+			VariableDescription entryDesc = listDescription.getEntryType();
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
@@ -308,12 +311,15 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 				
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
-//					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
-//					prefabVariable.setName(entryDesc.getType().toString() + variableNode.getChildren().length);
-//					variableNode.addChild(prefabVariable);
+					String entryName = entryDesc.getType().toString() + variableNode.getChildren().length;
+					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(entryName, entryDesc);
+					prefabVariable.setName(entryName);
+					variableNode.addChild(prefabVariable);
 					refreshViewer();
 				}
 			});
+			
+			refreshDetailsContainer();
 		}
 	}
 	
@@ -339,6 +345,8 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			createVariables(templateNodeMirror);
 
 			variableNode.setVariableValue(new Object());
+			
+			refreshDetailsContainer();
 		}
 		
 		private void createVariables(EntityTemplateNode templateNodeMirror) {
@@ -384,8 +392,8 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					variableNode.setVariableValue(textField.getText());
 				}
 			});
+			refreshDetailsContainer();
 		}
-		
 	}
 	
 	private class EnumEditor extends Composite {
@@ -418,8 +426,6 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			
 			if (values.size() == 0) {
 				MessageDialog.openConfirm(parent.getShell(), "No Enum Constants", "No enum Constants are defined in: " + enumMirror);
-				this.dispose();
-				nullCheckBox.setEnabled(false);
 				return;
 			}
 			
@@ -441,6 +447,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					variableNode.setVariableValue(comboBox.getText());
 				}
 			});
+			refreshDetailsContainer();
 		}
 	}
 	
@@ -482,6 +489,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					variableNode.setVariableValue(comboBox.getText().charAt(0));
 				}
 			});
+			refreshDetailsContainer();
 		}
 	}
 	
@@ -515,6 +523,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					variableNode.setVariableValue(checkBox.getSelection());
 				}
 			});
+			refreshDetailsContainer();
 		}
 	}
 	
@@ -569,6 +578,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					}
 				}
 			});
+			refreshDetailsContainer();
 		}
 	}
 	
@@ -596,7 +606,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 						variableNode.clearChildren();
 						detailsPanel.dispose();
 					}
-					parent.layout();
+					refreshDetailsContainer();
 					refreshViewer();
 				}
 			});
