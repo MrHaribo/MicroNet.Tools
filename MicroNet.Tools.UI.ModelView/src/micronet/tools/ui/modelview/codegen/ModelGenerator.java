@@ -22,7 +22,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
@@ -45,7 +44,6 @@ public class ModelGenerator {
 			
 			List<MethodSpec> methods = new ArrayList<>();
 			List<FieldSpec> fields = new ArrayList<>();
-			
 			
 			for (INode node : templateNode.getChildren()) {
 				
@@ -84,36 +82,12 @@ public class ModelGenerator {
 						getter = generateGetter(enumTypeName, variableName);
 						break;
 					case LIST:
-						CollectionDescription listDesc = (CollectionDescription) variableNode.getVariabelDescription();
-						ClassName listClassName = ClassName.get(List.class);
-						TypeName entryTypeName = null;
-						if (listDesc.getEntryType().getType() == VariableType.COMPONENT) {
-							ComponentDescription entryComponentDesc = (ComponentDescription) listDesc.getEntryType();
-							entryTypeName = ClassName.get(packageName, entryComponentDesc.getComponentType());
-						} else {
-							entryTypeName = getBoxingType(listDesc.getEntryType());
-						}
-						TypeName parametrizedListTypeName = ParameterizedTypeName.get(listClassName, entryTypeName);
-						field = FieldSpec.builder(parametrizedListTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(parametrizedListTypeName, variableName);
-						getter = generateGetter(parametrizedListTypeName, variableName);
-						break;
+					case SET:
 					case MAP:
-						MapDescription mapDesc = (MapDescription) variableNode.getVariabelDescription();
-						ClassName mapClassName = ClassName.get(Map.class);
-						TypeName mapKeyTypeName = getBoxingType(mapDesc.getKeyType());
-						
-						TypeName mapEntryTypeName =  null;
-						if (mapDesc.getEntryType().getType() == VariableType.COMPONENT) {
-							ComponentDescription entryComponentDesc = (ComponentDescription) mapDesc.getEntryType();
-							mapEntryTypeName = ClassName.get(packageName, entryComponentDesc.getComponentType());
-						} else {
-							mapEntryTypeName = getBoxingType(mapDesc.getEntryType());
-						}
-						TypeName parametrizedMapTypeName = ParameterizedTypeName.get(mapClassName, mapKeyTypeName, mapEntryTypeName);
-						field = FieldSpec.builder(parametrizedMapTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(parametrizedMapTypeName, variableName);
-						getter = generateGetter(parametrizedMapTypeName, variableName);
+						TypeName entryTypeName = getParametrizedEntryTypeName(variableNode.getVariabelDescription());
+						field = FieldSpec.builder(entryTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
+						setter = generateSetter(entryTypeName, variableName);
+						getter = generateGetter(entryTypeName, variableName);
 						break;
 					case NUMBER:
 						NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
@@ -121,16 +95,6 @@ public class ModelGenerator {
 						field = FieldSpec.builder(numberType, variableName).addModifiers(Modifier.PRIVATE).build();
 						setter = generateSetter(numberType, variableName);
 						getter = generateGetter(numberType, variableName);
-						break;
-					case SET:
-						CollectionDescription setDesc = (CollectionDescription) variableNode.getVariabelDescription();
-						ClassName setClassName = ClassName.get(Set.class);
-						TypeName setEntryTypeName = getBoxingType(setDesc.getEntryType());
-
-						TypeName parametrizedSetTypeName = ParameterizedTypeName.get(setClassName, setEntryTypeName);
-						field = FieldSpec.builder(parametrizedSetTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(parametrizedSetTypeName, variableName);
-						getter = generateGetter(parametrizedSetTypeName, variableName);
 						break;
 					case STRING:
 						field = FieldSpec.builder(String.class, variableName).addModifiers(Modifier.PRIVATE).build();
@@ -148,7 +112,6 @@ public class ModelGenerator {
 					methods.add(getter);
 					fields.add(field);
 				}
-
 			}
 
 			Builder entityBuilder = TypeSpec.classBuilder(templateNode.getName())
@@ -176,6 +139,41 @@ public class ModelGenerator {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	private static TypeName getParametrizedEntryTypeName(VariableDescription variableDesc) {
+		
+		switch (variableDesc.getType()) {
+		case COMPONENT:
+			ComponentDescription entryComponentDesc = (ComponentDescription) variableDesc;
+			return ClassName.get(packageName, entryComponentDesc.getComponentType());
+		case ENUM:
+			EnumDescription enumDesc = (EnumDescription) variableDesc;
+			return ClassName.get(packageName, enumDesc.getEnumType());
+		case LIST:
+			CollectionDescription listDesc = (CollectionDescription) variableDesc;
+			ClassName listClassName = ClassName.get(List.class);
+			TypeName entryTypeName = getParametrizedEntryTypeName(listDesc.getEntryType());
+			return ParameterizedTypeName.get(listClassName, entryTypeName);
+		case SET:
+			CollectionDescription setDesc = (CollectionDescription) variableDesc;
+			ClassName setClassName = ClassName.get(Set.class);
+			TypeName setEntryTypeName = getParametrizedEntryTypeName(setDesc.getEntryType());
+			return ParameterizedTypeName.get(setClassName, setEntryTypeName);
+		case MAP:
+			MapDescription mapDesc = (MapDescription) variableDesc;
+			ClassName mapClassName = ClassName.get(Map.class);
+			TypeName mapKeyTypeName = getParametrizedEntryTypeName(mapDesc.getKeyType());
+			TypeName mapEntryTypeName = getParametrizedEntryTypeName(mapDesc.getEntryType());
+			return ParameterizedTypeName.get(mapClassName, mapKeyTypeName, mapEntryTypeName);
+		case STRING:
+		case NUMBER:
+		case BOOLEAN:
+		case CHAR:
+		default:
+			return getBoxingType(variableDesc);
+		
 		}
 	}
 
