@@ -32,10 +32,12 @@ import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableEntryNode;
+import micronet.tools.ui.modelview.nodes.PrefabVariableKeyNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
+import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
@@ -77,10 +79,12 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			ModelNode parentNode = (ModelNode)variableNode.getParent();
 			parentNode.removeChild(variableNode);
 			
-			int index = 0;
-			for (INode siblingNode : parentNode.getChildren()) {
-				PrefabVariableEntryNode prefabVariable = (PrefabVariableEntryNode)siblingNode;
-				prefabVariable.setName(variableNode.getVariableType().toString() + index++);
+			if (!(variableNode instanceof PrefabVariableKeyNode)) {
+				int index = 0;
+				for (INode siblingNode : parentNode.getChildren()) {
+					PrefabVariableEntryNode prefabVariable = (PrefabVariableEntryNode)siblingNode;
+					prefabVariable.setName(variableNode.getVariableType().toString() + index++);
+				}
 			}
 			refreshViewer();
 		}
@@ -148,7 +152,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			detailsPanel = new SetEditor(detailsContainer, SWT.NONE);
 			break;
 		case MAP:
-			break;
+			detailsPanel = new MapEditor(detailsContainer, SWT.NONE);
 		default:
 			break;
 			
@@ -248,6 +252,51 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 				return value;
 			}
 			return null;
+		}
+	}
+	
+	private class MapEditor extends Composite {
+
+		private VariableDescription keyDesc = null;
+		private VariableDescription entryDesc = null;
+
+		public MapEditor(Composite parent, int style) {
+			super(parent, style);
+			setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			setLayout(new GridLayout(2, false));
+			
+			variableNode.setVariableValue(new Object());
+			
+			MapDescription setDescription = (MapDescription) variableNode.getVariableDescription();
+			entryDesc = setDescription.getEntryType();
+			keyDesc = setDescription.getKeyType();
+			
+			Button button = new Button(this, SWT.NONE);
+			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
+			button.setText("Add Entry");
+			button.addSelectionListener(new SelectionAdapter() {
+				
+				@Override
+				public void widgetSelected(SelectionEvent arg0) {
+					
+					String keyValueString = promtKey(entryDesc);
+					if (keyValueString == null)
+						return;
+					
+					Object keyValue = parseVariableValue(keyDesc, keyValueString);
+					
+					PrefabVariableKeyNode keyNode = new PrefabVariableKeyNode(keyValueString, keyDesc);
+					keyNode.setName(keyValueString);
+					keyNode.setVariableValue(keyValue);
+					keyNode.setEditable(false);
+					variableNode.addChild(keyNode);
+					
+					PrefabVariableNode valueNode = new PrefabVariableNode("value", entryDesc);
+					keyNode.addChild(valueNode);
+					
+					refreshViewer();
+				}
+			});
 		}
 	}
 	

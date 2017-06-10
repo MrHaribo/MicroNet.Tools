@@ -27,13 +27,14 @@ import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.nodes.EntityVariableNode;
 import micronet.tools.ui.modelview.nodes.EnumNode;
 import micronet.tools.ui.modelview.nodes.EnumRootNode;
-import micronet.tools.ui.modelview.nodes.ModelNode;
 import micronet.tools.ui.modelview.nodes.PrefabNode;
 import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableEntryNode;
+import micronet.tools.ui.modelview.nodes.PrefabVariableKeyNode;
 import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.variables.CollectionDescription;
 import micronet.tools.ui.modelview.variables.ComponentDescription;
+import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
@@ -206,6 +207,38 @@ public class SyncPrefabTree {
 			variableNode.setVariableValue(element.getAsString());
 			break;
 		case MAP:
+			
+			JsonObject mapObject = element.getAsJsonObject();
+			if (mapObject == null)
+				break;
+			variableNode.setVariableValue(new Object());
+			
+			MapDescription mapDescription = (MapDescription) variableNode.getVariableDescription();
+			VariableDescription mapKeyDesc = mapDescription.getKeyType();
+			VariableDescription mapEntryDesc = mapDescription.getEntryType();
+			
+			for (Map.Entry<String,JsonElement> entry : mapObject.entrySet()) {
+				
+				PrefabVariableKeyNode keyNode = new PrefabVariableKeyNode(entry.getKey(), mapKeyDesc);
+				keyNode.setName(entry.getKey());
+				keyNode.setEditable(false);
+				variableNode.addChild(keyNode);
+				
+				try {
+					JsonElement keyElement = new JsonPrimitive(entry.getKey());// = parseKeyString(mapKeyDesc, entry.getKey());
+					
+					deserializePrefabVariable(keyNode, keyElement, sharedDir);
+					
+					PrefabVariableNode valueNode = new PrefabVariableNode("value", mapEntryDesc);
+					keyNode.addChild(valueNode);
+					
+					try {
+						deserializePrefabVariable(valueNode, entry.getValue(), sharedDir);
+					} catch (Exception e) {
+					}
+				} catch (Exception e) {
+				}
+			}
 			break;
 		case NUMBER:
 			NumberDescription numberDescription = (NumberDescription) variableNode.getVariableDescription();
@@ -229,11 +262,14 @@ public class SyncPrefabTree {
 				variableNode.setVariableValue(element.getAsShort());
 				break;
 			}
+			break;
 		case STRING:
 			variableNode.setVariableValue(element.getAsString());
 			break;
 		}
 	}
+
+
 
 	private static JsonElement serializePrefabVariable(PrefabVariableNode variableNode) {
 		
@@ -298,15 +334,32 @@ public class SyncPrefabTree {
 			}
 			return listArray;
 		case MAP:
-			break;
+			if (!variableNode.hasChildren())
+				return null;
+			JsonObject mapObject = new JsonObject();
+			for (INode child : variableNode.getChildren()) {
+				if (child instanceof PrefabVariableNode) {
+					
+					PrefabVariableNode mapKeyVariable = (PrefabVariableNode) child;
+					PrefabVariableNode mapEntryVariable = (PrefabVariableNode) mapKeyVariable.getChildren()[0];
+					
+					try {
+						JsonElement childKeyVariableObject = serializePrefabVariable(mapKeyVariable);
+						JsonElement mapEntryObject = null;
+						try {
+							mapEntryObject = serializePrefabVariable(mapEntryVariable);
+						} catch (Exception e) {
+						}
+						mapObject.add(childKeyVariableObject.toString(), mapEntryObject);
+					} catch (Exception e) {
+					}
+				}
+			}
+			return mapObject;
 		default:
 			return null;
-		
 		}
-		
-		return null;
 	}
-	
 	
 	public static void savePrefab(INode node, String sharedDir) {
 		SavePrefabTreeVisitor visitor = new SavePrefabTreeVisitor(sharedDir);
@@ -355,7 +408,7 @@ public class SyncPrefabTree {
 				}
 			}
 			
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 
 			File file = new File(prefabDataDir + "/" + prefabNode.getID());
 			String data = gson.toJson(prefabObject);
