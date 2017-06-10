@@ -247,8 +247,6 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					MessageDialog.openInformation(getShell(), "Invalid Key", "Invalid Key input for Type :" + keyType);
 					return null;
 				}
-				
-
 			}
 		}
 		for (INode childNode : variableNode.getChildren()) {
@@ -278,6 +276,22 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			MapDescription setDescription = (MapDescription) variableNode.getVariableDescription();
 			entryDesc = setDescription.getEntryType();
 			keyDesc = setDescription.getKeyType();
+			
+			Label label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText("Key Type:");
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText(keyDesc.toString());
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText("Entry Type:");
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText(entryDesc.toString());
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
@@ -322,6 +336,14 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			CollectionDescription setDescription = (CollectionDescription) variableNode.getVariableDescription();
 			entryDesc = setDescription.getEntryType();
 			
+			Label label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText("Entry Type:");
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText(entryDesc.toString());
+			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
 			button.setText("Add Entry");
@@ -360,6 +382,14 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
 			VariableDescription entryDesc = listDescription.getEntryType();
+			
+			Label label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText("Entry Type:");
+			
+			label = new Label(this, SWT.NONE);
+			label.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false));
+			label.setText(entryDesc.toString());
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
