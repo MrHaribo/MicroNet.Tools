@@ -32,6 +32,7 @@ import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
 import micronet.tools.ui.modelview.variables.NumberType;
+import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
 public class ModelGenerator {
@@ -86,10 +87,11 @@ public class ModelGenerator {
 						CollectionDescription listDesc = (CollectionDescription) variableNode.getVariabelDescription();
 						ClassName listClassName = ClassName.get(List.class);
 						TypeName entryTypeName = null;
-						if (ModelConstants.isTemplateCollection(listDesc)) {
-							entryTypeName = ClassName.get(packageName, listDesc.getEntryType());
+						if (listDesc.getEntryType().getType() == VariableType.COMPONENT) {
+							ComponentDescription entryComponentDesc = (ComponentDescription) listDesc.getEntryType();
+							entryTypeName = ClassName.get(packageName, entryComponentDesc.getComponentType());
 						} else {
-							entryTypeName = getPrimitiveCollectionType(listDesc);
+							entryTypeName = getBoxingType(listDesc.getEntryType());
 						}
 						TypeName parametrizedListTypeName = ParameterizedTypeName.get(listClassName, entryTypeName);
 						field = FieldSpec.builder(parametrizedListTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
@@ -99,13 +101,14 @@ public class ModelGenerator {
 					case MAP:
 						MapDescription mapDesc = (MapDescription) variableNode.getVariabelDescription();
 						ClassName mapClassName = ClassName.get(Map.class);
-						TypeName mapKeyTypeName = getPrimitiveTypeFromName(mapDesc.getKeyType());
+						TypeName mapKeyTypeName = getBoxingType(mapDesc.getKeyType());
 						
 						TypeName mapEntryTypeName =  null;
-						if (ModelConstants.isTemplateCollection(mapDesc)) {
-							mapEntryTypeName = ClassName.get(packageName, mapDesc.getEntryType());
+						if (mapDesc.getEntryType().getType() == VariableType.COMPONENT) {
+							ComponentDescription entryComponentDesc = (ComponentDescription) mapDesc.getEntryType();
+							mapEntryTypeName = ClassName.get(packageName, entryComponentDesc.getComponentType());
 						} else {
-							mapEntryTypeName = getPrimitiveCollectionType(mapDesc);
+							mapEntryTypeName = getBoxingType(mapDesc.getEntryType());
 						}
 						TypeName parametrizedMapTypeName = ParameterizedTypeName.get(mapClassName, mapKeyTypeName, mapEntryTypeName);
 						field = FieldSpec.builder(parametrizedMapTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
@@ -122,7 +125,7 @@ public class ModelGenerator {
 					case SET:
 						CollectionDescription setDesc = (CollectionDescription) variableNode.getVariabelDescription();
 						ClassName setClassName = ClassName.get(Set.class);
-						TypeName setEntryTypeName = getPrimitiveCollectionType(setDesc);
+						TypeName setEntryTypeName = getBoxingType(setDesc.getEntryType());
 
 						TypeName parametrizedSetTypeName = ParameterizedTypeName.get(setClassName, setEntryTypeName);
 						field = FieldSpec.builder(parametrizedSetTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
@@ -175,21 +178,12 @@ public class ModelGenerator {
 			e.printStackTrace();
 		}
 	}
-	
-	private static TypeName getPrimitiveTypeFromName(String typeName) { 
-		return getBoxingType(typeName);
-	}
-	
-	private static TypeName getPrimitiveCollectionType(CollectionDescription desc) {
-		return getBoxingType(desc.getEntryType());
-	}
-	
-	private static TypeName getBoxingType(String typeName) {
+
+	private static TypeName getBoxingType(VariableDescription variableDesc) {
 		
-		NumberType numberType = ModelConstants.getNumberEntryTypeFromName(typeName);
-		
-		if (numberType != null) {
-			switch (numberType) {
+		if (variableDesc.getType() == VariableType.NUMBER) {
+			NumberDescription numberDesc = (NumberDescription) variableDesc;
+			switch (numberDesc.getNumberType()) {
 			case BYTE:
 				return ClassName.get(Byte.class);
 			case DOUBLE:
@@ -205,11 +199,8 @@ public class ModelGenerator {
 			default:
 				return null;
 			}
-		}
-		
-		VariableType variableType = ModelConstants.getVariableEntryTypeFromName(typeName);
-		if (variableType != null) {
-			switch (variableType) {
+		} else {
+			switch (variableDesc.getType()) {
 			case BOOLEAN:
 				return ClassName.get(Boolean.class);
 			case CHAR:
@@ -220,7 +211,6 @@ public class ModelGenerator {
 				return null;
 			}
 		}
-		return null;
 	}
 
 	private static Type getPrimitiveNumberType(NumberType numberType) {

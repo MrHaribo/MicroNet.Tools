@@ -12,4 +12,13 @@ public class ComponentDescription extends VariableDescription  {
 	public String getComponentType() {
 		return componentType;
 	}
+
+	public void setComponentType(String componentType) {
+		this.componentType = componentType;
+	}
+	
+	@Override
+	public String toString() {
+		return componentType;
+	}
 }

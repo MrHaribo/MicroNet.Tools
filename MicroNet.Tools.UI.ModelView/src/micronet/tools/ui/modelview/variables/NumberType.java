@@ -6,5 +6,14 @@ public enum NumberType {
 	INT,
 	LONG,
 	FLOAT,
-	DOUBLE
+	DOUBLE;
+	
+	public static boolean isNumberTypeName(String typeName) {
+		try {
+			Enum.valueOf(NumberType.class, typeName.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+		return true;
+	}
 }

@@ -2,14 +2,18 @@ package micronet.tools.ui.modelview.variables;
 
 public class CollectionDescription extends VariableDescription {
 
-	String entryType;
+	VariableDescription entryType;
 	
-	public CollectionDescription(VariableType type, String entryType) {
+	public CollectionDescription(VariableType type, VariableDescription entryType) {
 		super(type);
 		this.entryType = entryType;
 	}
 
-	public String getEntryType() {
+	public VariableDescription getEntryType() {
 		return entryType;
+	}
+
+	public void setEntryType(VariableDescription entryType) {
+		this.entryType = entryType;
 	}
 }

@@ -20,7 +20,7 @@ public abstract class NodeDetails extends Composite implements IDetails {
 		setLayout(new GridLayout(1, false));
 		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
-		Composite detailsContainer = new Composite(this, SWT.NONE);
+		Composite detailsContainer = new Composite(this, SWT.BORDER);
 		detailsContainer.setLayout(new GridLayout(2, false));
 		detailsContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 				

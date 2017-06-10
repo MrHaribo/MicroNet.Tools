@@ -171,31 +171,31 @@ public class ModelView extends ViewPart {
 				selectedNode = (ModelNode) selection.getFirstElement();
 
 				if (selectedNode instanceof EntityTemplateRootNode) {
-					TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(entityTemplateRoot, detailsContainer,	SWT.NONE);
+					TemplateNodeRootDetails templateRootDetails = new TemplateNodeRootDetails(entityTemplateRoot, detailsContainer,	SWT.BORDER);
 					currentDetailPanel = templateRootDetails;
 				} else if (selectedNode instanceof EntityTemplateNode) {
-					TemplateNodeDetails templateDetails = new TemplateNodeDetails((EntityTemplateNode)selectedNode, detailsContainer, SWT.NONE);
+					TemplateNodeDetails templateDetails = new TemplateNodeDetails((EntityTemplateNode)selectedNode, detailsContainer, SWT.BORDER);
 					currentDetailPanel = templateDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
-					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
+					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.BORDER);
 					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EnumRootNode) {
-					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(enumRoot, detailsContainer, SWT.NONE);
+					EnumNodeRootDetails enumRootDetails = new EnumNodeRootDetails(enumRoot, detailsContainer, SWT.BORDER);
 					currentDetailPanel = enumRootDetails;
 				} else if (selectedNode instanceof EnumNode) {
-					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.NONE);
+					EnumNodeDetails enumDetails = new EnumNodeDetails((EnumNode)selectedNode, detailsContainer, SWT.BORDER);
 					currentDetailPanel = enumDetails;
 				} else if (selectedNode instanceof PrefabNode) {
-					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.NONE);
+					PrefabNodeDetails prefabDetails = new PrefabNodeDetails((PrefabNode)selectedNode, detailsContainer, SWT.BORDER);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabRootNode) {
-					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(prefabRoot, detailsContainer, SWT.NONE);
+					PrefabNodeRootDetails prefabDetails = new PrefabNodeRootDetails(prefabRoot, detailsContainer, SWT.BORDER);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabVariableEntryNode) {
-					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE, true);
+					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.BORDER, true);
 					currentDetailPanel = prefabDetails;
 				} else if (selectedNode instanceof PrefabVariableNode) {
-					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.NONE, false);
+					PrefabVariableNodeDetails prefabDetails = new PrefabVariableNodeDetails((PrefabVariableNode)selectedNode, detailsContainer, SWT.BORDER, false);
 					currentDetailPanel = prefabDetails;
 				}
 				

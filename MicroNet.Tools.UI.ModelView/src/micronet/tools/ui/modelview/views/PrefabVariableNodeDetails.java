@@ -217,7 +217,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			variableNode.setVariableValue(new Object());
 			
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
-			entryDesc = ModelConstants.getEntryDescription(listDescription);
+			//entryDesc = ModelConstants.getEntryDescription(listDescription);
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
@@ -274,11 +274,11 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					
 					Object variableValue = parseVariableValue(entryDesc, value);
 					
-					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
-					prefabVariable.setName(entryDesc.getType().toString() + variableNode.getChildren().length);
-					prefabVariable.setVariableValue(variableValue);
-					prefabVariable.setEditable(false);
-					variableNode.addChild(prefabVariable);
+//					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
+//					prefabVariable.setName(entryDesc.getType().toString() + variableNode.getChildren().length);
+//					prefabVariable.setVariableValue(variableValue);
+//					prefabVariable.setEditable(false);
+//					variableNode.addChild(prefabVariable);
 					
 					refreshViewer();
 				}
@@ -299,7 +299,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			
 			CollectionDescription listDescription = (CollectionDescription) variableNode.getVariableDescription();
 			
-			entryDesc = ModelConstants.getEntryDescription(listDescription);
+			//entryDesc = ModelConstants.getEntryDescription(listDescription);
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
@@ -308,9 +308,9 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 				
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
-					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
-					prefabVariable.setName(entryDesc.getType().toString() + variableNode.getChildren().length);
-					variableNode.addChild(prefabVariable);
+//					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(listDescription.getEntryType(), entryDesc);
+//					prefabVariable.setName(entryDesc.getType().toString() + variableNode.getChildren().length);
+//					variableNode.addChild(prefabVariable);
 					refreshViewer();
 				}
 			});

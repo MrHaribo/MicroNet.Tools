@@ -17,9 +17,9 @@ public class ModelConstants {
 	public static final String NAME_PROP_KEY = "name";
 	public static final String ID_PROP_KEY = "id";
 	public static final String TYPE_PROP_KEY = "type";
-	public static final String NUMBER_TYPE_PROP_KEY = "number_type";
-	public static final String ENTRY_TYPE_PROP_KEY = "entry_type";
-	public static final String KEY_TYPE_PROP_KEY = "key_type";
+	public static final String NUMBER_TYPE_PROP_KEY = "numberType";
+	public static final String ENTRY_TYPE_PROP_KEY = "entryType";
+	public static final String KEY_TYPE_PROP_KEY = "keyType";
 	public static final String PARENT_PROP_KEY = "parent";
 	
 	public static File getModelDir(String sharedDir) {
@@ -29,39 +29,7 @@ public class ModelConstants {
 		return modelDir;
 	}
 	
-	public static boolean isPrimitiveTypeName(String typeName) {
-		boolean numberTypeName = isNumberTypeName(typeName);
-		boolean variableTypeName = isVariableTypeName(typeName);
-		return numberTypeName || variableTypeName;
-	}
-	
-	public static boolean isNumberTypeName(String typeName) {
-		try {
-			Enum.valueOf(NumberType.class, typeName.toUpperCase());
-		} catch (IllegalArgumentException e) {
-			return false;
-		}
-		return true;
-	}
-	
-	public static boolean isVariableTypeName(String typeName) {
-		try {
-			Enum.valueOf(VariableType.class, typeName.toUpperCase());
-		} catch (IllegalArgumentException e) {
-			return false;
-		}
-		return true;
-	}
-	
-	public static boolean isTemplateCollection(CollectionDescription desc) {
-		VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(desc);
-		NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(desc);
-		return variableType == null && numberType == null;
-	}
 
-	public static VariableType getVariableEntryTypeOfCollection(CollectionDescription desc) {
-		return getVariableEntryTypeFromName(desc.getEntryType());
-	}
 
 	public static VariableType getVariableEntryTypeFromName(String name) {
 		VariableType variableType = null;
@@ -72,9 +40,7 @@ public class ModelConstants {
 		return variableType;
 	}
 	
-	public static NumberType getNumberEntryTypeOfCollection(CollectionDescription desc) {
-		return getNumberEntryTypeFromName(desc.getEntryType());
-	}
+	
 		
 	public static NumberType getNumberEntryTypeFromName(String name) {
 		NumberType numberType = null;
@@ -83,24 +49,6 @@ public class ModelConstants {
 		} catch (IllegalArgumentException e) {
 		}
 		return numberType;
-	}
-	
-	public static VariableDescription getEntryDescription(CollectionDescription listDescription) {
-		VariableDescription variableDesc = null;
-		if (ModelConstants.isTemplateCollection(listDescription)) {
-			variableDesc = new ComponentDescription(listDescription.getEntryType());
-		} else {
-			NumberType numberType = ModelConstants.getNumberEntryTypeOfCollection(listDescription);
-			VariableType variableType = ModelConstants.getVariableEntryTypeOfCollection(listDescription);
-			
-			if (numberType != null) {
-				variableDesc = new NumberDescription(Enum.valueOf(NumberType.class, listDescription.getEntryType()));
-			} else if (variableType != null) {
-				variableDesc = new VariableDescription(Enum.valueOf(VariableType.class, listDescription.getEntryType()));
-			}
-		}
-		
-		return variableDesc;
 	}
 	
 	public static boolean isValidJavaIdentifier(String s) {

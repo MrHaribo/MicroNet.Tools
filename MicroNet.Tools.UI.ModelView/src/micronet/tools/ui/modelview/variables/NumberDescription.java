@@ -12,4 +12,13 @@ public class NumberDescription extends VariableDescription  {
 	public NumberType getNumberType() {
 		return numberType;
 	}
+
+	public void setNumberType(NumberType numberType) {
+		this.numberType = numberType;
+	}
+	
+	@Override
+	public String toString() {
+		return numberType.toString();
+	}
 }

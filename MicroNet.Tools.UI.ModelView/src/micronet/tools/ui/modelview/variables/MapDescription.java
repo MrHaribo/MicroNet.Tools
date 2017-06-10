@@ -2,14 +2,18 @@ package micronet.tools.ui.modelview.variables;
 
 public class MapDescription extends CollectionDescription {
 
-	String keyType;
+	VariableDescription keyType;
 
-	public MapDescription(String keyType, String entryType) {
+	public MapDescription(VariableDescription keyType, VariableDescription entryType) {
 		super(VariableType.MAP, entryType);
 		this.keyType = keyType;
 	}
 
-	public String getKeyType() {
+	public VariableDescription getKeyType() {
 		return keyType;
+	}
+
+	public void setKeyType(VariableDescription keyType) {
+		this.keyType = keyType;
 	}
 }

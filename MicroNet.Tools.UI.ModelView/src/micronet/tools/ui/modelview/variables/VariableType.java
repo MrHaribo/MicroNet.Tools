@@ -9,5 +9,20 @@ public enum VariableType {
 	LIST,
 	SET,
 	MAP,
-	COMPONENT,
+	COMPONENT;
+	
+	public static boolean isVariableTypeName(String typeName) {
+		try {
+			Enum.valueOf(VariableType.class, typeName.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public static boolean isPrimitiveTypeName(String typeName) {
+		boolean numberTypeName = NumberType.isNumberTypeName(typeName);
+		boolean variableTypeName = isVariableTypeName(typeName);
+		return numberTypeName || variableTypeName;
+	}
 }

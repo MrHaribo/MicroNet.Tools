@@ -39,7 +39,6 @@ import micronet.tools.ui.modelview.variables.ComponentDescription;
 import micronet.tools.ui.modelview.variables.EnumDescription;
 import micronet.tools.ui.modelview.variables.MapDescription;
 import micronet.tools.ui.modelview.variables.NumberDescription;
-import micronet.tools.ui.modelview.variables.NumberType;
 import micronet.tools.ui.modelview.variables.VariableDescription;
 import micronet.tools.ui.modelview.variables.VariableType;
 
@@ -113,8 +112,10 @@ public class SyncTemplateTree {
 				case LIST:
 				case MAP:
 					CollectionDescription collectionDesc = (CollectionDescription) variableDescription;
-					if (ModelConstants.isTemplateCollection(collectionDesc))
-						usedKey = collectionDesc.getEntryType();
+					if (collectionDesc.getEntryType().getType() == VariableType.COMPONENT) {
+						ComponentDescription entryComponentDesc = (ComponentDescription)collectionDesc.getEntryType();
+						usedKey = entryComponentDesc.getComponentType();
+					}
 					break;
 				case ENUM: case SET: case BOOLEAN: case CHAR: case STRING: case NUMBER: default:
 					break;
@@ -412,83 +413,55 @@ public class SyncTemplateTree {
 	
 	private static EntityVariableNode deserializeVariable(JsonObject variableObject) {
 		String variableName = variableObject.getAsJsonPrimitive(ModelConstants.NAME_PROP_KEY).getAsString();
-		VariableType variableType = Enum.valueOf(VariableType.class, variableObject.getAsJsonPrimitive(ModelConstants.TYPE_PROP_KEY).getAsString());
-		
+		JsonObject variableDetails = variableObject.getAsJsonObject(ModelConstants.TYPE_PROP_KEY);
+
 		EntityVariableNode variableNode = new EntityVariableNode(variableName);
-		VariableDescription variabelDescription = null;
+		VariableDescription variabelDescription = deserializeVariableDescription(variableDetails);
+
+		variableNode.setVariabelDescription(variabelDescription);
+		return variableNode;
+	}
+	
+	private static VariableDescription deserializeVariableDescription(JsonObject variableDetails) {
+		VariableType variableType = Enum.valueOf(VariableType.class, variableDetails.getAsJsonPrimitive(ModelConstants.TYPE_PROP_KEY).getAsString());
 		
 		switch (variableType) {
-		case LIST:
-			String listEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
-			variabelDescription = new CollectionDescription(VariableType.LIST, listEntryType);
-			break;
 		case SET:
-			String setEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
-			variabelDescription = new CollectionDescription(VariableType.SET, setEntryType);
-			break;
+		case LIST:
+			CollectionDescription collectionDesc = new Gson().fromJson(variableDetails, CollectionDescription.class);
+			JsonObject listEntryDetails = variableDetails.getAsJsonObject(ModelConstants.ENTRY_TYPE_PROP_KEY);
+			VariableDescription entryDesc = deserializeVariableDescription(listEntryDetails);
+			collectionDesc.setEntryType(entryDesc);
+			return collectionDesc;
 		case NUMBER:
-			String numberType = variableObject.getAsJsonPrimitive(ModelConstants.NUMBER_TYPE_PROP_KEY).getAsString();
-			variabelDescription = new NumberDescription(Enum.valueOf(NumberType.class, numberType));
-			break;
+			return new Gson().fromJson(variableDetails, NumberDescription.class);
 		case MAP:
-			String keyType = variableObject.getAsJsonPrimitive(ModelConstants.KEY_TYPE_PROP_KEY).getAsString();
-			String mapEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
-			variabelDescription = new MapDescription(keyType, mapEntryType);
-			break;
+			MapDescription mapDesc = new Gson().fromJson(variableDetails, MapDescription.class);
+			JsonObject mapEntryDetails = variableDetails.getAsJsonObject(ModelConstants.TYPE_PROP_KEY);
+			VariableDescription mapEntryDesc = deserializeVariableDescription(mapEntryDetails);
+			mapDesc.setEntryType(mapEntryDesc);
+			return mapDesc;
 		case ENUM:
-			String enumEntryType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
-			variabelDescription = new EnumDescription(enumEntryType);
-			break;
+			return new Gson().fromJson(variableDetails, EnumDescription.class);
 		case COMPONENT:
-			String componentType = variableObject.getAsJsonPrimitive(ModelConstants.ENTRY_TYPE_PROP_KEY).getAsString();
-			variabelDescription = new ComponentDescription(componentType);
-			break;
+			return new Gson().fromJson(variableDetails, ComponentDescription.class);
 		case BOOLEAN:
 		case CHAR:
 		case STRING:
-			variabelDescription = new VariableDescription(variableType);
-			break;
+		default:
+			return new Gson().fromJson(variableDetails, VariableDescription.class);
 		}
 		
-		variableNode.setVariabelDescription(variabelDescription);
-		return variableNode;
 	}
 	
 	private static JsonObject serializeVariableDescription(EntityVariableNode variableNode) {
 		
 		JsonObject variableDesc = new JsonObject();
 		variableDesc.addProperty(ModelConstants.NAME_PROP_KEY, variableNode.getName());
-		variableDesc.addProperty(ModelConstants.TYPE_PROP_KEY, variableNode.getVariabelDescription().getType().toString());
 		
-		switch (variableNode.getVariabelDescription().getType()) {
-		case COMPONENT:
-			ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariabelDescription();
-			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, componentDesc.getComponentType());
-			break;
-		case ENUM:
-			EnumDescription enumDesc = (EnumDescription) variableNode.getVariabelDescription();
-			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, enumDesc.getEnumType());
-			break;
-		case LIST:
-		case SET:
-			CollectionDescription collectionDesc = (CollectionDescription) variableNode.getVariabelDescription();
-			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, collectionDesc.getEntryType());
-			break;
-		case NUMBER:
-			NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
-			variableDesc.addProperty(ModelConstants.NUMBER_TYPE_PROP_KEY, numDesc.getNumberType().toString());
-			break;
-		case MAP:
-			MapDescription mapDesc = (MapDescription) variableNode.getVariabelDescription();
-			variableDesc.addProperty(ModelConstants.KEY_TYPE_PROP_KEY, mapDesc.getKeyType());
-			variableDesc.addProperty(ModelConstants.ENTRY_TYPE_PROP_KEY, mapDesc.getEntryType());
-			break;
-		case BOOLEAN:
-		case CHAR:
-		case STRING:
-		default:
-			return variableDesc;
-		}
+		JsonElement variableDetails = new Gson().toJsonTree(variableNode.getVariabelDescription());
+		variableDesc.add(ModelConstants.TYPE_PROP_KEY, variableDetails);
+		
 		return variableDesc;
 	}
 

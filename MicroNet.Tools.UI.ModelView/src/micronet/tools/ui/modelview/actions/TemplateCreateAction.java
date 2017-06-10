@@ -9,6 +9,7 @@ import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
+import micronet.tools.ui.modelview.variables.VariableType;
 
 public class TemplateCreateAction extends ModelAction {
 	
@@ -35,7 +36,7 @@ public class TemplateCreateAction extends ModelAction {
 				return;
 			}
 			
-			if (ModelConstants.isPrimitiveTypeName(name)) {
+			if (VariableType.isPrimitiveTypeName(name)) {
 				MessageDialog.openInformation(shell, "Forbidden Template Name", "Primitive Typenames are reserved.");
 				return;
 			}

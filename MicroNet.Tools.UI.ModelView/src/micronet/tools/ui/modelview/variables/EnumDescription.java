@@ -12,4 +12,13 @@ public class EnumDescription extends VariableDescription {
 	public String getEnumType() {
 		return enumType;
 	}
+
+	public void setEnumType(String enumType) {
+		this.enumType = enumType;
+	}
+	
+	@Override
+	public String toString() {
+		return enumType;
+	}
 }
