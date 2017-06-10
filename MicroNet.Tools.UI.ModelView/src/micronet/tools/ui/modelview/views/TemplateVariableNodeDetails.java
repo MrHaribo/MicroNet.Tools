@@ -3,7 +3,6 @@ package micronet.tools.ui.modelview.views;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -12,7 +11,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -20,7 +18,6 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.ModelConstants;
 import micronet.tools.ui.modelview.SyncEnumTree;
 import micronet.tools.ui.modelview.SyncTemplateTree;
 import micronet.tools.ui.modelview.actions.TemplateVariableRemoveAction;
@@ -38,10 +35,12 @@ import micronet.tools.ui.modelview.variables.VariableType;
 
 public class TemplateVariableNodeDetails extends NodeDetails {
 
-	private static String[] setTypes = { VariableType.ENUM.toString(), VariableType.CHAR.toString(),
-			VariableType.STRING.toString(), NumberType.BYTE.toString(), NumberType.SHORT.toString(),
-			NumberType.INT.toString(), NumberType.LONG.toString(), NumberType.FLOAT.toString(),
-			NumberType.DOUBLE.toString(), };
+	private static String[] keyTypes = { 
+			VariableType.ENUM.toString(), 
+			VariableType.CHAR.toString(),
+			VariableType.STRING.toString(),
+			VariableType.NUMBER.toString(),
+	};
 
 	private Composite detailsPanel;
 
@@ -86,6 +85,22 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		detailsContainer.getParent().layout();
 		detailsContainer.getParent().getParent().layout();
 	}
+	
+	private void updateVariableDetails() {
+
+		if (detailsPanel != null)
+			detailsPanel.dispose();
+
+		detailsPanel = createVariableDetails(variableNode.getVariabelDescription(), detailsContainer, SWT.BORDER);
+		if (detailsPanel != null && !detailsPanel.isDisposed()) {
+			detailsPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+		}
+
+		refreshDetailsPanel();
+		
+		saveTemplate();
+		refreshViewer();
+	}
 
 	public TemplateVariableNodeDetails(EntityVariableNode variableNode, Composite parent, int style) {
 		super(variableNode, parent, style, true);
@@ -96,7 +111,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		removeVariableAction.setText("Remove Template");
 		removeVariableAction.setToolTipText("Remove the Template.");
 
-		detailsContainer = new Composite(this, SWT.BORDER);
+		detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
 
 		Label label = new Label(detailsContainer, SWT.NONE);
@@ -157,43 +172,27 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		}
 	}
 
-	private Composite createVariableDetails(VariableDescription variableDesc, Composite parent) {
+	private Composite createVariableDetails(VariableDescription variableDesc, Composite parent, int style) {
 
 		switch (variableDesc.getType()) {
 		case NUMBER:
-			return new NumberDetails((NumberDescription) variableDesc, parent, SWT.BORDER);
+			return new NumberDetails((NumberDescription) variableDesc, parent, style);
 		case LIST:
-			return new EntryDetails((CollectionDescription) variableDesc, parent, SWT.BORDER);
+			return new EntryDetails((CollectionDescription) variableDesc, parent, style);
 		case SET:
-			return new SetDetails((CollectionDescription) variableDesc, parent, SWT.BORDER);
+			return new SetDetails((CollectionDescription) variableDesc, parent, style);
 		case MAP:
-			return new MapDetails((MapDescription) variableDesc, parent, SWT.BORDER);
+			return new MapDetails((MapDescription) variableDesc, parent, style);
 		case ENUM:
-			return new EnumDetails((EnumDescription) variableDesc, parent, SWT.BORDER);
+			return new EnumDetails((EnumDescription) variableDesc, parent, style);
 		case COMPONENT:
-			return new ComponentDetails((ComponentDescription) variableDesc, parent, SWT.BORDER);
+			return new ComponentDetails((ComponentDescription) variableDesc, parent, style);
 		case STRING:
 		case BOOLEAN:
 		case CHAR:
 		default:
 			return null;
 		}
-	}
-
-	private void updateVariableDetails() {
-
-		if (detailsPanel != null)
-			detailsPanel.dispose();
-
-		detailsPanel = createVariableDetails(variableNode.getVariabelDescription(), detailsContainer);
-		if (detailsPanel != null && !detailsPanel.isDisposed()) {
-			detailsPanel.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, true, false, 2, 1));
-		}
-
-		refreshDetailsPanel();
-		
-		saveTemplate();
-		refreshViewer();
 	}
 
 	private class EnumDetails extends Composite {
@@ -233,11 +232,66 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 
 	private class MapDetails extends Composite {
 
-		private Combo keyTypeSelect;
 		private Composite entryDetails;
 		private Composite keyDetails;
-
+		
+		private Composite keyPanel;
+		
 		public MapDetails(MapDescription mapDesc, Composite parent, int style) {
+			super(parent, style);
+
+			setLayout(new GridLayout(1, false));
+
+			keyPanel = new Composite(this, SWT.NONE);
+			keyPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			keyPanel.setLayout(new GridLayout(2, false));
+			
+			Label label = new Label(keyPanel, SWT.NONE);
+			label.setText("Key Type:");
+
+			Combo keyTypeSelect = new Combo(keyPanel, SWT.READ_ONLY);
+			keyTypeSelect.setItems(keyTypes);
+			keyTypeSelect.setText(mapDesc.getKeyType().getType().toString());
+			keyTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			keyTypeSelect.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+
+					VariableType variableType = Enum.valueOf(VariableType.class, keyTypeSelect.getText());
+					VariableDescription variableDesc = createNewVariableDescription(variableType);
+					mapDesc.setKeyType(variableDesc);
+					
+					updateKeyDetails(variableDesc);
+				}
+			});
+			
+			updateKeyDetails(mapDesc.getKeyType());
+
+			entryDetails = new EntryDetails(mapDesc, this, style);
+			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+		}
+		
+		private void updateKeyDetails(VariableDescription variableDesc) {
+			if (keyDetails != null)
+				keyDetails.dispose();
+			keyDetails = createVariableDetails(variableDesc, keyPanel, SWT.NONE);
+			if (keyDetails != null)
+				keyDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			
+			keyPanel.layout();
+			refreshDetailsPanel();
+			saveTemplate();
+			refreshViewer();
+		}
+	}
+
+	private class SetDetails extends Composite {
+
+		private Composite entryDetails;
+		
+		private Combo keyTypeSelect;
+
+		public SetDetails(CollectionDescription collectionDesc, Composite parent, int style) {
 			super(parent, style);
 
 			setLayout(new GridLayout(2, false));
@@ -246,73 +300,34 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			label.setText("Key Type:");
 
 			keyTypeSelect = new Combo(this, SWT.READ_ONLY);
-			keyTypeSelect.setItems(setTypes);
-			keyTypeSelect.setText(mapDesc.getKeyType().toString());
+			keyTypeSelect.setItems(keyTypes);
+			keyTypeSelect.setText(collectionDesc.getEntryType().getType().toString());
 			keyTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			keyTypeSelect.addSelectionListener(new SelectionAdapter() {
 				@Override
-				public void widgetSelected(SelectionEvent e) {
-
-					VariableType variableType = Enum.valueOf(VariableType.class, keyTypeSelect.getText());
-					VariableDescription variableDesc = createNewVariableDescription(variableType);
-					mapDesc.setEntryType(variableDesc);
-					
-					if (keyDetails != null)
-						keyDetails.dispose();
-					keyDetails = createVariableDetails(variableDesc, MapDetails.this);
-					if (keyDetails != null)
-						keyDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-					
-					refreshDetailsPanel();
-					
-					saveTemplate();
-					refreshViewer();
-				}
-			});
-
-			entryDetails = new EntryDetails(mapDesc, this, style);
-			entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-		}
-	}
-
-	private class SetDetails extends Composite {
-
-		private Composite entryDetails;
-		
-		private Combo setTypeSelect;
-
-		public SetDetails(CollectionDescription collectionDesc, Composite parent, int style) {
-			super(parent, style);
-
-			setLayout(new GridLayout(2, false));
-
-			Label label = new Label(this, SWT.NONE);
-			label.setText("Set Type:");
-
-			setTypeSelect = new Combo(this, SWT.READ_ONLY);
-			setTypeSelect.setItems(setTypes);
-			setTypeSelect.setText(collectionDesc.getEntryType().toString());
-			setTypeSelect.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-			setTypeSelect.addSelectionListener(new SelectionAdapter() {
-				@Override
 				public void widgetSelected(SelectionEvent arg0) {
 					
-					VariableType variableType = Enum.valueOf(VariableType.class, setTypeSelect.getText());
+					VariableType variableType = Enum.valueOf(VariableType.class, keyTypeSelect.getText());
 					VariableDescription variableDesc = createNewVariableDescription(variableType);
 					collectionDesc.setEntryType(variableDesc);
 					
-					if (entryDetails != null)
-						entryDetails.dispose();
-					entryDetails = createVariableDetails(variableDesc, SetDetails.this);
-					if (entryDetails != null)
-						entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-					
-					refreshDetailsPanel();
-					
-					saveTemplate();
-					refreshViewer();
+					updateKeyDetails(variableDesc);
 				}
 			});
+			
+			updateKeyDetails(collectionDesc.getEntryType());
+		}
+		
+		private void updateKeyDetails(VariableDescription variableDesc) {
+			if (entryDetails != null)
+				entryDetails.dispose();
+			entryDetails = createVariableDetails(variableDesc, SetDetails.this, SWT.NONE);
+			if (entryDetails != null)
+				entryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			
+			refreshDetailsPanel();
+			saveTemplate();
+			refreshViewer();
 		}
 	}
 
@@ -353,7 +368,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		private void updateSubEntryDetails(VariableDescription variableDesc) {
 			if (subEntryDetails != null)
 				subEntryDetails.dispose();
-			subEntryDetails = createVariableDetails(variableDesc, EntryDetails.this);
+			subEntryDetails = createVariableDetails(variableDesc, EntryDetails.this, SWT.NONE);
 			if (subEntryDetails != null)
 				subEntryDetails.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 			

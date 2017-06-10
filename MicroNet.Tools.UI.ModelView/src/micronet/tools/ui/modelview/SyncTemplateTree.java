@@ -437,9 +437,15 @@ public class SyncTemplateTree {
 			return new Gson().fromJson(variableDetails, NumberDescription.class);
 		case MAP:
 			MapDescription mapDesc = new Gson().fromJson(variableDetails, MapDescription.class);
-			JsonObject mapEntryDetails = variableDetails.getAsJsonObject(ModelConstants.TYPE_PROP_KEY);
+
+			JsonObject mapKeyDetails = variableDetails.getAsJsonObject(ModelConstants.KEY_TYPE_PROP_KEY);
+			VariableDescription mapKeyDesc = deserializeVariableDescription(mapKeyDetails);
+			mapDesc.setKeyType(mapKeyDesc);
+
+			JsonObject mapEntryDetails = variableDetails.getAsJsonObject(ModelConstants.ENTRY_TYPE_PROP_KEY);
 			VariableDescription mapEntryDesc = deserializeVariableDescription(mapEntryDetails);
 			mapDesc.setEntryType(mapEntryDesc);
+			
 			return mapDesc;
 		case ENUM:
 			return new Gson().fromJson(variableDetails, EnumDescription.class);
