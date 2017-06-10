@@ -209,6 +209,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 	}
 	
 	private String promtKey(VariableDescription keyType) {
+		String value = null;
 		if (keyType.getType().equals(VariableType.ENUM)) {
 			
 			EnumDescription enumDesc = (EnumDescription) keyType;
@@ -231,28 +232,35 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 			Object[] selectedType = dialog.getResult();
 			if (selectedType.length == 0 || selectedType.length > 1)
 				return null;
-			return selectedType[0].toString();
+			
+			value = selectedType[0].toString();
 			
 		} else {
 			InputDialog dlg = new InputDialog(getShell(), "Add Set Entry", "Enter new Set Entry of Type: " + keyType, "over 9000", null);
 			if (dlg.open() == Window.OK) {
-				String value = dlg.getValue();
+				value = dlg.getValue();
 				if (value == null)
 					return null;
 				
-				for (INode childNode : variableNode.getChildren()) {
-					if (childNode instanceof PrefabVariableNode) {
-						PrefabVariableNode existingVariable = (PrefabVariableNode) childNode;
-						if (existingVariable.getVariableValue().toString().equals(value)) {
-							MessageDialog.openInformation(getShell(), "Duplicate Set Entry", "Entry has already been added to the set");
-							return null;
-						}
-					}
+				Object keyValue = parseVariableValue(keyType, value);
+				if (keyValue == null) {
+					MessageDialog.openInformation(getShell(), "Invalid Key", "Invalid Key input for Type :" + keyType);
+					return null;
 				}
-				return value;
+				
+
 			}
-			return null;
 		}
+		for (INode childNode : variableNode.getChildren()) {
+			if (childNode instanceof PrefabVariableNode) {
+				PrefabVariableNode existingVariable = (PrefabVariableNode) childNode;
+				if (existingVariable.getVariableValue().toString().equals(value)) {
+					MessageDialog.openInformation(getShell(), "Duplicate Set Entry", "Entry has already been added to the set");
+					return null;
+				}
+			}
+		}
+		return value;
 	}
 	
 	private class MapEditor extends Composite {
@@ -279,7 +287,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
 					
-					String keyValueString = promtKey(entryDesc);
+					String keyValueString = promtKey(keyDesc);
 					if (keyValueString == null)
 						return;
 					
