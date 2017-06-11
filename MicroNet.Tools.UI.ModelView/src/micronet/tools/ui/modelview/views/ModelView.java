@@ -1,15 +1,12 @@
 package micronet.tools.ui.modelview.views;
 
-import java.net.URL;
 import java.util.Arrays;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -30,9 +27,8 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.modelview.INode;
 import micronet.tools.ui.modelview.ModelConstants;
@@ -60,10 +56,6 @@ public class ModelView extends ViewPart {
 	 * The ID of the view as specified by the extension.
 	 */
 	public static final String ID = "micronet.tools.ui.modelview.views.ModelView";
-
-	public static final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
-	public static final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
-	public static final ImageDescriptor IMG_MICRONET = getImageDescriptor("micronet_icon.png");
 
 	private TreeViewer viewer;
 	private DrillDownAdapter drillDownAdapter;
@@ -282,7 +274,7 @@ public class ModelView extends ViewPart {
 		};
 		testGenAction.setText("Test Gen");
 		testGenAction.setToolTipText("Action 1 tooltip");
-		testGenAction.setImageDescriptor(IMG_MICRONET);
+		testGenAction.setImageDescriptor(Icons.IMG_LAUNCH_GROUP);
 		
 		refreshViewerAction = new ModelAction() {
 			@Override
@@ -299,13 +291,7 @@ public class ModelView extends ViewPart {
 		};
 		refreshViewerAction.setText("Refresh Model Tree");
 		refreshViewerAction.setToolTipText("Refreshes the template, enum and prefab tree.");
-		refreshViewerAction.setImageDescriptor(IMG_ADD);
-	}
-
-	public static ImageDescriptor getImageDescriptor(String file) {
-		Bundle bundle = FrameworkUtil.getBundle(ModelView.class);
-		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
-		return ImageDescriptor.createFromURL(url);
+		refreshViewerAction.setImageDescriptor(Icons.IMG_ADD);
 	}
 
 	/**

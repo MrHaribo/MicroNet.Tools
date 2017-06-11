@@ -11,6 +11,7 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.JavaCore;
@@ -112,6 +113,14 @@ public enum ModelProvider {
 			addProject(project);
 		}
 		notifyServicesChangedListeners();
+	}
+	
+	public void buildServiceProjects() {
+		try {
+			ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
+		} catch (CoreException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void addProject(IProject project) {

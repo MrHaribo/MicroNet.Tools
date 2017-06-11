@@ -1,7 +1,6 @@
 package micronet.tools.ui.parametercodeview.views;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -10,10 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -22,16 +19,11 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
-import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -44,14 +36,13 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
 
 import micronet.tools.annotation.api.ListenerAPI;
 import micronet.tools.annotation.api.ParameterAPI;
 import micronet.tools.annotation.api.ServiceAPI;
 import micronet.tools.annotation.filesync.SyncParameterCodes;
 import micronet.tools.annotation.filesync.SyncServiceAPI;
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.ui.parametercodeview.WatchDir;
 import micronet.tools.ui.parametercodeview.WatchDir.DirChangedListener;
@@ -81,40 +72,11 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	private TableViewer viewer;
 	private Action addParameterCodeAction;
 	private Action removeParameterCodeAction;
-
-	private final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
-	private final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
-	private final ImageDescriptor IMG_PARAM = getImageDescriptor("param.png");
+	
+	private Action refreshServicesAction;
 	
 	private Map<String, Set<String>> requiredParameters;
 	private Map<String, Set<String>> providedParameters;
-	
-	class ViewLabelProvider2 extends LabelProvider implements ITableLabelProvider {
-		public String getColumnText(Object obj, int index) {
-			
-			switch (index) {
-			default:
-			case 0:
-				return getText(obj);
-			case 1:
-				return "JO";//String.join(",", requiredParameters.get(getText(obj)));
-			case 2:
-				return "man";//String.join(",", providedParameters.get(getText(obj)));
-			}
-			
-		}
-		
-		public Image getColumnImage(Object obj, int index) {
-			if (index == 0)
-				return getImage(obj);
-			else
-				return null;
-		}
-
-		public Image getImage(Object obj) {
-			return IMG_PARAM.createImage();
-		}
-	}
 
 	/**
 	 * The constructor.
@@ -134,8 +96,6 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 
 		viewer.setContentProvider(ArrayContentProvider.getInstance());
 		viewer.setInput(new String[] { "One", "Two", "Three" });
-		//viewer.setLabelProvider(new ViewLabelProvider());
-		
 		
 		TableViewerColumn column = new TableViewerColumn(viewer, SWT.LEFT);
 		column.getColumn().setText("ParameterCode");
@@ -143,7 +103,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		column.setLabelProvider(new ColumnLabelProvider() {
 			@Override
 			public Image getImage(Object element) {
-				return IMG_PARAM.createImage();
+				return Icons.IMG_PARAM.createImage();
 			}
 	        @Override
 	        public String getText(Object element) {
@@ -195,7 +155,6 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 					watchDir.registerDirChangedListener(ParameterCodeView.this);
 					watchDir.processEvents();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				System.out.println("WatchDir Thread End");
@@ -275,8 +234,8 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 
 	private void fillLocalPullDown(IMenuManager manager) {
 		manager.add(addParameterCodeAction);
-		manager.add(new Separator());
 		manager.add(removeParameterCodeAction);
+		manager.add(new Separator());
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
@@ -289,6 +248,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	private void fillLocalToolBar(IToolBarManager manager) {
 		manager.add(addParameterCodeAction);
 		manager.add(removeParameterCodeAction);
+		manager.add(refreshServicesAction);
 	}
 
 	private void makeActions() {
@@ -305,7 +265,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		};
 		addParameterCodeAction.setText("Add Parameter Code");
 		addParameterCodeAction.setToolTipText("Adds a new Parameter Code to the Workspace");
-		addParameterCodeAction.setImageDescriptor(IMG_ADD);
+		addParameterCodeAction.setImageDescriptor(Icons.IMG_ADD);
 
 		removeParameterCodeAction = new Action() {
 			public void run() {
@@ -326,11 +286,16 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		removeParameterCodeAction.setText("Remove Parameter Codes");
 		removeParameterCodeAction.setToolTipText(
 				"Removes the selected Parameter Codes from the Workspace. (Only possible when no references remain)");
-		removeParameterCodeAction.setImageDescriptor(IMG_REMOVE);
-	}
-
-	private void showMessage(String title, String message) {
-		MessageDialog.openInformation(viewer.getControl().getShell(), title, message);
+		removeParameterCodeAction.setImageDescriptor(Icons.IMG_REMOVE);
+		
+		refreshServicesAction = new Action() {
+			public void run() {
+				ModelProvider.INSTANCE.buildServiceProjects();
+			}
+		};
+		refreshServicesAction.setText("Rebuild Services");
+		refreshServicesAction.setToolTipText("Rebuild all service Projects in the Workspace");
+		refreshServicesAction.setImageDescriptor(Icons.IMG_REFRESH);
 	}
 
 	private boolean promptQuestion(String title, String message) {
@@ -343,13 +308,6 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 			return dlg.getValue();
 		}
 		return null;
-	}
-
-	private static ImageDescriptor getImageDescriptor(String file) {
-		// assume that the current class is called View.java
-		Bundle bundle = FrameworkUtil.getBundle(ParameterCodeView.class);
-		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
-		return ImageDescriptor.createFromURL(url);
 	}
 
 	/**
