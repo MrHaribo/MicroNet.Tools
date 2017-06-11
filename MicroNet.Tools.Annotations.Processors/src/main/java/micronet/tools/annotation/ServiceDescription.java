@@ -81,14 +81,6 @@ public class ServiceDescription {
 		return service.getEnclosingElement().getSimpleName().toString();
 	}
 
-	public String getServiceVariable() {
-		return "service";
-	}
-
-	public String getPeerVariable() {
-		return "peer";
-	}
-
 	public String getURI() {
 		if (service == null)
 			return null;

@@ -1,16 +1,9 @@
 package micronet.tools.annotation;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -26,12 +19,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
-import micronet.serialization.Serialization;
 import micronet.tools.annotation.ServiceAnnotationProcessorContext.ProcessingState;
 import micronet.tools.annotation.api.ListenerAPI;
 import micronet.tools.annotation.api.ParameterAPI;
 import micronet.tools.annotation.api.ServiceAPI;
-import micronet.tools.annotation.codegen.CodegenConstants;
 import micronet.tools.annotation.filesync.SyncParameterCodes;
 import micronet.tools.annotation.filesync.SyncServiceAPI;
 import micronet.tools.core.ModelProvider;
