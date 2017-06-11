@@ -16,6 +16,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.ArtifactKey;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 
@@ -129,17 +130,14 @@ public enum ModelProvider {
 		try {
 			ServiceProject serviceProject = null;
 			if (project.hasNature("org.eclipse.m2e.core.maven2Nature")) {
-				IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
-				IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project);
-				String version = mavenProjectFacade.getArtifactKey().getVersion();
-				serviceProject = new ServiceProject(project, version, Nature.JAVA, Nature.MAVEN);
+				serviceProject = new ServiceProject(project, Nature.JAVA, Nature.MAVEN);
 			} else if (project.hasNature(JavaCore.NATURE_ID)) {
-				serviceProject = new ServiceProject(project, null, Nature.JAVA);
+				serviceProject = new ServiceProject(project, Nature.JAVA);
 			} 
 			
 			if (project.getFile("Dockerfile").exists()) {
 				if (serviceProject == null) {
-					serviceProject = new ServiceProject(project, null, Nature.DOCKER);
+					serviceProject = new ServiceProject(project, Nature.DOCKER);
 				} else {
 					serviceProject.addNature(Nature.DOCKER);
 				}

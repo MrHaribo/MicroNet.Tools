@@ -9,8 +9,13 @@ import java.util.StringJoiner;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.ArtifactKey;
+import org.eclipse.m2e.core.project.IMavenProjectFacade;
+import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class ServiceProject {
@@ -25,16 +30,14 @@ public class ServiceProject {
 	}
 	
 	private IProject project;
-	private String version;
     private Set<Nature> natures = new HashSet<>();
 
-	public ServiceProject(IProject project, String version) {
+	public ServiceProject(IProject project) {
 		this.project = project;
-		this.version = version;
 	}
     
-	public ServiceProject(IProject project, String version, Nature... natures) {
-		this(project, version);
+	public ServiceProject(IProject project, Nature... natures) {
+		this(project);
 		for (Nature nature : natures) {
 			this.natures.add(nature);
 		}
@@ -44,14 +47,6 @@ public class ServiceProject {
 		return project != null ? project.getName() : "UNKNOWN";
 	}
 
-	public String getVersion() {
-		return version;
-	}
-	
-	public void setVersion(String version) {
-		this.version = version;
-	}
-	
 	public boolean isEnabled() {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
@@ -96,7 +91,7 @@ public class ServiceProject {
 
 	@Override
 	public String toString() {
-		return getName() + " " + version;
+		return getName() + " " + getVersion();
 	}
 
 	public IProject getProject() {
@@ -220,5 +215,29 @@ public class ServiceProject {
 		Set<String> result = new HashSet<>(Arrays.asList(parameterString.split(SPLIT_STRING)));
 		result.remove("");
 		return result;
+	}
+	
+	public String getVersion() {
+		if (!hasNature(Nature.MAVEN))
+			return null;
+		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
+		IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project.getProject());
+		return mavenProjectFacade.getArtifactKey().getVersion();
+	}
+	
+	public String getProjectArtifactID() {
+		if (!hasNature(Nature.MAVEN))
+			return null;
+		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
+		IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project.getProject());
+		return mavenProjectFacade.getArtifactKey().getArtifactId();
+	}
+	
+	public String getProjectGroupID() {
+		if (!hasNature(Nature.MAVEN))
+			return null;
+		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
+		IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project.getProject());
+		return mavenProjectFacade.getArtifactKey().getGroupId();
 	}
 }
