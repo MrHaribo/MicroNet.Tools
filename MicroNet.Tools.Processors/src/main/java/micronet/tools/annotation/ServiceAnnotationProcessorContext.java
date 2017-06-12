@@ -15,6 +15,7 @@ import micronet.annotation.MessageService;
 import micronet.annotation.OnStart;
 import micronet.annotation.OnStop;
 import micronet.tools.codegen.AnnotationGenerator;
+import micronet.tools.codegen.ModelGenerator;
 import micronet.tools.codegen.ParameterCodesGenerator;
 import micronet.tools.codegen.ServiceImplGenerator;
 
@@ -89,6 +90,9 @@ public class ServiceAnnotationProcessorContext {
 	public void generateGlobalCode() {
 		ParameterCodesGenerator parameterCodesGenerator = new ParameterCodesGenerator(filer);
 		parameterCodesGenerator.generateParameterCodeEnum(packageName, sharedDir);
+		
+		ModelGenerator modelGenerator = new ModelGenerator(packageName, filer);
+		modelGenerator.generateModel(sharedDir);
 		
 		AnnotationGenerator annotationGenerator = new AnnotationGenerator(filer);
 		annotationGenerator.generateMessageParameterAnnotation(packageName);

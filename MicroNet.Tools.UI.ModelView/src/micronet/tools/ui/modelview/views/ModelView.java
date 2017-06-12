@@ -2,6 +2,7 @@ package micronet.tools.ui.modelview.views;
 
 import java.util.Arrays;
 
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -61,8 +62,8 @@ public class ModelView extends ViewPart {
 	private DrillDownAdapter drillDownAdapter;
 	
 	private ModelAction refreshViewerAction;
-	
-	private ModelAction testGenAction;
+
+	private Action refreshServicesAction;
 
 	private ModelNode selectedNode;
 
@@ -237,6 +238,7 @@ public class ModelView extends ViewPart {
 
 	private void fillLocalPullDown(IMenuManager manager) {
 		manager.add(refreshViewerAction);
+		manager.add(refreshServicesAction);
 		manager.add(new Separator());
 		manager.add(new TemplateCreateAction(viewer.getControl().getShell(), entityTemplateRoot));
 		manager.add(new EnumCreateAction(viewer.getControl().getShell(), enumRoot));
@@ -251,30 +253,13 @@ public class ModelView extends ViewPart {
 	}
 
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(testGenAction);
+		manager.add(refreshServicesAction);
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 	}
 
 	private void makeActions() {
-		testGenAction = new ModelAction() {
-			public void run() {
-				if (selectedNode == null || selectedNode.getParent() == null)
-					return;
-				
-				if (selectedNode instanceof EntityTemplateNode) {
-					EntityTemplateNode entityTemplateNode = (EntityTemplateNode) selectedNode;
-					
-					if (entityTemplateNode.getName().equals(ModelConstants.ENTITY_TEMPLATE_ROOT_KEY))
-						return;
-					
-					ModelGenerator.generateModelEntity(entityTemplateNode);
-				}
-			}
-		};
-		testGenAction.setText("Test Gen");
-		testGenAction.setToolTipText("Action 1 tooltip");
-		testGenAction.setImageDescriptor(Icons.IMG_LAUNCH_GROUP);
+
 		
 		refreshViewerAction = new ModelAction() {
 			@Override
@@ -292,6 +277,15 @@ public class ModelView extends ViewPart {
 		refreshViewerAction.setText("Refresh Model Tree");
 		refreshViewerAction.setToolTipText("Refreshes the template, enum and prefab tree.");
 		refreshViewerAction.setImageDescriptor(Icons.IMG_ADD);
+		
+		refreshServicesAction = new Action() {
+			public void run() {
+				ModelProvider.INSTANCE.buildServiceProjects();
+			}
+		};
+		refreshServicesAction.setText("Rebuild Services");
+		refreshServicesAction.setToolTipText("Rebuild all service Projects in the Workspace");
+		refreshServicesAction.setImageDescriptor(Icons.IMG_REFRESH);
 	}
 
 	/**

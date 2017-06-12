@@ -167,6 +167,22 @@ public class SyncTemplateTree {
 		return templateNames;
 	}
 	
+	public static List<EntityTemplateNode> loadAllTemplateTypes(String sharedDir) {
+		File templateDir = getTemplateDir(sharedDir);
+		File[] directoryListing = templateDir.listFiles();
+		if (directoryListing == null)
+			return null;
+
+		List<EntityTemplateNode> templateObjects = new ArrayList<>();
+
+		for (File templateFile : directoryListing) {
+			EntityTemplateNode templateNode = loadTemplateType(templateFile.getName(), sharedDir);
+			if (templateNode != null)
+				templateObjects.add(templateNode);
+		}
+		return templateObjects;
+	}
+	
 	public static EntityTemplateNode loadTemplateType(String templateType, String sharedDir) {
 		
 		XOBJ<String> parentNameOut = new XOBJ<>(null);    

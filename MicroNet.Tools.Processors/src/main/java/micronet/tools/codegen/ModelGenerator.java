@@ -1,7 +1,5 @@
 package micronet.tools.codegen;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
@@ -10,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.processing.Filer;
 import javax.lang.model.element.Modifier;
+import javax.tools.JavaFileObject;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -21,6 +21,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 
+import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityTemplateRootNode;
@@ -36,12 +37,22 @@ import micronet.tools.model.variables.VariableType;
 
 public class ModelGenerator {
 	
-	//TODO: Correct This
+	private String packageName;
+	private Filer filer;
 	
-	private static String packageName = "SomeGame.WorldService";
-	private static String outDirName = "D:\\Workspace\\runtime-EclipseApplication\\WorldService\\target\\generated-sources\\annotations\\SomeGame\\WorldService\\";
+	public ModelGenerator(String packageName, Filer filer) {
+		this.packageName = packageName;
+		this.filer = filer;
+	}
 	
-	public static void generateModelEntity(EntityTemplateNode templateNode) {
+	public void generateModel(String sharedDir) {
+		List<EntityTemplateNode> templates = SyncTemplateTree.loadAllTemplateTypes(sharedDir);
+		for (EntityTemplateNode template : templates) {
+			generateModelEntity(template);
+		}
+	}
+
+	public void generateModelEntity(EntityTemplateNode templateNode) {
 		try {
 			
 			List<MethodSpec> methods = new ArrayList<>();
@@ -86,7 +97,7 @@ public class ModelGenerator {
 					case LIST:
 					case SET:
 					case MAP:
-						TypeName entryTypeName = getParametrizedEntryTypeName(variableNode.getVariabelDescription());
+						TypeName entryTypeName = getParametrizedEntryTypeName(variableNode.getVariabelDescription(), packageName);
 						field = FieldSpec.builder(entryTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
 						setter = generateSetter(entryTypeName, variableName);
 						getter = generateGetter(entryTypeName, variableName);
@@ -132,19 +143,16 @@ public class ModelGenerator {
 			
 			JavaFile javaFile = JavaFile.builder(packageName, entityClass).build();
 			
-			File outDir = new File(outDirName);
-			Writer writer = new FileWriter(outDir + "/" + templateNode.getName() + ".java");
-
+			JavaFileObject file = filer.createSourceFile(packageName + "." + templateNode.getName());
+			Writer writer = file.openWriter();
 			javaFile.writeTo(writer);
 			writer.close();
-
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
-	private static TypeName getParametrizedEntryTypeName(VariableDescription variableDesc) {
+	private static TypeName getParametrizedEntryTypeName(VariableDescription variableDesc, String packageName) {
 		
 		switch (variableDesc.getType()) {
 		case COMPONENT:
@@ -156,18 +164,18 @@ public class ModelGenerator {
 		case LIST:
 			CollectionDescription listDesc = (CollectionDescription) variableDesc;
 			ClassName listClassName = ClassName.get(List.class);
-			TypeName entryTypeName = getParametrizedEntryTypeName(listDesc.getEntryType());
+			TypeName entryTypeName = getParametrizedEntryTypeName(listDesc.getEntryType(), packageName);
 			return ParameterizedTypeName.get(listClassName, entryTypeName);
 		case SET:
 			CollectionDescription setDesc = (CollectionDescription) variableDesc;
 			ClassName setClassName = ClassName.get(Set.class);
-			TypeName setEntryTypeName = getParametrizedEntryTypeName(setDesc.getEntryType());
+			TypeName setEntryTypeName = getParametrizedEntryTypeName(setDesc.getEntryType(), packageName);
 			return ParameterizedTypeName.get(setClassName, setEntryTypeName);
 		case MAP:
 			MapDescription mapDesc = (MapDescription) variableDesc;
 			ClassName mapClassName = ClassName.get(Map.class);
-			TypeName mapKeyTypeName = getParametrizedEntryTypeName(mapDesc.getKeyType());
-			TypeName mapEntryTypeName = getParametrizedEntryTypeName(mapDesc.getEntryType());
+			TypeName mapKeyTypeName = getParametrizedEntryTypeName(mapDesc.getKeyType(), packageName);
+			TypeName mapEntryTypeName = getParametrizedEntryTypeName(mapDesc.getEntryType(), packageName);
 			return ParameterizedTypeName.get(mapClassName, mapKeyTypeName, mapEntryTypeName);
 		case STRING:
 		case NUMBER:
