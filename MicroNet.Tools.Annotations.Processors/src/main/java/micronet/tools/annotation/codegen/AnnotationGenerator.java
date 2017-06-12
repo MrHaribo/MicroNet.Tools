@@ -37,10 +37,10 @@ public class AnnotationGenerator {
 	// public String value();
 	// }
 
-	public void generateMessageParameterAnnotation(ServiceDescription serviceDescription) {
+	public void generateMessageParameterAnnotation(String packageName) {
 		try {
 
-			TypeName paramClassType = ClassName.get(serviceDescription.getPackage(), PARAMETER_CODE);
+			TypeName paramClassType = ClassName.get(packageName, PARAMETER_CODE);
 
 			TypeSpec typeSpec = TypeSpec.annotationBuilder(MESSAGE_PARAMETER)
 					.addAnnotation(AnnotationSpec.builder(Retention.class)
@@ -54,9 +54,9 @@ public class AnnotationGenerator {
 
 					.build();
 
-			JavaFile javaFile = JavaFile.builder(serviceDescription.getPackage(), typeSpec).build();
+			JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
 
-			JavaFileObject file = filer.createSourceFile(serviceDescription.getPackage() + "." + MESSAGE_PARAMETER);
+			JavaFileObject file = filer.createSourceFile(packageName + "." + MESSAGE_PARAMETER);
 			Writer writer = file.openWriter();
 
 			javaFile.writeTo(writer);
@@ -68,12 +68,12 @@ public class AnnotationGenerator {
 		}
 	}
 	
-	public void generateParametersAnnotations(ServiceDescription serviceDescription) {
-		generateParametersAnnotation(REQUEST_PARAMETERS, serviceDescription);
-		generateParametersAnnotation(RESPONSE_PARAMETERS, serviceDescription);
+	public void generateParametersAnnotations(String packageName) {
+		generateParametersAnnotation(REQUEST_PARAMETERS, packageName);
+		generateParametersAnnotation(RESPONSE_PARAMETERS, packageName);
 	}
 
-	public void generateParametersAnnotation(String parametersName, ServiceDescription serviceDescription) {
+	public void generateParametersAnnotation(String parametersName, String packageName) {
 		try {
 
 			TypeSpec typeSpec = TypeSpec.annotationBuilder(parametersName)
@@ -84,13 +84,13 @@ public class AnnotationGenerator {
 							.addMember("value", "$T.$L", ElementType.class, ElementType.METHOD.name()).build())
 
 					.addMethod(MethodSpec.methodBuilder("value").addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-							.returns(ArrayTypeName.of(ClassName.get(serviceDescription.getPackage(), MESSAGE_PARAMETER)))
+							.returns(ArrayTypeName.of(ClassName.get(packageName, MESSAGE_PARAMETER)))
 							.defaultValue("$L", "{}").build())
 
 					.build();
 
-			JavaFile javaFile = JavaFile.builder(serviceDescription.getPackage(), typeSpec).build();
-			JavaFileObject file = filer.createSourceFile(serviceDescription.getPackage() + "." + parametersName);
+			JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
+			JavaFileObject file = filer.createSourceFile(packageName + "." + parametersName);
 			Writer writer = file.openWriter();
 
 			javaFile.writeTo(writer);

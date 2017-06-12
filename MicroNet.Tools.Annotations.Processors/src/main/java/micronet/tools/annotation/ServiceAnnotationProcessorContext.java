@@ -1,7 +1,6 @@
 package micronet.tools.annotation;
 
 import java.util.LinkedHashSet;
-import java.util.Observable;
 import java.util.Set;
 
 import javax.annotation.processing.Filer;
@@ -10,8 +9,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 import micronet.annotation.MessageListener;
 import micronet.annotation.MessageService;
@@ -21,26 +18,26 @@ import micronet.tools.annotation.codegen.AnnotationGenerator;
 import micronet.tools.annotation.codegen.ParameterCodesGenerator;
 import micronet.tools.annotation.codegen.ServiceImplGenerator;
 
-public class ServiceAnnotationProcessorContext extends Observable {
-	private Types typeUtils;
-	private Elements elementUtils;
+public class ServiceAnnotationProcessorContext {
 	private Filer filer;
 	private Messager messager;
 
 	private String sharedDir;
+	private String packageName;
 
 	private ServiceDescription serviceDescription;
+	
+	private boolean codeCreated = false;
 	
 	public enum ProcessingState {
 		SERVICE_FOUND, PROCESSING_COMPLETE
 	}
 
-	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String sharedDir) {
-		typeUtils = processingEnv.getTypeUtils();
-		elementUtils = processingEnv.getElementUtils();
+	public ServiceAnnotationProcessorContext(ProcessingEnvironment processingEnv, String packageName, String sharedDir) {
 		filer = processingEnv.getFiler();
 		messager = processingEnv.getMessager();
 
+		this.packageName = packageName;
 		this.sharedDir = sharedDir;
 	}
 
@@ -54,51 +51,48 @@ public class ServiceAnnotationProcessorContext extends Observable {
 		return SourceVersion.latestSupported();
 	}
 
-	public boolean process(RoundEnvironment roundEnv) {
+	public void process(RoundEnvironment roundEnv) {
 
 		try {
+			Element annotatedServiceElement = null;
 			for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(MessageService.class)) {
-				processRound1(annotatedElement, roundEnv);
-				return true;
+				annotatedServiceElement = annotatedElement;
+				break;
 			}
+			
+			if (annotatedServiceElement != null) {
+				serviceDescription = new ServiceDescription();
 
-			if (serviceDescription != null) {
-				processRound2(roundEnv);
-				serviceDescription = null;
-				return true;
+				serviceDescription.setMessageListeners(roundEnv.getElementsAnnotatedWith(MessageListener.class));
+				serviceDescription.setStartMethods(roundEnv.getElementsAnnotatedWith(OnStart.class));
+				serviceDescription.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
+				serviceDescription.setService(annotatedServiceElement);
+				
+				packageName = serviceDescription.getPackage();
+			} 
+			
+			if (!codeCreated) {
+				generateGlobalCode();
+
+				if (serviceDescription != null) {
+					ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
+					implGenerator.generateServiceImplementation(serviceDescription);
+				}
+				codeCreated = true;				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		return true;
 	}
-
-	private void processRound1(Element serviceElement, RoundEnvironment roundEnv) {
-		serviceDescription = new ServiceDescription();
-
-		serviceDescription.setMessageListeners(roundEnv.getElementsAnnotatedWith(MessageListener.class));
-		serviceDescription.setStartMethods(roundEnv.getElementsAnnotatedWith(OnStart.class));
-		serviceDescription.setStopMethods(roundEnv.getElementsAnnotatedWith(OnStop.class));
-		serviceDescription.setService(serviceElement);
-
-		setChanged();
-		notifyObservers(ProcessingState.SERVICE_FOUND);
-		
+	
+	public void generateGlobalCode() {
 		ParameterCodesGenerator parameterCodesGenerator = new ParameterCodesGenerator(filer);
-		parameterCodesGenerator.generateParameterCodeEnum(serviceDescription, sharedDir);
-
-		AnnotationGenerator annotationGenerator = new AnnotationGenerator(filer);
-		annotationGenerator.generateMessageParameterAnnotation(serviceDescription);
-		annotationGenerator.generateParametersAnnotations(serviceDescription);
-	}
-
-	private void processRound2(RoundEnvironment roundEnv) {
-		ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
-		implGenerator.generateServiceImplementation(serviceDescription);
+		parameterCodesGenerator.generateParameterCodeEnum(packageName, sharedDir);
 		
-		setChanged();
-		notifyObservers(ProcessingState.PROCESSING_COMPLETE);
+		AnnotationGenerator annotationGenerator = new AnnotationGenerator(filer);
+		annotationGenerator.generateMessageParameterAnnotation(packageName);
+		annotationGenerator.generateParametersAnnotations(packageName);
 	}
 
 	public ServiceDescription getServiceDescription() {

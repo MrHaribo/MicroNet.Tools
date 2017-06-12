@@ -9,11 +9,9 @@ import java.util.StringJoiner;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.embedder.ArtifactKey;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.osgi.service.prefs.BackingStoreException;
@@ -225,7 +223,7 @@ public class ServiceProject {
 		return mavenProjectFacade.getArtifactKey().getVersion();
 	}
 	
-	public String getProjectArtifactID() {
+	public String getArtifactID() {
 		if (!hasNature(Nature.MAVEN))
 			return null;
 		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
@@ -233,7 +231,7 @@ public class ServiceProject {
 		return mavenProjectFacade.getArtifactKey().getArtifactId();
 	}
 	
-	public String getProjectGroupID() {
+	public String getGroupID() {
 		if (!hasNature(Nature.MAVEN))
 			return null;
 		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();

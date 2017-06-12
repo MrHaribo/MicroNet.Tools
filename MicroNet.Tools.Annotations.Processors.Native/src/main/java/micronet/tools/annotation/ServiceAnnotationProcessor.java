@@ -17,8 +17,19 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		super.init(processingEnv);
 		String workspacePath = processingEnv.getOptions().get("workspace_path");
 		String sharedDir = workspacePath + "/shared/";
-		System.out.println("Workspace path: " + workspacePath);
-		context = new ServiceAnnotationProcessorContext(processingEnv, sharedDir);
+		
+		String groupID = processingEnv.getOptions().get("group_id");
+		String artifactID = processingEnv.getOptions().get("artifact_id");
+		String packageName = groupID + "." + artifactID;
+		System.out.println(packageName);
+		
+		context = new ServiceAnnotationProcessorContext(processingEnv, packageName, sharedDir);
+		
+		
+		if (processingEnv.getOptions().containsKey("no_service")) {
+			System.out.println("Generating global code for no_ervice");
+			context.generateGlobalCode();
+		}
 	}
 
 	@Override
@@ -33,6 +44,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		return context.process(roundEnv);
+		context.process(roundEnv);
+		return true;
 	}
 }
