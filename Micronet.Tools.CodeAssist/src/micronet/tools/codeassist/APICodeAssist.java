@@ -23,8 +23,8 @@ import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 
 import micronet.serialization.Serialization;
-import micronet.tools.annotation.api.ListenerAPI;
-import micronet.tools.annotation.api.ServiceAPI;
+import micronet.tools.api.ListenerAPI;
+import micronet.tools.api.ServiceAPI;
 
 
 public class APICodeAssist implements IJavaCompletionProposalComputer {

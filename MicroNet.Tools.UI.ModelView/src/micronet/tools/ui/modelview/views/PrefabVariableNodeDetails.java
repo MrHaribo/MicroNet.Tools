@@ -24,23 +24,23 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.SyncEnumTree;
-import micronet.tools.ui.modelview.SyncTemplateTree;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
-import micronet.tools.ui.modelview.nodes.EntityVariableNode;
-import micronet.tools.ui.modelview.nodes.EnumNode;
-import micronet.tools.ui.modelview.nodes.ModelNode;
-import micronet.tools.ui.modelview.nodes.PrefabVariableEntryNode;
-import micronet.tools.ui.modelview.nodes.PrefabVariableKeyNode;
-import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
-import micronet.tools.ui.modelview.variables.CollectionDescription;
-import micronet.tools.ui.modelview.variables.ComponentDescription;
-import micronet.tools.ui.modelview.variables.EnumDescription;
-import micronet.tools.ui.modelview.variables.MapDescription;
-import micronet.tools.ui.modelview.variables.NumberDescription;
-import micronet.tools.ui.modelview.variables.VariableDescription;
-import micronet.tools.ui.modelview.variables.VariableType;
+import micronet.tools.filesync.SyncEnumTree;
+import micronet.tools.filesync.SyncTemplateTree;
+import micronet.tools.model.INode;
+import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.nodes.EntityVariableNode;
+import micronet.tools.model.nodes.EnumNode;
+import micronet.tools.model.nodes.ModelNode;
+import micronet.tools.model.nodes.PrefabVariableEntryNode;
+import micronet.tools.model.nodes.PrefabVariableKeyNode;
+import micronet.tools.model.nodes.PrefabVariableNode;
+import micronet.tools.model.variables.CollectionDescription;
+import micronet.tools.model.variables.ComponentDescription;
+import micronet.tools.model.variables.EnumDescription;
+import micronet.tools.model.variables.MapDescription;
+import micronet.tools.model.variables.NumberDescription;
+import micronet.tools.model.variables.VariableDescription;
+import micronet.tools.model.variables.VariableType;
 
 public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 

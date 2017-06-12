@@ -32,7 +32,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.github.mrharibo.micronet</groupId>
-			<artifactId>tools.annotation.processors</artifactId>
+			<artifactId>tools.processors</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>

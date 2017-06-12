@@ -14,11 +14,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.filesync.SyncTemplateTree;
+import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.ui.modelview.actions.TemplateCreateAction;
 import micronet.tools.ui.modelview.actions.TemplateRemoveAction;
 import micronet.tools.ui.modelview.actions.TemplateVariableCreateAction;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
 
 public class TemplateNodeDetails extends NodeDetails {
 

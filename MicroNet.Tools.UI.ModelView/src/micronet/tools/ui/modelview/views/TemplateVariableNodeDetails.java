@@ -17,21 +17,21 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.SyncEnumTree;
-import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.filesync.SyncEnumTree;
+import micronet.tools.filesync.SyncTemplateTree;
+import micronet.tools.model.INode;
+import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.nodes.EntityVariableNode;
+import micronet.tools.model.nodes.EnumRootNode;
+import micronet.tools.model.variables.CollectionDescription;
+import micronet.tools.model.variables.ComponentDescription;
+import micronet.tools.model.variables.EnumDescription;
+import micronet.tools.model.variables.MapDescription;
+import micronet.tools.model.variables.NumberDescription;
+import micronet.tools.model.variables.NumberType;
+import micronet.tools.model.variables.VariableDescription;
+import micronet.tools.model.variables.VariableType;
 import micronet.tools.ui.modelview.actions.TemplateVariableRemoveAction;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
-import micronet.tools.ui.modelview.nodes.EntityVariableNode;
-import micronet.tools.ui.modelview.nodes.EnumRootNode;
-import micronet.tools.ui.modelview.variables.CollectionDescription;
-import micronet.tools.ui.modelview.variables.ComponentDescription;
-import micronet.tools.ui.modelview.variables.EnumDescription;
-import micronet.tools.ui.modelview.variables.MapDescription;
-import micronet.tools.ui.modelview.variables.NumberDescription;
-import micronet.tools.ui.modelview.variables.NumberType;
-import micronet.tools.ui.modelview.variables.VariableDescription;
-import micronet.tools.ui.modelview.variables.VariableType;
 
 public class TemplateVariableNodeDetails extends NodeDetails {
 

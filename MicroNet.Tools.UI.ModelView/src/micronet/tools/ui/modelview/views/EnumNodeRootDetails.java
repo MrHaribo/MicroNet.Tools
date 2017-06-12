@@ -9,8 +9,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
 import micronet.tools.core.Icons;
+import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.actions.EnumCreateAction;
-import micronet.tools.ui.modelview.nodes.EnumRootNode;
 
 public class EnumNodeRootDetails extends Composite implements IDetails {
 

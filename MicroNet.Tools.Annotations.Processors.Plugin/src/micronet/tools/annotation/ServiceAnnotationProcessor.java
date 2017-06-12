@@ -18,14 +18,14 @@ import javax.tools.StandardLocation;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 
-import micronet.tools.annotation.api.ListenerAPI;
-import micronet.tools.annotation.api.ParameterAPI;
-import micronet.tools.annotation.api.ServiceAPI;
-import micronet.tools.annotation.filesync.SyncParameterCodes;
-import micronet.tools.annotation.filesync.SyncServiceAPI;
+import micronet.tools.api.ListenerAPI;
+import micronet.tools.api.ParameterAPI;
+import micronet.tools.api.ServiceAPI;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
+import micronet.tools.filesync.SyncParameterCodes;
+import micronet.tools.filesync.SyncServiceAPI;
 
 public class ServiceAnnotationProcessor extends AbstractProcessor {
 

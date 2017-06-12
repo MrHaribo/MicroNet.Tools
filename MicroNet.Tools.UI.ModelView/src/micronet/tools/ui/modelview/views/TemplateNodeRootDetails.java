@@ -8,8 +8,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
+import micronet.tools.model.nodes.EntityTemplateRootNode;
 import micronet.tools.ui.modelview.actions.TemplateCreateAction;
-import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
 
 public class TemplateNodeRootDetails extends Composite implements IDetails {
 

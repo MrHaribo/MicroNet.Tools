@@ -9,9 +9,9 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.SyncPrefabTree;
+import micronet.tools.filesync.SyncPrefabTree;
+import micronet.tools.model.nodes.PrefabRootNode;
 import micronet.tools.ui.modelview.actions.PrefabCreateAction;
-import micronet.tools.ui.modelview.nodes.PrefabRootNode;
 
 public class PrefabNodeRootDetails extends Composite implements IDetails {
 

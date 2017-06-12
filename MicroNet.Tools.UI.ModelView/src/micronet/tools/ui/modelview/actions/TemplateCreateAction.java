@@ -6,10 +6,10 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.ModelConstants;
-import micronet.tools.ui.modelview.SyncTemplateTree;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
-import micronet.tools.ui.modelview.variables.VariableType;
+import micronet.tools.filesync.SyncTemplateTree;
+import micronet.tools.model.ModelConstants;
+import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.variables.VariableType;
 
 public class TemplateCreateAction extends ModelAction {
 	

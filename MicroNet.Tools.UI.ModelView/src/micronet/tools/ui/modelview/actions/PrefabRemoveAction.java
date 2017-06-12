@@ -4,9 +4,9 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.SyncPrefabTree;
-import micronet.tools.ui.modelview.nodes.ModelNode;
-import micronet.tools.ui.modelview.nodes.PrefabNode;
+import micronet.tools.filesync.SyncPrefabTree;
+import micronet.tools.model.nodes.ModelNode;
+import micronet.tools.model.nodes.PrefabNode;
 
 public class PrefabRemoveAction extends ModelAction {
 

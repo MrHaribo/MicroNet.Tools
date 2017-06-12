@@ -37,13 +37,13 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
-import micronet.tools.annotation.api.ListenerAPI;
-import micronet.tools.annotation.api.ParameterAPI;
-import micronet.tools.annotation.api.ServiceAPI;
-import micronet.tools.annotation.filesync.SyncParameterCodes;
-import micronet.tools.annotation.filesync.SyncServiceAPI;
+import micronet.tools.api.ListenerAPI;
+import micronet.tools.api.ParameterAPI;
+import micronet.tools.api.ServiceAPI;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
+import micronet.tools.filesync.SyncParameterCodes;
+import micronet.tools.filesync.SyncServiceAPI;
 import micronet.tools.ui.parametercodeview.WatchDir;
 import micronet.tools.ui.parametercodeview.WatchDir.DirChangedListener;
 

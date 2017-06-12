@@ -4,9 +4,9 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.SyncTemplateTree;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
-import micronet.tools.ui.modelview.nodes.EntityVariableNode;
+import micronet.tools.filesync.SyncTemplateTree;
+import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.nodes.EntityVariableNode;
 
 public class TemplateVariableRemoveAction extends ModelAction {
 	

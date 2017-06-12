@@ -28,27 +28,27 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 
+import micronet.tools.codegen.ModelGenerator;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.INode;
-import micronet.tools.ui.modelview.ModelConstants;
-import micronet.tools.ui.modelview.SyncEnumTree;
-import micronet.tools.ui.modelview.SyncPrefabTree;
-import micronet.tools.ui.modelview.SyncTemplateTree;
+import micronet.tools.filesync.SyncEnumTree;
+import micronet.tools.filesync.SyncPrefabTree;
+import micronet.tools.filesync.SyncTemplateTree;
+import micronet.tools.model.INode;
+import micronet.tools.model.ModelConstants;
+import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.nodes.EntityTemplateRootNode;
+import micronet.tools.model.nodes.EntityVariableNode;
+import micronet.tools.model.nodes.EnumNode;
+import micronet.tools.model.nodes.EnumRootNode;
+import micronet.tools.model.nodes.ModelNode;
+import micronet.tools.model.nodes.PrefabNode;
+import micronet.tools.model.nodes.PrefabRootNode;
+import micronet.tools.model.nodes.PrefabVariableEntryNode;
+import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.actions.EnumCreateAction;
 import micronet.tools.ui.modelview.actions.ModelAction;
 import micronet.tools.ui.modelview.actions.TemplateCreateAction;
-import micronet.tools.ui.modelview.codegen.ModelGenerator;
-import micronet.tools.ui.modelview.nodes.EntityTemplateNode;
-import micronet.tools.ui.modelview.nodes.EntityTemplateRootNode;
-import micronet.tools.ui.modelview.nodes.EntityVariableNode;
-import micronet.tools.ui.modelview.nodes.EnumNode;
-import micronet.tools.ui.modelview.nodes.EnumRootNode;
-import micronet.tools.ui.modelview.nodes.ModelNode;
-import micronet.tools.ui.modelview.nodes.PrefabNode;
-import micronet.tools.ui.modelview.nodes.PrefabRootNode;
-import micronet.tools.ui.modelview.nodes.PrefabVariableEntryNode;
-import micronet.tools.ui.modelview.nodes.PrefabVariableNode;
 
 public class ModelView extends ViewPart {
 

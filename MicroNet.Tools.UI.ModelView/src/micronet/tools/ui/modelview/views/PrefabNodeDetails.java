@@ -11,10 +11,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.SyncPrefabTree;
+import micronet.tools.filesync.SyncPrefabTree;
+import micronet.tools.model.nodes.PrefabNode;
 import micronet.tools.ui.modelview.actions.PrefabCreateAction;
 import micronet.tools.ui.modelview.actions.PrefabRemoveAction;
-import micronet.tools.ui.modelview.nodes.PrefabNode;
 
 public class PrefabNodeDetails extends NodeDetails {
 	

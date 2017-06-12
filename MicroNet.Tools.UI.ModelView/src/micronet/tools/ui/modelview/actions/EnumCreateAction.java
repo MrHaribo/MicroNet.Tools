@@ -6,10 +6,10 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
 import micronet.tools.core.ModelProvider;
-import micronet.tools.ui.modelview.ModelConstants;
-import micronet.tools.ui.modelview.SyncEnumTree;
-import micronet.tools.ui.modelview.nodes.EnumNode;
-import micronet.tools.ui.modelview.nodes.EnumRootNode;
+import micronet.tools.filesync.SyncEnumTree;
+import micronet.tools.model.ModelConstants;
+import micronet.tools.model.nodes.EnumNode;
+import micronet.tools.model.nodes.EnumRootNode;
 
 public class EnumCreateAction extends ModelAction {
 	
