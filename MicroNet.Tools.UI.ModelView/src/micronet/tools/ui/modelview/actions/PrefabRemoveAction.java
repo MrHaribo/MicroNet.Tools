@@ -26,5 +26,7 @@ public class PrefabRemoveAction extends ModelAction {
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		SyncPrefabTree.removePrefab((PrefabNode) prefabNode, sharedDir);
 		((ModelNode) prefabNode.getParent()).removeChild(prefabNode);
+		
+		refreshViewer();
 	}
 }

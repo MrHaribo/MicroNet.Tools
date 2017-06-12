@@ -13,7 +13,8 @@ public class PrefabNode extends ModelNode {
 		this.templateType = templateType;
 		
 		EntityTemplateNode templateNodeMirror = SyncTemplateTree.loadTemplateType(templateType, sharedDir);
-		createVariables(templateNodeMirror);
+		if (templateNodeMirror != null)
+			createVariables(templateNodeMirror);
 	}
 	
 	private void createVariables(EntityTemplateNode templateNodeMirror) {
