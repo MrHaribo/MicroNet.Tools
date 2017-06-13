@@ -37,7 +37,7 @@ public class TemplateNodeDetails extends NodeDetails {
 		detailsContainer.setLayout(new GridLayout(2, false));
 		
 		Button button = new Button(detailsContainer, SWT.PUSH);
-		button.setText("Add Child Template");
+		button.setText("Add Derived Template");
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {

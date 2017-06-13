@@ -37,6 +37,7 @@ public abstract class ModelNode implements INode  {
 	}
 
 	public INode[] getChildren() {
+		//TODO: Resolve Stack Overflow
 		return children.toArray(new ModelNode[children.size()]);
 	}
 	

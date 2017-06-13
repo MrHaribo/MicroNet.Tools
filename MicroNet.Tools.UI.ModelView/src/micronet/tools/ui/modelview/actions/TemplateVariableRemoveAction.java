@@ -18,8 +18,8 @@ public class TemplateVariableRemoveAction extends ModelAction {
 		this.shell = shell;
 		this.variableNode = variableNode;
 		
-		setText("Remove Template");
-		setToolTipText("Remove the Template.");
+		setText("Remove Variable");
+		setToolTipText("Remove the Variable from the Template.");
 		setImageDescriptor(Icons.IMG_REMOVE);
 	}
 

@@ -75,7 +75,12 @@ public class SyncPrefabTree {
 			@Override
 			public int compare(String[] o1, String[] o2) {
 				int comparison = o1.length - o2.length;
-				return comparison;
+				if (comparison != 0)
+					return comparison;
+				
+				String name1 = String.join(".", o1);
+				String name2 = String.join(".", o2);
+				return name1.compareTo(name2);
 			}
 		});
 

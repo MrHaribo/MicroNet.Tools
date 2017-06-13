@@ -46,9 +46,14 @@ import micronet.tools.model.nodes.PrefabRootNode;
 import micronet.tools.model.nodes.PrefabVariableEntryNode;
 import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.actions.EnumCreateAction;
+import micronet.tools.ui.modelview.actions.EnumRemoveAction;
 import micronet.tools.ui.modelview.actions.ModelAction;
 import micronet.tools.ui.modelview.actions.PrefabCreateAction;
+import micronet.tools.ui.modelview.actions.PrefabRemoveAction;
 import micronet.tools.ui.modelview.actions.TemplateCreateAction;
+import micronet.tools.ui.modelview.actions.TemplateRemoveAction;
+import micronet.tools.ui.modelview.actions.TemplateVariableCreateAction;
+import micronet.tools.ui.modelview.actions.TemplateVariableRemoveAction;
 
 public class ModelView extends ViewPart {
 
@@ -260,7 +265,48 @@ public class ModelView extends ViewPart {
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
-		//manager.add(removeNodeAction);
+		ModelAction action = null;
+		
+		if (selectedNode != null) {
+			if (selectedNode instanceof EntityTemplateRootNode) {
+				manager.add(createTemplateAction);
+			} else if(selectedNode instanceof EnumRootNode) { 
+				manager.add(createEnumAction);
+			} else if (selectedNode instanceof PrefabRootNode) {
+				manager.add(createPrefabAction);
+			} else if(selectedNode instanceof EntityTemplateNode) {
+				action = new TemplateRemoveAction(viewer.getControl().getShell(), (EntityTemplateNode)selectedNode);
+				action.setRefreshViewerAction(refreshViewerAction, true);
+				manager.add(action);
+				
+				action = new TemplateCreateAction(viewer.getControl().getShell(), (EntityTemplateNode)selectedNode);
+				action.setText("Add Derived Template");
+				action.setRefreshViewerAction(refreshViewerAction, false);
+				manager.add(action);
+				
+				action = new TemplateVariableCreateAction(viewer.getControl().getShell(), (EntityTemplateNode)selectedNode);
+				action.setRefreshViewerAction(refreshViewerAction, true);
+				manager.add(action);
+			} else if(selectedNode instanceof PrefabNode) {
+				action = new PrefabCreateAction(viewer.getControl().getShell(), (PrefabNode)selectedNode);
+				action.setRefreshViewerAction(refreshViewerAction, false);
+				manager.add(action);
+
+				action = new PrefabRemoveAction(viewer.getControl().getShell(), (PrefabNode)selectedNode);
+				action.setRefreshViewerAction(refreshViewerAction, false);
+				manager.add(action);
+			} else if(selectedNode instanceof EnumNode) {
+				action = new EnumRemoveAction(viewer.getControl().getShell(), (EnumNode)selectedNode);
+				action.setRefreshViewerAction(refreshViewerAction, true);
+				manager.add(action);
+			} else if(selectedNode instanceof EntityVariableNode) { 
+				action = new TemplateVariableRemoveAction(viewer.getControl().getShell(), (EntityVariableNode)selectedNode);
+				action.setRefreshViewerAction(refreshViewerAction, true);
+				manager.add(action);
+			} else if (selectedNode instanceof PrefabVariableNode) {
+			}
+		}
+		
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 		// Other plug-ins can contribute there actions here
