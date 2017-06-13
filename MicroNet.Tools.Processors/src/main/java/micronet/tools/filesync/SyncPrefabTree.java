@@ -53,7 +53,7 @@ public class SyncPrefabTree {
 		
 		for (INode childNode : node.getChildren()) {
 			if (childNode instanceof PrefabNode) {
-				removePrefab((PrefabNode)node, sharedDir);
+				removePrefab((PrefabNode)childNode, sharedDir);
 			}
 		}
 		
@@ -348,7 +348,7 @@ public class SyncPrefabTree {
 				if (child instanceof PrefabVariableNode) {
 					
 					PrefabVariableNode mapKeyVariable = (PrefabVariableNode) child;
-					PrefabVariableNode mapEntryVariable = (PrefabVariableNode) mapKeyVariable.getChildren()[0];
+					PrefabVariableNode mapEntryVariable = (PrefabVariableNode) mapKeyVariable.getChildren().get(0);
 					
 					try {
 						JsonElement childKeyVariableObject = serializePrefabVariable(mapKeyVariable);

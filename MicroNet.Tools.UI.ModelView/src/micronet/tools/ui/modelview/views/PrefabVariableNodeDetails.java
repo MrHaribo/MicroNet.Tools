@@ -358,7 +358,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 					
 					Object variableValue = parseVariableValue(entryDesc, value);
 					
-					String name = entryDesc.getType().toString() + variableNode.getChildren().length;
+					String name = entryDesc.getType().toString() + variableNode.getChildren().size();
 					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(name, entryDesc);
 					prefabVariable.setName(name);
 					prefabVariable.setVariableValue(variableValue);
@@ -398,7 +398,7 @@ public class PrefabVariableNodeDetails extends NodeDetails implements IDetails {
 				
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
-					String entryName = entryDesc.getType().toString() + variableNode.getChildren().length;
+					String entryName = entryDesc.getType().toString() + variableNode.getChildren().size();
 					PrefabVariableEntryNode prefabVariable = new PrefabVariableEntryNode(entryName, entryDesc);
 					prefabVariable.setName(entryName);
 					variableNode.addChild(prefabVariable);

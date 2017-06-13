@@ -154,12 +154,12 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			return new ComponentDescription(templateNames.get(0));
 		case ENUM:
 			EnumRootNode loadEnumTree = SyncEnumTree.loadEnumTree(sharedDir);
-			if (loadEnumTree.getChildren().length == 0) {
+			if (loadEnumTree.getChildren().size() == 0) {
 				MessageDialog.openInformation(typeSelect.getShell(), "No Enum Present",
 						"No enum has been defined yet. Define Enum first.");
 				return new VariableDescription(VariableType.STRING);
 			}
-			return new EnumDescription(loadEnumTree.getChildren()[0].getName());
+			return new EnumDescription(loadEnumTree.getChildren().get(0).getName());
 		case BOOLEAN:
 			return new VariableDescription(VariableType.BOOLEAN);
 		case CHAR:

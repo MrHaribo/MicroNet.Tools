@@ -1,6 +1,7 @@
 package micronet.tools.ui.modelview.views;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -99,8 +100,10 @@ public class ModelView extends ViewPart {
 		}
 
 		public Object[] getChildren(Object parent) {
-			if (parent instanceof ModelNode) 
-				return ((ModelNode) parent).getChildren();
+			if (parent instanceof ModelNode)  {
+				List<INode> children = ((ModelNode) parent).getChildren();
+				return children.toArray(new ModelNode[children.size()]);
+			}
 			return new Object[0];
 		}
 
