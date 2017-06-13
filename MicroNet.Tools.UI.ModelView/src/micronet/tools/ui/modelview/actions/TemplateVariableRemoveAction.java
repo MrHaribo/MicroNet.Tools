@@ -3,6 +3,7 @@ package micronet.tools.ui.modelview.actions;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.nodes.EntityTemplateNode;
@@ -16,6 +17,10 @@ public class TemplateVariableRemoveAction extends ModelAction {
 	public TemplateVariableRemoveAction(Shell shell, EntityVariableNode variableNode) {
 		this.shell = shell;
 		this.variableNode = variableNode;
+		
+		setText("Remove Template");
+		setToolTipText("Remove the Template.");
+		setImageDescriptor(Icons.IMG_REMOVE);
 	}
 
 	@Override

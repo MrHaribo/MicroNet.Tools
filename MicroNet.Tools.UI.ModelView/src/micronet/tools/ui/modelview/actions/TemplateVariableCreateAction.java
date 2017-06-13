@@ -5,6 +5,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
@@ -22,6 +23,10 @@ public class TemplateVariableCreateAction extends ModelAction {
 	public TemplateVariableCreateAction(Shell shell, EntityTemplateNode entityTemplateNode) {
 		this.shell = shell;
 		this.entityTemplateNode = entityTemplateNode;
+		
+		setText("Add Variable");
+		setToolTipText("Adds a Variable to the selected Template.");
+		setImageDescriptor(Icons.IMG_VARIABLE);
 	}
 
 	public void run() {

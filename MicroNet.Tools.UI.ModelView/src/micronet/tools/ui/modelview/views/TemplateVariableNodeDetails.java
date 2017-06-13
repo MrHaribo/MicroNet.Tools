@@ -108,8 +108,6 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		this.variableNode = variableNode;
 
 		removeVariableAction = new TemplateVariableRemoveAction(getShell(), variableNode);
-		removeVariableAction.setText("Remove Template");
-		removeVariableAction.setToolTipText("Remove the Template.");
 
 		detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));

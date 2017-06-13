@@ -25,12 +25,7 @@ public class PrefabNodeDetails extends NodeDetails {
 		super(prefabNode, parent, style, true);
 		
 		createChildPrefabAction = new PrefabCreateAction(getShell(), prefabNode);
-		createChildPrefabAction.setText("Add Prefab");
-		createChildPrefabAction.setToolTipText("Adds a new Child Prefab.");
-		
 		removePrefabAction = new PrefabRemoveAction(getShell(), prefabNode);
-		removePrefabAction.setText("Add Prefab");
-		removePrefabAction.setToolTipText("Adds a new Child Prefab.");
 		
 		setLayout(new GridLayout(1, false));
 		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));

@@ -5,6 +5,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.ModelConstants;
@@ -19,6 +20,10 @@ public class TemplateCreateAction extends ModelAction {
 	public TemplateCreateAction(Shell shell, EntityTemplateNode entityTemplateNode) {
 		this.shell = shell;
 		this.entityTemplateNode = entityTemplateNode;
+		
+		setText("Create Template");
+		setToolTipText("Creates a new Template.");
+		setImageDescriptor(Icons.IMG_TEMPLATE);
 	}
 
 	public void run() {

@@ -41,8 +41,6 @@ public class EnumNodeDetails extends NodeDetails {
 		this.enumNode = enumNode;
 		
 		removeEnumAction = new EnumRemoveAction(getShell(), enumNode);
-		removeEnumAction.setText("Remove Enum");
-		removeEnumAction.setToolTipText("Removed the Enum");
 		
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));

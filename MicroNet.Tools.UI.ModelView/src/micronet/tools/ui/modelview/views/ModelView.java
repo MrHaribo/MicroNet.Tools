@@ -29,14 +29,12 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 
-import micronet.tools.codegen.ModelGenerator;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncPrefabTree;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
-import micronet.tools.model.ModelConstants;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityTemplateRootNode;
 import micronet.tools.model.nodes.EntityVariableNode;
@@ -49,6 +47,7 @@ import micronet.tools.model.nodes.PrefabVariableEntryNode;
 import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.ui.modelview.actions.EnumCreateAction;
 import micronet.tools.ui.modelview.actions.ModelAction;
+import micronet.tools.ui.modelview.actions.PrefabCreateAction;
 import micronet.tools.ui.modelview.actions.TemplateCreateAction;
 
 public class ModelView extends ViewPart {
@@ -63,6 +62,10 @@ public class ModelView extends ViewPart {
 	
 	private ModelAction refreshViewerAction;
 
+	private ModelAction createTemplateAction;
+	private ModelAction createEnumAction;
+	private ModelAction createPrefabAction;
+	
 	private Action refreshServicesAction;
 
 	private ModelNode selectedNode;
@@ -111,8 +114,19 @@ public class ModelView extends ViewPart {
 
 		public Image getImage(Object obj) {
 			String imageKey = ISharedImages.IMG_OBJ_ELEMENT;
-			if (obj instanceof EntityTemplateNode || obj instanceof EnumRootNode || obj instanceof PrefabNode || obj instanceof PrefabRootNode)
+			if (obj instanceof EntityTemplateRootNode || obj instanceof EnumRootNode || obj instanceof PrefabRootNode) {
 				imageKey = ISharedImages.IMG_OBJ_FOLDER;
+			} else if(obj instanceof EntityTemplateNode) {
+				return Icons.IMG_TEMPLATE.createImage();
+			} else if(obj instanceof PrefabNode) {
+				return Icons.IMG_PREFAB.createImage();
+			} else if(obj instanceof EnumNode) {
+				return Icons.IMG_ENUM.createImage();
+			} else if(obj instanceof EntityVariableNode || obj instanceof PrefabVariableNode) {
+				return Icons.IMG_VARIABLE.createImage();
+			}
+			
+			
 			return PlatformUI.getWorkbench().getSharedImages().getImage(imageKey);
 		}
 	}
@@ -240,8 +254,9 @@ public class ModelView extends ViewPart {
 		manager.add(refreshViewerAction);
 		manager.add(refreshServicesAction);
 		manager.add(new Separator());
-		manager.add(new TemplateCreateAction(viewer.getControl().getShell(), entityTemplateRoot));
-		manager.add(new EnumCreateAction(viewer.getControl().getShell(), enumRoot));
+		manager.add(createTemplateAction);
+		manager.add(createEnumAction);
+		manager.add(createPrefabAction);
 	}
 
 	private void fillContextMenu(IMenuManager manager) {
@@ -257,14 +272,13 @@ public class ModelView extends ViewPart {
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 	}
-
+	
 	private void makeActions() {
-
 		
 		refreshViewerAction = new ModelAction() {
 			@Override
 			public void runWithEvent(Event event) {
-				if ((boolean)event.data) {
+				if (event.data != null && (boolean)event.data) {
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					prefabRoot = SyncPrefabTree.loadPrefabTree(sharedDir);
 				}
@@ -276,7 +290,16 @@ public class ModelView extends ViewPart {
 		};
 		refreshViewerAction.setText("Refresh Model Tree");
 		refreshViewerAction.setToolTipText("Refreshes the template, enum and prefab tree.");
-		refreshViewerAction.setImageDescriptor(Icons.IMG_ADD);
+		refreshViewerAction.setImageDescriptor(Icons.IMG_REFRESH);
+
+		createTemplateAction = new TemplateCreateAction(viewer.getControl().getShell(), entityTemplateRoot);
+		createTemplateAction.setRefreshViewerAction(refreshViewerAction, false);
+		
+		createEnumAction = new EnumCreateAction(viewer.getControl().getShell(), enumRoot);
+		createEnumAction.setRefreshViewerAction(refreshViewerAction, false);
+		
+		createPrefabAction = new PrefabCreateAction(viewer.getControl().getShell(), prefabRoot);
+		createPrefabAction.setRefreshViewerAction(refreshViewerAction, false);
 		
 		refreshServicesAction = new Action() {
 			public void run() {
@@ -285,7 +308,7 @@ public class ModelView extends ViewPart {
 		};
 		refreshServicesAction.setText("Rebuild Services");
 		refreshServicesAction.setToolTipText("Rebuild all service Projects in the Workspace");
-		refreshServicesAction.setImageDescriptor(Icons.IMG_REFRESH);
+		refreshServicesAction.setImageDescriptor(Icons.IMG_BUILD);
 	}
 
 	/**

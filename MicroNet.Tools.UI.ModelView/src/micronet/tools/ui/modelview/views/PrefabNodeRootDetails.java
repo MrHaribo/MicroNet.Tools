@@ -21,8 +21,6 @@ public class PrefabNodeRootDetails extends Composite implements IDetails {
 		super(parent, style);
 
 		addPrefabAction = new PrefabCreateAction(getShell(), prefabRoot);
-		addPrefabAction.setText("Add Prefab");
-		addPrefabAction.setToolTipText("Adds a new Prefab.");
 		
 		setLayout(new FillLayout(SWT.VERTICAL));
 

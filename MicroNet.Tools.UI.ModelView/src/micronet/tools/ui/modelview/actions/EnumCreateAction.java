@@ -5,6 +5,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.model.ModelConstants;
@@ -19,6 +20,10 @@ public class EnumCreateAction extends ModelAction {
 	public EnumCreateAction(Shell shell, EnumRootNode enumRootNode) {
 		this.shell = shell;
 		this.enumRootNode = enumRootNode;
+		
+		setText("Add Enum");
+		setToolTipText("Creates a new Enum.");
+		setImageDescriptor(Icons.IMG_ENUM);
 	}
 
 	@Override

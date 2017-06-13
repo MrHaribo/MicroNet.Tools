@@ -30,17 +30,9 @@ public class TemplateNodeDetails extends NodeDetails {
 		super(templateNode, parent, style, true);
 		
 		removeChildTemplateAction = new TemplateRemoveAction(getShell(), templateNode);
-		removeChildTemplateAction.setText("Remove Template");
-		removeChildTemplateAction.setToolTipText("Remove the Template.");
-		
 		addChildTemplateAction = new TemplateCreateAction(getShell(), templateNode); 
-		addChildTemplateAction.setText("Create Template");
-		addChildTemplateAction.setToolTipText("Create a new Template.");
-		
 		addChildVariableAction = new TemplateVariableCreateAction(getShell(), templateNode);
-		addChildVariableAction.setText("Add Variable");
-		addChildVariableAction.setToolTipText("Adds a Variable to the Selected Template");
-		
+
 		Composite detailsContainer = new Composite(this, SWT.NONE);
 		detailsContainer.setLayout(new GridLayout(2, false));
 		

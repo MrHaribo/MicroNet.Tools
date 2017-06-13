@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
@@ -19,6 +20,10 @@ public class TemplateRemoveAction extends ModelAction {
 	public TemplateRemoveAction(Shell shell, EntityTemplateNode entityTemplateNode) {
 		this.shell = shell;
 		this.entityTemplateNode = entityTemplateNode;
+		
+		setText("Remove Template");
+		setToolTipText("Remove the Template from the Model Tree.");
+		setImageDescriptor(Icons.IMG_REMOVE);
 	}
 
 	@Override

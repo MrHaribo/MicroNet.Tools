@@ -9,6 +9,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncPrefabTree;
 import micronet.tools.filesync.SyncTemplateTree;
@@ -25,6 +26,10 @@ public class PrefabCreateAction extends ModelAction {
 	public PrefabCreateAction(Shell shell, ModelNode modelNode) {
 		this.shell = shell;
 		this.modelNode = modelNode;
+		
+		setText("Add Prefab");
+		setToolTipText("Adds a new Prefab under the selected Node.");
+		setImageDescriptor(Icons.IMG_PREFAB);
 	}
 
 	@Override

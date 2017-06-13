@@ -29,6 +29,12 @@ public class Icons {
 	public static final ImageDescriptor IMG_ACTIVEMQ = getImageDescriptor("activemq.png");
 	public static final ImageDescriptor IMG_POSTGRESQL = getImageDescriptor("postgreesql.png");
 	
+	public static final ImageDescriptor IMG_PREFAB = getImageDescriptor("prefab.png");
+	public static final ImageDescriptor IMG_VARIABLE = getImageDescriptor("variable.png");
+	public static final ImageDescriptor IMG_TEMPLATE = getImageDescriptor("template.png");
+	public static final ImageDescriptor IMG_ENUM = getImageDescriptor("enum.png");
+	public static final ImageDescriptor IMG_BUILD = getImageDescriptor("build.png");
+	
 	public static ImageDescriptor getImageDescriptor(String file) {
 		Bundle bundle = FrameworkUtil.getBundle(Icons.class);
 		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);

@@ -6,6 +6,7 @@ import java.util.Set;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
+import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncTemplateTree;
@@ -20,6 +21,10 @@ public class EnumRemoveAction extends ModelAction {
 	public EnumRemoveAction(Shell shell, EnumNode enumNode) {
 		this.shell = shell;
 		this.enumNode = enumNode;
+		
+		setText("Remove Enum");
+		setToolTipText("Removes the selected Enum");
+		setImageDescriptor(Icons.IMG_REMOVE);
 	}
 
 	@Override

@@ -8,7 +8,6 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
-import micronet.tools.core.Icons;
 import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.ui.modelview.actions.EnumCreateAction;
 
@@ -20,9 +19,6 @@ public class EnumNodeRootDetails extends Composite implements IDetails {
 		super(parent, style);
 		
 		addEnumAction = new EnumCreateAction(getShell(), enumRootNode);
-		addEnumAction.setText("Add Enum");
-		addEnumAction.setToolTipText("Adds a new Enum.");
-		addEnumAction.setImageDescriptor(Icons.IMG_ADD);
 		
 		setLayout(new FillLayout(SWT.VERTICAL));
 		
