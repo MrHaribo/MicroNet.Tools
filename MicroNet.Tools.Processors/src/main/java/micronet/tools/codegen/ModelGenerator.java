@@ -21,11 +21,14 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 
+import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityTemplateRootNode;
 import micronet.tools.model.nodes.EntityVariableNode;
+import micronet.tools.model.nodes.EnumNode;
+import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
@@ -49,6 +52,38 @@ public class ModelGenerator {
 		List<EntityTemplateNode> templates = SyncTemplateTree.loadAllTemplateTypes(sharedDir);
 		for (EntityTemplateNode template : templates) {
 			generateModelEntity(template);
+		}
+		generateEnums(sharedDir);
+	}
+	
+	private void generateEnums(String sharedDir) {
+		EnumRootNode enumTree = SyncEnumTree.loadEnumTree(sharedDir);
+		for (INode node : enumTree.getChildren()) {
+			if (node instanceof EnumNode) {
+				generateEnum((EnumNode)node);
+			}
+		}
+	}
+
+	private void generateEnum(EnumNode node) {
+		// TODO Auto-generated method stub
+		String[] entries = (String[]) node.getEnumConstants().toArray(new String[node.getEnumConstants().size()]);
+
+		TypeSpec.Builder builder = TypeSpec.enumBuilder(node.getName()).addModifiers(Modifier.PUBLIC);
+		for (String entry : entries) {
+			builder.addEnumConstant(entry);
+		}
+		TypeSpec typeSpec = builder.build();
+		JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
+
+		try {
+			JavaFileObject file = filer.createSourceFile(packageName + "." + node.getName());
+			Writer writer = file.openWriter();
+			javaFile.writeTo(writer);
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

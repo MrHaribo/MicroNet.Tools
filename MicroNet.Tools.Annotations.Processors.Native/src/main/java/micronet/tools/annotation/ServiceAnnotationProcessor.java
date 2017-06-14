@@ -25,8 +25,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		
 		context = new ServiceAnnotationProcessorContext(processingEnv, packageName, sharedDir);
 		
-		
-		if (processingEnv.getOptions().containsKey("no_service")) {
+		if (processingEnv.getOptions().containsKey("generate_model")) {
 			System.out.println("Generating global code for no_ervice");
 			context.generateGlobalCode();
 		}

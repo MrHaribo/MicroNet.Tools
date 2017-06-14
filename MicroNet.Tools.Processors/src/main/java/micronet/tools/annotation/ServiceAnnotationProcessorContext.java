@@ -72,13 +72,9 @@ public class ServiceAnnotationProcessorContext {
 				packageName = serviceDescription.getPackage();
 			} 
 			
-			if (!codeCreated) {
-				generateGlobalCode();
-
-				if (serviceDescription != null) {
-					ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
-					implGenerator.generateServiceImplementation(serviceDescription);
-				}
+			if (!codeCreated && serviceDescription != null) {
+				ServiceImplGenerator implGenerator = new ServiceImplGenerator(filer, messager);
+				implGenerator.generateServiceImplementation(serviceDescription);
 				codeCreated = true;				
 			}
 		} catch (Exception e) {

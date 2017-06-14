@@ -24,23 +24,23 @@ public class ParameterCodesGenerator {
 
 	public void generateParameterCodeEnum(String packageName, String sharedDir) {
 
-		try {
-			Set<String> params = SyncParameterCodes.readParameters(sharedDir);
-			String[] entries = (String[]) params.toArray(new String[params.size()]);
+		Set<String> params = SyncParameterCodes.readParameters(sharedDir);
+		String[] entries = (String[]) params.toArray(new String[params.size()]);
 
-			TypeSpec.Builder builder = TypeSpec.enumBuilder(PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
-			for (String entry : entries) {
-			    builder.addEnumConstant(entry);
-			}
-			TypeSpec typeSpec = builder.build();
-			JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
-			
+		TypeSpec.Builder builder = TypeSpec.enumBuilder(PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
+		for (String entry : entries) {
+			builder.addEnumConstant(entry);
+		}
+		TypeSpec typeSpec = builder.build();
+		JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
+
+		try {
 			JavaFileObject file = filer.createSourceFile(packageName + "." + PARAMETER_CODE);
 			Writer writer = file.openWriter();
-			
+
 			javaFile.writeTo(writer);
 			writer.close();
-			
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

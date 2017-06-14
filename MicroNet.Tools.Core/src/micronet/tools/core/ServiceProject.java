@@ -217,25 +217,31 @@ public class ServiceProject {
 	
 	public String getVersion() {
 		if (!hasNature(Nature.MAVEN))
-			return null;
+			return "";
 		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
 		IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project.getProject());
+		if (mavenProjectFacade == null || mavenProjectFacade.getArtifactKey() == null)
+			return "";
 		return mavenProjectFacade.getArtifactKey().getVersion();
 	}
 	
 	public String getArtifactID() {
 		if (!hasNature(Nature.MAVEN))
-			return null;
+			return "";
 		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
 		IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project.getProject());
+		if (mavenProjectFacade == null || mavenProjectFacade.getArtifactKey() == null)
+			return "";
 		return mavenProjectFacade.getArtifactKey().getArtifactId();
 	}
 	
 	public String getGroupID() {
 		if (!hasNature(Nature.MAVEN))
-			return null;
+			return "";
 		IMavenProjectRegistry projectManager = MavenPlugin.getMavenProjectRegistry();
 		IMavenProjectFacade mavenProjectFacade = projectManager.getProject(project.getProject());
+		if (mavenProjectFacade == null || mavenProjectFacade.getArtifactKey() == null)
+			return "";
 		return mavenProjectFacade.getArtifactKey().getGroupId();
 	}
 }
