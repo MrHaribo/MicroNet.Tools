@@ -35,7 +35,7 @@ public class DockerUtility {
 		
 		
 		List<String> argArray = new ArrayList<>();
-		argArray.add(dockerToolboxPath);
+		argArray.add(dockerToolboxPath + "/docker-machine");
 		argArray.add("env");	
 		
 		ProcessBuilder builder = new ProcessBuilder(argArray);
