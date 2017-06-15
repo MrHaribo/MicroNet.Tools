@@ -13,8 +13,10 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.IPath;
 
+import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
+import micronet.tools.core.preferences.PreferenceConstants;
 
 public final class BuildServiceContainerUtility {
 
@@ -29,8 +31,13 @@ public final class BuildServiceContainerUtility {
 		IPath projectLocation = serviceProject.getProject().getLocation();
 		String projectPath = projectLocation.toOSString();
 		
+		boolean useDockerToolbox = ModelProvider.INSTANCE.getPreferenceStore().getBoolean(PreferenceConstants.P_USE_DOCKER_TOOLBOX);
+		String dockerCommand = "docker";
+		if (useDockerToolbox) 
+			dockerCommand = ModelProvider.INSTANCE.getPreferenceStore().getString(PreferenceConstants.P_DOCKER_TOOLBOX_PATH) + "/docker";
+		
 		List<String> argArray = new ArrayList<>();
-		argArray.add("docker");
+		argArray.add(dockerCommand);
 		argArray.add("build");	
 		argArray.add("-t");
 		argArray.add(serviceProject.getName().toLowerCase());
@@ -44,6 +51,13 @@ public final class BuildServiceContainerUtility {
 		ProcessBuilder builder = new ProcessBuilder(argArray);
 		builder.directory(new File(projectPath));
 		builder.redirectErrorStream(true);
+		
+		if (useDockerToolbox)  {
+			Map<String, String> dockerMachineEnvironmentVariables = getDockerMachineEnvironmentVariables();
+			for (Map.Entry<String, String> envVar : dockerMachineEnvironmentVariables.entrySet()) {
+				builder.environment().put(envVar.getKey(), envVar.getValue());
+			}
+		}
 
 		try {
 			Process process = builder.start();

@@ -8,7 +8,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.eclipse.m2e.core,
  org.eclipse.jdt.core,
- org.eclipse.jface
+ org.eclipse.jface,
+ org.eclipse.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: lib/micronet-0.0.2-SNAPSHOT-jar-with-dependencies.jar,
@@ -28,6 +29,7 @@ Export-Package: com.google.gson,
  micronet.tools.api,
  micronet.tools.codegen,
  micronet.tools.core,
+ micronet.tools.core.preferences,
  micronet.tools.filesync,
  micronet.tools.model,
  micronet.tools.model.nodes,

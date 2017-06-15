@@ -14,7 +14,10 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import micronet.tools.core.ServiceProject.Nature;
 
@@ -180,5 +183,9 @@ public enum ModelProvider {
 	}
 	protected void notifyServicesChangedListeners() {
 		this.servicesChangedListeners.forEach(listener -> listener.onServicesChanged());
+	}
+	
+	public IPreferenceStore getPreferenceStore() {
+		return new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Core");
 	}
 }
