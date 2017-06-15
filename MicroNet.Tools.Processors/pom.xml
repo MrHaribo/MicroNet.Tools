@@ -45,8 +45,18 @@
 				</executions>
 			</plugin>
 		</plugins>
-
 	</build>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
 	<dependencies>
 		<dependency>
@@ -57,9 +67,9 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.squareup/javapoet -->
 		<dependency>
-		    <groupId>com.squareup</groupId>
-		    <artifactId>javapoet</artifactId>
-		    <version>1.9.0</version>
+			<groupId>com.squareup</groupId>
+			<artifactId>javapoet</artifactId>
+			<version>1.9.0</version>
 		</dependency>
 
 
