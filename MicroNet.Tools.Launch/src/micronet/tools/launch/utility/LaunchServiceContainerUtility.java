@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
@@ -18,8 +19,10 @@ public final class LaunchServiceContainerUtility {
 		if (!serviceProject.hasNature(Nature.DOCKER))
 			return null;
 
+		String dockerCommand = DockerUtility.getDockerCommand();
+		
 		List<String> argArray = new ArrayList<>();
-		argArray.add("docker");
+		argArray.add(dockerCommand);
 		argArray.add("run");
 		
 		for (String port : serviceProject.getPorts()) {
@@ -35,6 +38,14 @@ public final class LaunchServiceContainerUtility {
 		
 		ProcessBuilder builder = new ProcessBuilder(argArray);
 		builder.redirectErrorStream(true);
+		
+		if (DockerUtility.useDockerToolbox())  {
+			String dockerToolboxPath = DockerUtility.getDockerToolboxPath();
+			Map<String, String> dockerMachineEnvironmentVariables = DockerUtility.getDockerMachineEnvironmentVariables(dockerToolboxPath);
+			for (Map.Entry<String, String> envVar : dockerMachineEnvironmentVariables.entrySet()) {
+				builder.environment().put(envVar.getKey(), envVar.getValue());
+			}
+		}
 
 		try {
 			Process process = builder.start();
