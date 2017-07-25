@@ -91,8 +91,7 @@ public class ServiceAnnotationProcessorContext {
 		modelGenerator.generateModel(sharedDir);
 		
 		AnnotationGenerator annotationGenerator = new AnnotationGenerator(filer);
-		annotationGenerator.generateMessageParameterAnnotation(packageName);
-		annotationGenerator.generateParametersAnnotations(packageName);
+		annotationGenerator.generateAnnotations(packageName);
 	}
 
 	public ServiceDescription getServiceDescription() {

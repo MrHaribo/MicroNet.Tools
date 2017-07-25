@@ -18,8 +18,10 @@ import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.WildcardTypeName;
 
 import micronet.tools.annotation.ServiceDescription;
 
@@ -30,18 +32,58 @@ public class AnnotationGenerator {
 	public AnnotationGenerator(Filer filer) {
 		this.filer = filer;
 	}
+	
+	public void generateAnnotations(String packageName) {
+		generateMessageParameterAnnotation(packageName);
+
+		generateParametersAnnotation(REQUEST_PARAMETERS, packageName);
+		generateParametersAnnotation(RESPONSE_PARAMETERS, packageName);
+		
+		generatePayloadTypeAnnotation(REQUEST_PAYLOAD_TYPE, packageName);
+		generatePayloadTypeAnnotation(RESPONSE_PAYLOAD_TYPE, packageName);
+	}
+
+	public void generatePayloadTypeAnnotation(String name, String packageName) {
+		try {
+			TypeName classTypeName = ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(Object.class));
+			
+			TypeSpec typeSpec = TypeSpec.annotationBuilder(name)
+					.addAnnotation(AnnotationSpec.builder(Retention.class)
+							.addMember("value", "$T.$L", RetentionPolicy.class, RetentionPolicy.CLASS.name()).build())
+
+					.addAnnotation(AnnotationSpec.builder(Target.class)
+							.addMember("value", "$T.$L", ElementType.class, ElementType.METHOD.name()).build())
+
+					.addMethod(MethodSpec.methodBuilder("value").addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+							.returns(classTypeName).build())
+					
+					.addModifiers(Modifier.PUBLIC)
+					.build();
+
+			JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
+
+			JavaFileObject file = filer.createSourceFile(packageName + "." + name);
+			Writer writer = file.openWriter();
+
+			javaFile.writeTo(writer);
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	// @Retention(RetentionPolicy.CLASS)
 	// @Target(ElementType.METHOD)
 	// public @interface MessageParameter {
 	// public String value();
 	// }
-
 	public void generateMessageParameterAnnotation(String packageName) {
 		try {
 
 			TypeName paramClassType = ClassName.get(packageName, PARAMETER_CODE);
-
+			TypeName classTypeName = ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(Object.class));
+			
 			TypeSpec typeSpec = TypeSpec.annotationBuilder(MESSAGE_PARAMETER)
 					.addAnnotation(AnnotationSpec.builder(Retention.class)
 							.addMember("value", "$T.$L", RetentionPolicy.class, RetentionPolicy.CLASS.name()).build())
@@ -49,9 +91,13 @@ public class AnnotationGenerator {
 					.addAnnotation(AnnotationSpec.builder(Target.class)
 							.addMember("value", "$T.$L", ElementType.class, ElementType.TYPE.name()).build())
 
-					.addMethod(MethodSpec.methodBuilder("value").addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+					.addMethod(MethodSpec.methodBuilder("code").addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
 							.returns(paramClassType).build())
 
+					.addMethod(MethodSpec.methodBuilder("type").addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+							.returns(classTypeName).build())
+					
+					.addModifiers(Modifier.PUBLIC)
 					.build();
 
 			JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
@@ -66,11 +112,6 @@ public class AnnotationGenerator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	public void generateParametersAnnotations(String packageName) {
-		generateParametersAnnotation(REQUEST_PARAMETERS, packageName);
-		generateParametersAnnotation(RESPONSE_PARAMETERS, packageName);
 	}
 
 	public void generateParametersAnnotation(String parametersName, String packageName) {
@@ -87,6 +128,7 @@ public class AnnotationGenerator {
 							.returns(ArrayTypeName.of(ClassName.get(packageName, MESSAGE_PARAMETER)))
 							.defaultValue("$L", "{}").build())
 
+					.addModifiers(Modifier.PUBLIC)
 					.build();
 
 			JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
