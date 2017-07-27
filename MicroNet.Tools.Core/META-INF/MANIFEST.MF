@@ -12,7 +12,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: lib/micronet-0.0.2-SNAPSHOT-jar-with-dependencies.jar,
+Bundle-ClassPath: lib/mn-micronet-bundle-0.1.0-jar-with-dependencies.jar,
  lib/tools.processors-0.0.1-SNAPSHOT-jar-with-dependencies.jar,
  lib/tools.yaml.utility-0.0.1-SNAPSHOT-jar-with-dependencies.jar,
  .

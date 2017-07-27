@@ -60,7 +60,9 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 		context = new ServiceAnnotationProcessorContext(processingEnv, packageName, sharedDir);
 		
-		if (processingEnv.getOptions().containsKey("generate_model")) {
+		String generateModelArg = processingEnv.getOptions().get("generate_model");
+		if (generateModelArg != null && generateModelArg.equals("true")) {
+			System.out.println("generate_model=true -> Generate global code");
 			context.generateGlobalCode();
 		}
 	}
