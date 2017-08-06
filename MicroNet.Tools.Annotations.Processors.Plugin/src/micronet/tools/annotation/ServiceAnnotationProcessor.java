@@ -36,7 +36,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
-		super.init(processingEnv);
+		//super.init(processingEnv);
 		
 		elementUtils = processingEnv.getElementUtils();
 		
@@ -46,7 +46,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		String projectName = findProjectName(processingEnv.getFiler());
 		serviceProject = ModelProvider.INSTANCE.getServiceProject(projectName);
 		
-		String packageName = "game";
+		String packageName = null;
 		if (serviceProject != null) {
 			Set<String> contributedParameters = serviceProject.getRequiredParameters();
 			SyncParameterCodes.contributeParameters(contributedParameters, sharedDir);
@@ -54,9 +54,13 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 			if (serviceProject.hasNature(Nature.MAVEN)) {
 				String groupString = serviceProject.getGroupID().replaceAll("[^a-zA-Z0-9]+",".");
 				String artifactString = serviceProject.getArtifactID().replaceAll("[^a-zA-Z0-9]+",".");
-				packageName = groupString + "." + artifactString;
+				if (!groupString.equals("") && !artifactString.equals(""))
+					packageName = groupString + "." + artifactString;
 			}
 		}
+		
+		if (packageName == null)
+			return;
 
 		context = new ServiceAnnotationProcessorContext(processingEnv, packageName, sharedDir);
 		
@@ -69,16 +73,23 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
+		if (context == null)
+			return null;
 		return context.getSupportedAnnotationTypes();
 	}
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
+		if (context == null)
+			return null;
 		return context.getSupportedSourceVersion();
 	}
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		if (context == null)
+			return false;
+		
 		context.process(roundEnv);
 		
 		if (context.getServiceDescription() != null) {

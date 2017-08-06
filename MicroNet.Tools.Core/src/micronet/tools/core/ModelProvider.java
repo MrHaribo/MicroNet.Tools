@@ -1,5 +1,6 @@
 package micronet.tools.core;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ public enum ModelProvider {
 	private ModelProvider() {
 
 		refreshServiceProjects();
+		notifyServicesChangedListeners();
 		
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(event -> {
 			try {
@@ -81,7 +83,7 @@ public enum ModelProvider {
 				if (res instanceof IProject) {
 					System.out.println("Project was added: " + res.getFullPath());
 					addProject((IProject)res);
-					notifyServicesChangedListeners();
+					//notifyServicesChangedListeners();
 		        }
 				break;
 			case IResourceDelta.REMOVED:
@@ -110,9 +112,24 @@ public enum ModelProvider {
 		for (IProject project : workspaceRoot.getProjects()) {
 			if(!project.isOpen())
 				continue;
+			
+			File ignoreFile = new File(project.getLocation().append("mn_ignore").toString());
+			if (ignoreFile.exists()) {
+				continue;
+			}
+			
+			File removeFile = new File(project.getLocation().append("mn_remove").toString());
+			if (removeFile.exists()) {
+				try {
+					project.delete(false, false, null);
+				} catch (CoreException e) {
+					e.printStackTrace();
+				}
+				continue;
+			}
+			
 			addProject(project);
 		}
-		notifyServicesChangedListeners();
 	}
 	
 	public void buildServiceProjects() {
@@ -182,6 +199,7 @@ public enum ModelProvider {
 		this.servicesChangedListeners.remove(listener);
 	}
 	protected void notifyServicesChangedListeners() {
+		refreshServiceProjects();
 		this.servicesChangedListeners.forEach(listener -> listener.onServicesChanged());
 	}
 	

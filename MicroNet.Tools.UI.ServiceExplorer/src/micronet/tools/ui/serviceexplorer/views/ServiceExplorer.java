@@ -2,20 +2,15 @@ package micronet.tools.ui.serviceexplorer.views;
 
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.URL;
 import java.util.List;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -46,8 +41,6 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
 
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
@@ -55,7 +48,6 @@ import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
 import micronet.tools.core.SyncCompose;
 import micronet.tools.core.SyncPom;
-import micronet.tools.launch.utility.AddDependencyUtility;
 import micronet.tools.launch.utility.BuildGameComposeUtility;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildServiceContainerUtility;
@@ -88,10 +80,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	public static final String ID = "micronet.tools.ui.serviceexplorer.views.ServiceExplorer";
 
 	private TableViewer viewer;
-
-	private Action dependencyCreateActiveMQ;
-	private Action dependencyCreateCouchbase;
-	private Action dependencyCreatePostgres;
 
 	private Action addLinks;
 	private Action addPorts;
@@ -355,13 +343,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(localRunGameCompose);
 		manager.add(localRunGameSwarm);
-		manager.add(new Separator());
-		
-        MenuManager subMenu = new MenuManager("Dependencies", null);
-        subMenu.add(dependencyCreateActiveMQ);
-        subMenu.add(dependencyCreateCouchbase);
-        subMenu.add(dependencyCreatePostgres);
-        manager.add(subMenu);
 		
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
@@ -388,7 +369,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	}
 
 	private void makeActions() {
-		createDependencyActions();
 		createServiceActions();
 		createLanuchGroupActions();
 		createGenerateGameActions();
@@ -511,37 +491,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		addPorts.setText("Add Ports...");
 		addPorts.setToolTipText("Specifies exposed ports of the service.");
 		addPorts.setImageDescriptor(Icons.IMG_DOCKER);
-	}
-
-	private void createDependencyActions() {
-		dependencyCreateActiveMQ = new Action() {
-			public void run() {
-				AddDependencyUtility.addActiveMQ();
-				showMessage("ActiveMQ Dependency added");
-			}
-		};
-		dependencyCreateActiveMQ.setText("Add ActiveMQ");
-		dependencyCreateActiveMQ.setToolTipText("Adds the ActiveMQ dependency to the workspace.");
-		dependencyCreateActiveMQ.setImageDescriptor(Icons.IMG_ACTIVEMQ);
-		
-		dependencyCreateCouchbase = new Action() {
-			public void run() {
-				AddDependencyUtility.addCouchbase();
-				showMessage("Couchbase Dependency added");
-			}
-		};
-		dependencyCreateCouchbase.setText("Add Couchbase");
-		dependencyCreateCouchbase.setToolTipText("Adds the Couchbase dependency to the workspace.");
-		dependencyCreateCouchbase.setImageDescriptor(Icons.IMG_COUCHBASE);
-		
-		dependencyCreatePostgres = new Action() {
-			public void run() {
-				showMessage("Add Postgres (not implemented yet)");
-			}
-		};
-		dependencyCreatePostgres.setText("Add PostgreSQL Service");
-		dependencyCreatePostgres.setToolTipText("Adds a PostgreSQL instance to the workspace.");
-		dependencyCreatePostgres.setImageDescriptor(Icons.IMG_POSTGRESQL);
 	}
 
 	private void createLanuchGroupActions() {
