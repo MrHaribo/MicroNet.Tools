@@ -45,40 +45,6 @@ public class ServiceProject {
 		return project != null ? project.getName() : "UNKNOWN";
 	}
 
-	public boolean isEnabled() {
-		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		return preferences.getBoolean("enabled", false);
-	}
-
-	public void setEnabled(boolean isEnabled) {
-		try {
-			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-			preferences.putBoolean("enabled", isEnabled);
-			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public String getNetworkMode() {
-		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		return preferences.get("network_mode", null);
-	}
-
-	public void setNetworkMode(String networkMode) {
-		try {
-			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-			preferences.put("network_mode", networkMode);
-			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public boolean isInGamePom() {
 		return SyncPom.getServicesFromGamePom().contains(project.getName());
 	}
@@ -119,34 +85,41 @@ public class ServiceProject {
     public boolean hasNature(Nature nature) {
     	return natures.contains(nature);
     }
-
-	public String getLinksRaw() {
+    
+	public boolean isEnabled() {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		String linkString = preferences.get("links", "");
-		return linkString;
+		return preferences.getBoolean("enabled", false);
+	}
+
+	public void setEnabled(boolean isEnabled) {
+		try {
+			ProjectScope projectScope = new ProjectScope(project);
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+			preferences.putBoolean("enabled", isEnabled);
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
 	}
     
-	public List<String> getLinks() {
-		String linkString = getLinksRaw();
-		List<String> result = new ArrayList<>(Arrays.asList(linkString.split(SPLIT_STRING)));
-		result.remove("");
-		return result;
-	}
-
-	public void setLinks(List<String> links) {
+    public String getContainerName() {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		
-		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
-		for (String link : links) {
-			if (link.equals(""))
-				continue;
-		    joiner.add(link.toLowerCase());
-		}
-		
+		return preferences.get("container.name", getName().toLowerCase());
+    }
+
+	public String getNetwork() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+		return preferences.get("network", "bridge");
+	}
+	
+	public void setNetwork(String network) {
 		try {
-			preferences.put("links", joiner.toString());
+			ProjectScope projectScope = new ProjectScope(project);
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+			preferences.put("network", network);
 			preferences.flush();
 		} catch (BackingStoreException e) {
 			e.printStackTrace();

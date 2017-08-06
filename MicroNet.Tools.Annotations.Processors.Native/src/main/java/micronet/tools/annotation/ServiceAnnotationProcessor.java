@@ -18,9 +18,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		String workspacePath = processingEnv.getOptions().get("workspace_path");
 		String sharedDir = workspacePath + "/shared/";
 		
-		String groupID = processingEnv.getOptions().get("group_id");
-		String artifactID = processingEnv.getOptions().get("artifact_id");
-		String packageName = groupID + "." + artifactID;
+		String packageName = processingEnv.getOptions().get("package_name");
 		System.out.println(packageName);
 		
 		context = new ServiceAnnotationProcessorContext(processingEnv, packageName, sharedDir);

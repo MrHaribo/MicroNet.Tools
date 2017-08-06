@@ -19,14 +19,13 @@ public class SyncCompose {
 			composeService.setImage(serviceProject.getName().toLowerCase());
 			composeService.setBuild("./" + serviceProject.getName());
 			
-			if (serviceProject.getLinks().size() > 0)
-				composeService.setLinks((String[]) serviceProject.getLinks().toArray(new String[serviceProject.getLinks().size()]));
-			
 			if (serviceProject.getPorts().size() > 0)
 				composeService.setPorts((String[]) serviceProject.getPorts().toArray(new String[serviceProject.getPorts().size()]));
 			
-			if (serviceProject.getNetworkMode() != null)
-				composeService.setNetwork_mode(serviceProject.getNetworkMode());
+			if (serviceProject.getNetwork() != null) {
+				String[] networks = new String[] {serviceProject.getNetwork()};				
+				composeService.setNetworks(networks);
+			}
 			
 			composeServices.put(serviceProject.getName().toLowerCase(), composeService);
 		}

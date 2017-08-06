@@ -10,6 +10,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -22,6 +23,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
@@ -80,8 +83,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	public static final String ID = "micronet.tools.ui.serviceexplorer.views.ServiceExplorer";
 
 	private TableViewer viewer;
+	private ServiceTableComperator comparator;
 
-	private Action addLinks;
+	private Action setNetwork;
 	private Action addPorts;
 	
 	private Action debugService;
@@ -146,6 +150,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
         });
         viewer.addFilter(filter);
+        
+        comparator = new ServiceTableComperator();
+        viewer.setComparator(comparator);
 
 		// Create the help context id for the viewer's control
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(viewer.getControl(),
@@ -197,7 +204,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	// create the columns for the table
 	private void createColumns(final Composite parent, final TableViewer viewer) {
-		String[] titles = { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose", "Links", "Ports" };
+		String[] titles = { "Enabled", "Service Name", "Version", "Nature", "Game Pom", "Game Compose", "Network", "Ports" };
 		int[] bounds = { 60, 200, 150, 150, 80, 80, 120, 120 };
 
 		// the status enabled
@@ -281,7 +288,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			@Override
 			public String getText(Object element) {
 				ServiceProject p = (ServiceProject) element;
-				return p.getLinksRaw();
+				return p.getNetwork();
 			}
 		});
 		
@@ -307,8 +314,24 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		column.setWidth(bound);
 		column.setResizable(true);
 		column.setMoveable(true);
+		column.addSelectionListener(getSelectionAdapter(column, colNumber));
 		return viewerColumn;
 	}
+	
+	private SelectionAdapter getSelectionAdapter(final TableColumn column,
+            final int index) {
+        SelectionAdapter selectionAdapter = new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                comparator.setColumn(index);
+                int dir = comparator.getDirection();
+                viewer.getTable().setSortDirection(dir);
+                viewer.getTable().setSortColumn(column);
+                viewer.refresh();
+            }
+        };
+        return selectionAdapter;
+    }
 
 	private void hookContextMenu() {
 		MenuManager menuMgr = new MenuManager("#PopupMenu");
@@ -357,7 +380,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(runService);
 		manager.add(runServiceContainer);
 		manager.add(new Separator());
-		manager.add(addLinks);
+		manager.add(setNetwork);
 		manager.add(addPorts);
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
@@ -469,17 +492,16 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		runServiceContainer.setToolTipText("Runs the selected service as a Docker Container");
 		runServiceContainer.setImageDescriptor(Icons.IMG_DOCKER);
 		
-		addLinks = new Action() {
+		setNetwork = new Action() {
 			public void run() {
 				if (selectedProject != null) {
-					showLinkSelectionDialog(selectedProject);
+					showNetworkSelectionDialog(selectedProject);
 				}
-				
 			}
 		};
-		addLinks.setText("Add Links...");
-		addLinks.setToolTipText("Adds Links to other services to the service.");
-		addLinks.setImageDescriptor(Icons.IMG_DOCKER);
+		setNetwork.setText("Set Network...");
+		setNetwork.setToolTipText("Set the Docker Network for the Service.");
+		setNetwork.setImageDescriptor(Icons.IMG_DOCKER);
 		
 		addPorts = new Action() {
 			public void run() {
@@ -617,11 +639,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
 	}
 	
-	private void showLinkSelectionDialog(ServiceProject serviceProject) {
-		AddLinksDialog dialog = new AddLinksDialog(viewer.getControl().getShell(), serviceProject);
-        // get the new values from the dialog
-        if (dialog.open() == Window.OK) {
-        	serviceProject.setLinks(dialog.getCurrentLinks());
+	private void showNetworkSelectionDialog(ServiceProject serviceProject) {
+		InputDialog dlg = new InputDialog(viewer.getControl().getShell(), "Select Network", 
+				"Select the Docker network you want to connect the container to.", serviceProject.getNetwork(), null);
+		if (dlg.open() == Window.OK) {
+			String network = dlg.getValue();
+			if (network != null) {
+				serviceProject.setNetwork(network);
+			}
         }
 	}
 	

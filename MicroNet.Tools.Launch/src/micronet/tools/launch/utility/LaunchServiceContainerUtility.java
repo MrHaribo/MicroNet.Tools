@@ -30,6 +30,10 @@ public final class LaunchServiceContainerUtility {
 			argArray.add(port);
 		}
 		
+		argArray.add("--network=" + serviceProject.getNetwork());
+		argArray.add("--name=" + serviceProject.getContainerName());
+		
+		
 		for (String arg : args) {
 			argArray.add(arg);
 		}

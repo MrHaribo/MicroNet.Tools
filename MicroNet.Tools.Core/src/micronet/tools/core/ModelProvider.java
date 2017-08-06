@@ -83,7 +83,7 @@ public enum ModelProvider {
 				if (res instanceof IProject) {
 					System.out.println("Project was added: " + res.getFullPath());
 					addProject((IProject)res);
-					//notifyServicesChangedListeners();
+					notifyServicesChangedListeners();
 		        }
 				break;
 			case IResourceDelta.REMOVED:
@@ -122,8 +122,10 @@ public enum ModelProvider {
 			if (removeFile.exists()) {
 				try {
 					project.delete(false, false, null);
+					System.out.println("mn_remove project removed");
 				} catch (CoreException e) {
-					e.printStackTrace();
+					System.out.println("mn_remove project remove attempt");
+					//e.printStackTrace();
 				}
 				continue;
 			}
