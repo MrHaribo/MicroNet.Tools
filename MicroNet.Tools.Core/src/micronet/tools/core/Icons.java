@@ -11,6 +11,8 @@ public class Icons {
 	public static final ImageDescriptor IMG_MICRONET = getImageDescriptor("micronet_icon.png");
 	public static final ImageDescriptor IMG_ADD = getImageDescriptor("add.png");
 	public static final ImageDescriptor IMG_REMOVE = getImageDescriptor("remove.png");
+	public static final ImageDescriptor IMG_CHECK = getImageDescriptor("check.png");
+	public static final ImageDescriptor IMG_QUESTION = getImageDescriptor("question.png");
 	public static final ImageDescriptor IMG_REFRESH = getImageDescriptor("refresh.png");
 	
 	public static final ImageDescriptor IMG_PARAM = getImageDescriptor("param.png");

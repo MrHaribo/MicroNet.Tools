@@ -206,6 +206,6 @@ public enum ModelProvider {
 	}
 	
 	public IPreferenceStore getPreferenceStore() {
-		return new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Core");
+		return new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Preferences");
 	}
 }

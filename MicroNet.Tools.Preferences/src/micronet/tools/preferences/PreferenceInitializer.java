@@ -1,9 +1,10 @@
-package micronet.tools.core.preferences;
+package micronet.tools.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import micronet.tools.core.ModelProvider;
+import micronet.tools.core.PreferenceConstants;
 
 /**
  * Class used to initialize default preference values.
@@ -19,6 +20,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		
 		IPreferenceStore store = ModelProvider.INSTANCE.getPreferenceStore();
 		store.setDefault(PreferenceConstants.P_USE_DOCKER_TOOLBOX, false);
+		store.setDefault(PreferenceConstants.P_DOCKER_NETWORK_NAME, "bridge");
 	}
 
 }

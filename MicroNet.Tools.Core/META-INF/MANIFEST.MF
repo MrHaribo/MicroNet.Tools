@@ -4,7 +4,7 @@ Bundle-Name: Core
 Bundle-SymbolicName: MicroNet.Tools.Core;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: micronet.tools.core.Activator
-Require-Bundle: org.eclipse.core.runtime,
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0",
  org.eclipse.core.resources,
  org.eclipse.m2e.core,
  org.eclipse.jdt.core,
@@ -29,7 +29,6 @@ Export-Package: com.google.gson,
  micronet.tools.api,
  micronet.tools.codegen,
  micronet.tools.core,
- micronet.tools.core.preferences,
  micronet.tools.filesync,
  micronet.tools.model,
  micronet.tools.model.nodes,
