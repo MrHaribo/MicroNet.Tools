@@ -1,23 +1,31 @@
 package micronet.tools.preferences;
 
+import java.io.File;
+
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.preference.*;
+import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.DirectoryFieldEditor;
+import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
-import micronet.tools.core.Activator;
+import org.eclipse.ui.IWorkbenchPreferencePage;
+
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.PreferenceConstants;
+import micronet.tools.core.SyncPom;
 import micronet.tools.launch.utility.DockerUtility;
 import micronet.tools.model.ModelConstants;
 
@@ -50,41 +58,44 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 	 */
 	public void createFieldEditors() {
 
-		Group dockerPanel = new Group(getFieldEditorParent(), SWT.NONE);
-		dockerPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
-		dockerPanel.setText("Docker Settings");
+		createDockerPanel();
 
-		addField(new BooleanFieldEditor(PreferenceConstants.P_USE_DOCKER_TOOLBOX, "&Use Docker Toolbox", dockerPanel));
+		createDockerNetworkPanel();
 
-		addField(new DirectoryFieldEditor(PreferenceConstants.P_DOCKER_TOOLBOX_PATH, "&Docker Toolbox Directory:",
-				dockerPanel));
+		createWorkspacePanel();
+	}
 
-		Button button = new Button(dockerPanel, SWT.NONE);
-		button.setText("Test Docker");
+	private void createWorkspacePanel() {
+		Button button;
+		Group workspacePanel = new Group(getFieldEditorParent(), SWT.NONE);
+		workspacePanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
+		workspacePanel.setText("Application Workspace");
+
+		addField(new StringFieldEditor(PreferenceConstants.APP_GROUP_ID, "&Application GroupID", workspacePanel));
+		addField(new StringFieldEditor(PreferenceConstants.APP_ARTIFACT_ID, "&Application ArtifactID", workspacePanel));
+		addField(new StringFieldEditor(PreferenceConstants.APP_VERSION, "&Application Version", workspacePanel));
+
+		Composite workspaceStatusPanel = new Composite(workspacePanel, SWT.NONE);
+		workspaceStatusPanel.setLayout(new GridLayout(3, false));
+
+		button = new Button(workspaceStatusPanel, SWT.NONE);
+		button.setText("Apply Application Pom Metadata");
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				DockerUtility.testDocker(testSuccessful -> {
-					Display.getDefault().asyncExec(() -> {
-						if (testSuccessful) {
-							dockerStatus.setBackgroundImage(Icons.IMG_CHECK.createImage());
-						} else {
-							dockerStatus.setBackgroundImage(Icons.IMG_REMOVE.createImage());
-						}
-					});
-				});
+				performApply();
+				SyncPom.updateMetadataInApplicationPom();
 			}
 		});
+	}
 
-		dockerStatus = new Composite(dockerPanel, SWT.BORDER);
-		dockerStatus.setBackgroundImage(Icons.IMG_QUESTION.createImage());
-		dockerStatus.setLayoutData(new GridData(16, 16));
-
+	private void createDockerNetworkPanel() {
+		Button button;
 		Group dockerNetworkPanel = new Group(getFieldEditorParent(), SWT.NONE);
-		dockerNetworkPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 1, 1));
+		dockerNetworkPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		dockerNetworkPanel.setText("Application Docker Network");
 
-		StringFieldEditor networkNameEditor = new StringFieldEditor(PreferenceConstants.P_DOCKER_NETWORK_NAME,
+		StringFieldEditor networkNameEditor = new StringFieldEditor(PreferenceConstants.DOCKER_NETWORK_NAME,
 				"&Docker Network Name", dockerNetworkPanel);
 		addField(networkNameEditor);
 
@@ -96,13 +107,14 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 				String networkName = networkNameEditor.getStringValue();
 
 				if (!ModelConstants.isValidJavaIdentifier(networkName)) {
-					MessageDialog.openError(getFieldEditorParent().getShell(), "Error Creating Network", "Invalid Network Name: " + networkName);
+					MessageDialog.openError(getFieldEditorParent().getShell(), "Error Creating Network",
+							"Invalid Network Name: " + networkName);
 					return;
 				}
 
 				DockerUtility.createNetwork(networkName, result -> {
 					Display.getDefault().asyncExec(() -> {
-						if (result.contains("error") || result.contains("Error")) {
+						if (isErrorResult(result)) {
 							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Creating Network", result);
 							return;
 						}
@@ -112,33 +124,71 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 			}
 		});
 
-		Composite networkTestComposite = new Composite(dockerNetworkPanel, SWT.NONE);
-		networkTestComposite.setLayout(new GridLayout(2, false));
-		
-		button = new Button(networkTestComposite, SWT.NONE);
+		Composite networkTestPanel = new Composite(dockerNetworkPanel, SWT.NONE);
+		networkTestPanel.setLayout(new GridLayout(2, false));
+
+		button = new Button(networkTestPanel, SWT.NONE);
 		button.setText("Test Network");
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
 				String networkName = networkNameEditor.getStringValue();
-				
+
 				DockerUtility.testNetwork(networkName, result -> {
 					Display.getDefault().asyncExec(() -> {
-						if (result.contains("error") || result.contains("Error")) {
-							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Network Detected", result);
+						if (isErrorResult(result)) {
 							dockerNetworkStatus.setBackgroundImage(Icons.IMG_REMOVE.createImage());
-							return;
+							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Testing Network", result);
+						} else {
+							dockerNetworkStatus.setBackgroundImage(Icons.IMG_CHECK.createImage());
+							MessageDialog.openInformation(getFieldEditorParent().getShell(), "Network Tested Successful", result);
 						}
-						dockerNetworkStatus.setBackgroundImage(Icons.IMG_CHECK.createImage());
-						MessageDialog.openInformation(getFieldEditorParent().getShell(), "Network Tested Successful", result);
+
 					});
 				});
 			}
 		});
-		
-		dockerNetworkStatus = new Composite(networkTestComposite, SWT.BORDER);
+
+		dockerNetworkStatus = new Composite(networkTestPanel, SWT.BORDER);
 		dockerNetworkStatus.setBackgroundImage(Icons.IMG_QUESTION.createImage());
 		dockerNetworkStatus.setLayoutData(new GridData(16, 16));
+	}
+
+	private void createDockerPanel() {
+		Group dockerPanel = new Group(getFieldEditorParent(), SWT.NONE);
+		dockerPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
+		dockerPanel.setText("Docker Settings");
+
+		addField(new BooleanFieldEditor(PreferenceConstants.USE_DOCKER_TOOLBOX, "&Use Docker Toolbox", dockerPanel));
+
+		addField(new DirectoryFieldEditor(PreferenceConstants.DOCKER_TOOLBOX_PATH, "&Docker Toolbox Directory:", dockerPanel));
+
+		Button button = new Button(dockerPanel, SWT.NONE);
+		button.setText("Test Docker");
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent arg0) {
+				DockerUtility.testDocker(result -> {
+					Display.getDefault().asyncExec(() -> {
+						if (isErrorResult(result)) {
+							dockerStatus.setBackgroundImage(Icons.IMG_REMOVE.createImage());
+							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Testing Docker", result);
+						} else {
+							dockerStatus.setBackgroundImage(Icons.IMG_CHECK.createImage());
+							MessageDialog.openInformation(getFieldEditorParent().getShell(), "Docker Running", result);
+						}
+					});
+				});
+			}
+		});
+
+		dockerStatus = new Composite(dockerPanel, SWT.BORDER);
+		dockerStatus.setBackgroundImage(Icons.IMG_QUESTION.createImage());
+		dockerStatus.setLayoutData(new GridData(16, 16));
+	}
+	
+	private boolean isErrorResult(String result) {
+		return result.contains("error") || result.contains("Error");
 	}
 
 	/*

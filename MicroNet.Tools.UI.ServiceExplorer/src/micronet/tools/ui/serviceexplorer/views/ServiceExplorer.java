@@ -543,7 +543,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		generateGamePom = new Action() {
 			public void run() {
 				List<ServiceProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
-				SyncPom.updateGamePom(enabledProjects);
+				SyncPom.updateServicesInApplicationPom(enabledProjects);
 				ModelProvider.INSTANCE.refreshServiceProjects();
 				showMessage("Game Pom has been generated from Enabled Services.");
 			}

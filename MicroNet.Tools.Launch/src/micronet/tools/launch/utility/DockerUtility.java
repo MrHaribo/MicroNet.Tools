@@ -10,21 +10,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.osgi.internal.loader.ModuleClassLoader.GenerationProtectionDomain;
-import org.eclipse.swt.widgets.Display;
-
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.PreferenceConstants;
 
 public class DockerUtility {
 
 	public static boolean useDockerToolbox() {
-		return ModelProvider.INSTANCE.getPreferenceStore().getBoolean(PreferenceConstants.P_USE_DOCKER_TOOLBOX);
+		return ModelProvider.INSTANCE.getPreferenceStore().getBoolean(PreferenceConstants.USE_DOCKER_TOOLBOX);
 	}
 
 	public static String getDockerToolboxPath() {
-		return ModelProvider.INSTANCE.getPreferenceStore().getString(PreferenceConstants.P_DOCKER_TOOLBOX_PATH);
+		return ModelProvider.INSTANCE.getPreferenceStore().getString(PreferenceConstants.DOCKER_TOOLBOX_PATH);
 	}
 
 	public static String getDockerCommand() {
@@ -57,7 +53,7 @@ public class DockerUtility {
 		});
 	}
 
-	public static void testDocker(Consumer<Boolean> resultCallback) {
+	public static void testDocker(Consumer<String> resultCallback) {
 
 		String dockerCommand = DockerUtility.getDockerCommand();
 
@@ -69,8 +65,7 @@ public class DockerUtility {
 		builder.command(argArray);
 		
 		runDockerProcessAsync(builder, result->{
-			boolean res = !result.contains("error") && !result.contains("Error");
-			resultCallback.accept(res);
+			resultCallback.accept(result);
 		});
 	}
 	

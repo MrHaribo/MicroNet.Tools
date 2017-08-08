@@ -15,9 +15,11 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.ui.IStartup;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import micronet.tools.core.ServiceProject.Nature;
@@ -187,8 +189,31 @@ public enum ModelProvider {
 	}
 	
 	public String getSharedDir() {
+		String sharedDir = getWorkspaceDir() + "/shared/";
+		File sharedDirFile = new File(sharedDir);
+		if (!sharedDirFile.exists())
+			sharedDirFile.mkdir();
+		return sharedDir;
+	}
+	
+	public String getWorkspaceDir() {
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		return workspaceRoot.getLocation().toOSString() + "/shared/";
+		return workspaceRoot.getLocation().toOSString() + "/";
+	}
+	
+	public void initWorkspace() {
+		if (!isSharedDirPresent())
+			new File(getSharedDir()).mkdir();
+		if (!isApplicationPomPresent())
+			SyncPom.updateMetadataInApplicationPom();
+	}
+	
+	private boolean isSharedDirPresent() {
+		return new File(getSharedDir()).exists();
+	}
+	
+	private boolean isApplicationPomPresent() {
+		return new File(new Path(getWorkspaceDir()).append("pom.xml").toString()).exists();
 	}
 
 	public interface ServicesChangedListener {

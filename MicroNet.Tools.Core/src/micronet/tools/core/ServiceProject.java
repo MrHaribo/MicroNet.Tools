@@ -11,9 +11,11 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class ServiceProject {
@@ -46,7 +48,7 @@ public class ServiceProject {
 	}
 
 	public boolean isInGamePom() {
-		return SyncPom.getServicesFromGamePom().contains(project.getName());
+		return SyncPom.getServicesFromApplicationPom().contains(project.getName());
 	}
 
 	public boolean isInGameCompose() {
@@ -112,7 +114,11 @@ public class ServiceProject {
 	public String getNetwork() {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		return preferences.get("network", "bridge");
+		
+		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Preferences");
+		String defaultValue = preferenceStore.getString(PreferenceConstants.DOCKER_NETWORK_NAME);
+		
+		return preferences.get("network", defaultValue);
 	}
 	
 	public void setNetwork(String network) {
