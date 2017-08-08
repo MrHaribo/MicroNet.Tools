@@ -3,14 +3,13 @@ package micronet.tools.filesync;
 import static micronet.tools.codegen.CodegenConstants.REQUEST_PARAMETERS;
 import static micronet.tools.codegen.CodegenConstants.RESPONSE_PARAMETERS;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -83,11 +82,9 @@ public class SyncServiceAPI {
 			if (!apiDir.exists())
 				apiDir.mkdir();
 
-			String path = sharedDir + "api/" + apiFileName;
-			System.out.println("Api Path:" + path);
-			BufferedWriter out = new BufferedWriter(new FileWriter(path));
-			out.write(apiData);
-			out.close();
+			File apiFile = new File(sharedDir + "api/" + apiFileName);
+			Files.write(apiFile.toPath(), apiData.getBytes());
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -111,9 +108,8 @@ public class SyncServiceAPI {
 				return result;
 
 			for (File parameterCodeFile : directoryListing) {
-				try (Scanner scanner = new Scanner(parameterCodeFile)) {
-					scanner.useDelimiter("\\A");
-					String data = scanner.next();
+				try {
+					String data = new String(Files.readAllBytes(parameterCodeFile.toPath()), StandardCharsets.UTF_8);
 					ServiceAPI apiDesc = Serialization.deserialize(data, ServiceAPI.class);
 					result.add(apiDesc);
 				} catch (IOException e) {

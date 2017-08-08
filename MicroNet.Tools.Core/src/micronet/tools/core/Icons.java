@@ -14,6 +14,7 @@ public class Icons {
 	public static final ImageDescriptor IMG_CHECK = getImageDescriptor("check.png");
 	public static final ImageDescriptor IMG_QUESTION = getImageDescriptor("question.png");
 	public static final ImageDescriptor IMG_REFRESH = getImageDescriptor("refresh.png");
+	public static final ImageDescriptor IMG_LETTERBOX = getImageDescriptor("letterbox.png");
 	
 	public static final ImageDescriptor IMG_PARAM = getImageDescriptor("param.png");
 	
