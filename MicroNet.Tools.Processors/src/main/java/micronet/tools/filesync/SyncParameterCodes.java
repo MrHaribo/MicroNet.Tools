@@ -9,12 +9,15 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Semaphore;
 
+import micronet.network.NetworkConstants;
 import micronet.serialization.Serialization;
 import micronet.tools.codegen.CodegenConstants;
 
@@ -30,8 +33,7 @@ public class SyncParameterCodes {
 	        semaphore.acquire();
 
 	        try (Scanner scanner = new Scanner(parameterCodeFile)) {
-		        scanner.useDelimiter("\\A");
-		        String data = scanner.next();
+	        	String data = new String(Files.readAllBytes(parameterCodeFile.toPath()), StandardCharsets.UTF_8);
 				String[] codeArray = Serialization.deserialize(data, String[].class);
 				
 				Set<String> existingParameterCodes = new TreeSet<String>(Arrays.asList(codeArray));
@@ -44,6 +46,9 @@ public class SyncParameterCodes {
 					printer.print(data);
 				}
 	        } catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 	    } catch (InterruptedException e1) {
@@ -60,8 +65,7 @@ public class SyncParameterCodes {
 	        semaphore.acquire();
 
 	        try (Scanner scanner = new Scanner(parameterCodeFile)) {
-		        scanner.useDelimiter("\\A");
-		        String data = scanner.next();
+	        	String data = new String(Files.readAllBytes(parameterCodeFile.toPath()), StandardCharsets.UTF_8);
 				String[] codeArray = Serialization.deserialize(data, String[].class);
 				
 				Set<String> existingParameterCodes = new TreeSet<String>(Arrays.asList(codeArray));
@@ -74,6 +78,9 @@ public class SyncParameterCodes {
 					printer.print(data);
 				}
 	        } catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 	    } catch (InterruptedException e1) {
@@ -89,12 +96,9 @@ public class SyncParameterCodes {
 	    try {
 	        semaphore.acquire();
 
-	        try (FileInputStream fis = new FileInputStream(parameterCodeFile)) {
-	        	byte[] data = new byte[(int) parameterCodeFile.length()];
-	        	fis.read(data);
-
-	        	String str = new String(data, "UTF-8");
-				String[] codeArray = Serialization.deserialize(str, String[].class);
+	        try {
+	        	String data = new String(Files.readAllBytes(parameterCodeFile.toPath()), StandardCharsets.UTF_8);
+				String[] codeArray = Serialization.deserialize(data, String[].class);
 				
 				if (codeArray == null)
 					return new TreeSet<>();
@@ -120,7 +124,7 @@ public class SyncParameterCodes {
 			File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
 			if (!parameterCodeFile.exists()) {
 				try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(parameterCodeFile), "utf-8"))) {
-					writer.write("[\"USER_ID\"]");
+					writer.write("[\"DUMMY_CODE\"]");
 				}
 			}
 			return parameterCodeFile;

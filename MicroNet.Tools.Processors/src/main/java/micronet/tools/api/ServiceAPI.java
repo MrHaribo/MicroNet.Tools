@@ -1,9 +1,10 @@
 package micronet.tools.api;
 
 public class ServiceAPI {
-	String serviceName;
-	String serviceUri;
-	ListenerAPI[] listeners;
+	private String serviceName;
+	private String serviceUri;
+	private String description;
+	private ListenerAPI[] listeners;
 
 	public String getServiceName() {
 		return serviceName;
@@ -19,6 +20,14 @@ public class ServiceAPI {
 
 	public void setServiceUri(String serviceUri) {
 		this.serviceUri = serviceUri;
+	}
+	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	public ListenerAPI[] getListeners() {

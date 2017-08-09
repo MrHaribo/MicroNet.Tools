@@ -86,4 +86,10 @@ public class ServiceDescription {
 			return null;
 		return service.getAnnotation(MessageService.class).uri();
 	}
+	
+	public String getDescription() {
+		if (service == null)
+			return null;
+		return service.getAnnotation(MessageService.class).desc();
+	}
 }

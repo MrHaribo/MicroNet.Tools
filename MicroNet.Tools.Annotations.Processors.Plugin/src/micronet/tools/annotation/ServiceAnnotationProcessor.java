@@ -12,6 +12,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
@@ -30,6 +31,7 @@ import micronet.tools.filesync.SyncServiceAPI;
 public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	private Elements elementUtils;
+	private Types typeUtils;
 	private ServiceAnnotationProcessorContext context;
 	private String sharedDir;
 	private ServiceProject serviceProject;
@@ -39,6 +41,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		//super.init(processingEnv);
 		
 		elementUtils = processingEnv.getElementUtils();
+		typeUtils = processingEnv.getTypeUtils();
 		
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		sharedDir = workspaceRoot.getLocation().toOSString() + "/shared/";
@@ -91,7 +94,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 			return false;
 		
 		context.process(roundEnv);
-		
+
 		if (context.getServiceDescription() != null) {
 			ServiceAPI apiDescription = SyncServiceAPI.generateAPIDescription(context.getServiceDescription(), elementUtils, sharedDir);
 			Set<String> requiredParameters = getRequiredParameters(apiDescription);
@@ -102,14 +105,18 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	private Set<String> getRequiredParameters(ServiceAPI apiDescription) {
 		Set<String> requiredParameters = new HashSet<String>();
-		for (ListenerAPI listener : apiDescription.getListeners()) {
-			for (ParameterAPI parameter : listener.getRequestParameters()) {
-				requiredParameters.add(parameter.getType());
-			}
-			for (ParameterAPI parameter : listener.getResponseParameters()) {
-				requiredParameters.add(parameter.getType());
-			}
-		}
+//		for (ListenerAPI listener : apiDescription.getListeners()) {
+//			if (listener.getRequestParameters() != null) {
+//				for (ParameterAPI parameter : listener.getRequestParameters()) {
+//					requiredParameters.add(Integer.toString(parameter.getCode()));
+//				}
+//			}
+//			if (listener.getResponseParameters() != null) {
+//				for (ParameterAPI parameter : listener.getResponseParameters()) {
+//					requiredParameters.add(Integer.toString(parameter.getCode()));
+//				}
+//			}
+//		}
 		return requiredParameters;
 	}
 	
