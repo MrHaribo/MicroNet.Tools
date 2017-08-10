@@ -171,7 +171,7 @@ public class ServiceProject {
 		
 		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
 		for (String param : requiredParameters) {
-			if (param.equals(""))
+			if (param == null || param.equals(""))
 				continue;
 		    joiner.add(param);
 		}

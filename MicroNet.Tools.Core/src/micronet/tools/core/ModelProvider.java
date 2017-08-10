@@ -19,7 +19,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.ui.IStartup;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import micronet.tools.core.ServiceProject.Nature;
@@ -114,21 +113,9 @@ public enum ModelProvider {
 		for (IProject project : workspaceRoot.getProjects()) {
 			if(!project.isOpen())
 				continue;
-			
-			File ignoreFile = new File(project.getLocation().append("mn_ignore").toString());
-			if (ignoreFile.exists()) {
-				continue;
-			}
-			
+
 			File removeFile = new File(project.getLocation().append("mn_remove").toString());
 			if (removeFile.exists()) {
-				try {
-					project.delete(false, false, null);
-					System.out.println("mn_remove project removed");
-				} catch (CoreException e) {
-					System.out.println("mn_remove project remove attempt");
-					//e.printStackTrace();
-				}
 				continue;
 			}
 			

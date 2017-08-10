@@ -14,7 +14,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
-import micronet.network.NetworkConstants;
 import micronet.tools.filesync.SyncParameterCodes;
 
 public class ParameterCodesGenerator {
@@ -26,25 +25,13 @@ public class ParameterCodesGenerator {
 
 	public void generateParameterCodeEnum(String packageName, String sharedDir) {
 
-		int index = 0;
 		TypeSpec.Builder builder = TypeSpec.classBuilder(PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
-		Set<String> params = SyncParameterCodes.readParameters(sharedDir);
-		
-		for (NetworkConstants entry : NetworkConstants.values()) {
-			builder.addField(FieldSpec.builder(int.class, entry.toString())
-			    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-			    .initializer("$L", entry.getCode())
-			    .build());
-			
-			if (entry.getCode() > index)
-				index = entry.getCode();
-			params.remove(entry.toString());
-		}
+		Set<String> params = SyncParameterCodes.getAllParameterCodes(sharedDir);
 		
 		for (String entry : params) {
-			builder.addField(FieldSpec.builder(int.class, entry)
+			builder.addField(FieldSpec.builder(String.class, entry)
 			    .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-			    .initializer("$L", ++index)
+			    .initializer("$S", entry)
 			    .build());
 		}
 		
@@ -59,7 +46,6 @@ public class ParameterCodesGenerator {
 			writer.close();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

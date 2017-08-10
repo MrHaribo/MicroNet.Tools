@@ -17,6 +17,7 @@ public class Icons {
 	public static final ImageDescriptor IMG_LETTERBOX = getImageDescriptor("letterbox.png");
 	
 	public static final ImageDescriptor IMG_PARAM = getImageDescriptor("param.png");
+	public static final ImageDescriptor IMG_PARAM_GREY = getImageDescriptor("param_grey.png");
 	
 	public static final ImageDescriptor IMG_CHECKED = getImageDescriptor("checked.png");
 	public static final ImageDescriptor IMG_UNCHECKED = getImageDescriptor("unchecked.png");

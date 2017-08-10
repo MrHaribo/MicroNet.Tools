@@ -2,7 +2,6 @@ package micronet.tools.annotation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -19,8 +18,6 @@ import javax.tools.StandardLocation;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 
-import micronet.tools.api.ListenerAPI;
-import micronet.tools.api.ParameterAPI;
 import micronet.tools.api.ServiceAPI;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
@@ -97,28 +94,12 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 		if (context.getServiceDescription() != null) {
 			ServiceAPI apiDescription = SyncServiceAPI.generateAPIDescription(context.getServiceDescription(), elementUtils, sharedDir);
-			Set<String> requiredParameters = getRequiredParameters(apiDescription);
+			Set<String> requiredParameters = SyncParameterCodes.getUsedParameters(apiDescription);
 			serviceProject.setRequiredParameters(requiredParameters);
 		}
 		return true;
 	}
 
-	private Set<String> getRequiredParameters(ServiceAPI apiDescription) {
-		Set<String> requiredParameters = new HashSet<String>();
-//		for (ListenerAPI listener : apiDescription.getListeners()) {
-//			if (listener.getRequestParameters() != null) {
-//				for (ParameterAPI parameter : listener.getRequestParameters()) {
-//					requiredParameters.add(Integer.toString(parameter.getCode()));
-//				}
-//			}
-//			if (listener.getResponseParameters() != null) {
-//				for (ParameterAPI parameter : listener.getResponseParameters()) {
-//					requiredParameters.add(Integer.toString(parameter.getCode()));
-//				}
-//			}
-//		}
-		return requiredParameters;
-	}
 	
 	private String findProjectName(Filer filer) {
 		try {

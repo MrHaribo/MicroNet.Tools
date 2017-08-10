@@ -3,13 +3,12 @@ package micronet.tools.ui.parametercodeview.views;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -37,8 +36,6 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
-import micronet.tools.api.ListenerAPI;
-import micronet.tools.api.ParameterAPI;
 import micronet.tools.api.ServiceAPI;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
@@ -103,6 +100,9 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		column.setLabelProvider(new ColumnLabelProvider() {
 			@Override
 			public Image getImage(Object element) {
+				
+				if (SyncParameterCodes.getBuiltInParameterCodes().contains(element))
+						return Icons.IMG_PARAM_GREY.createImage();
 				return Icons.IMG_PARAM.createImage();
 			}
 	        @Override
@@ -181,36 +181,25 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 				return;
 			
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-			Set<String> parameterCodes = SyncParameterCodes.readParameters(sharedDir);
-			String[] codeArray = parameterCodes.toArray(new String[parameterCodes.size()]);
+			Set<String> builtInParameterCodes = SyncParameterCodes.getBuiltInParameterCodes();
+			Set<String> userParameterCodes = SyncParameterCodes.getUserParameterCodes(sharedDir);
+			
+			List<String> orderedParameterCodes = new ArrayList<>(builtInParameterCodes);
+			orderedParameterCodes.addAll(userParameterCodes);
+			String[] codeArray = orderedParameterCodes.toArray(new String[orderedParameterCodes.size()]);
 
-			refreshParameters(parameterCodes, sharedDir);
+			refreshUsedParameters(sharedDir);
 			
 			viewer.setInput(codeArray);
 			viewer.refresh();
 		});
 	}
 
-	private void refreshParameters(Set<String> parameterCodes, String sharedDir) {
+	private void refreshUsedParameters(String sharedDir) {
 		List<ServiceAPI> completeAPI = SyncServiceAPI.readServiceApi(sharedDir);
 		
-		requiredParameters = new HashMap<>();
-		providedParameters = new HashMap<>();
-		
-		for (ServiceAPI serviceAPI : completeAPI) {
-			for (ListenerAPI listenerAPI : serviceAPI.getListeners()) {
-				for (ParameterAPI paramAPI : listenerAPI.getRequestParameters()) {
-					if (!requiredParameters.containsKey(paramAPI.getType()))
-						requiredParameters.put(paramAPI.getType(), new TreeSet<>());
-					requiredParameters.get(paramAPI.getType()).add(serviceAPI.getServiceName());
-				}
-				for (ParameterAPI paramAPI : listenerAPI.getResponseParameters()) {
-					if (!providedParameters.containsKey(paramAPI.getType()))
-						providedParameters.put(paramAPI.getType(), new TreeSet<>());
-					providedParameters.get(paramAPI.getType()).add(serviceAPI.getServiceName());
-				}
-			}
-		}
+		requiredParameters = SyncParameterCodes.getAllRequiredParameters(completeAPI);
+		providedParameters = SyncParameterCodes.getAllProvidedParameters(completeAPI);
 	}
 
 	private void hookContextMenu() {
@@ -273,7 +262,14 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 				StringBuilder messageString = new StringBuilder();
 				Set<String> removedParameters = new HashSet<>();
 				IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+				
+				Set<String> builtInParameterCodes = SyncParameterCodes.getBuiltInParameterCodes();
 				for (Object o : selection.toList()) {
+					if (builtInParameterCodes.contains(o)) {
+						MessageDialog.openError(viewer.getControl().getShell(), "Error removing Parameter Codes", "Cannot remove Built-In ParameterCodes");
+						return;
+					}
+					
 					removedParameters.add(o.toString());
 					messageString.append(o.toString() + ",");
 				}

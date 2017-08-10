@@ -2,7 +2,6 @@ package micronet.tools.filesync;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,6 +11,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
@@ -19,15 +22,84 @@ import java.util.concurrent.Semaphore;
 
 import micronet.network.NetworkConstants;
 import micronet.serialization.Serialization;
+import micronet.tools.api.ListenerAPI;
+import micronet.tools.api.ParameterAPI;
+import micronet.tools.api.ServiceAPI;
 import micronet.tools.codegen.CodegenConstants;
 
 public class SyncParameterCodes {
 	
-	
 	private static Semaphore semaphore = new Semaphore(1);
 
+	public static Set<String> getUsedParameters(ServiceAPI apiDescription) {
+		Set<String> requiredParameters = new HashSet<String>();
+		for (ListenerAPI listener : apiDescription.getListeners()) {
+			if (listener.getRequestParameters() != null) {
+				for (ParameterAPI parameter : listener.getRequestParameters()) {
+					requiredParameters.add(parameter.getCode());
+				}
+			}
+			if (listener.getResponseParameters() != null) {
+				for (ParameterAPI parameter : listener.getResponseParameters()) {
+					requiredParameters.add(parameter.getCode());
+				}
+			}
+		}
+		return requiredParameters;
+	}
+	
+	public static Map<String, Set<String>> getAllRequiredParameters(List<ServiceAPI> completeAPI) {
+		Map<String, Set<String>> requiredParameters = new HashMap<>();
+		for (ServiceAPI serviceAPI : completeAPI) {
+			for (ListenerAPI listenerAPI : serviceAPI.getListeners()) {
+				if (listenerAPI.getRequestParameters() == null)
+					continue;
+				for (ParameterAPI paramAPI : listenerAPI.getRequestParameters()) {
+					if (!requiredParameters.containsKey(paramAPI.getCode()))
+						requiredParameters.put(paramAPI.getCode(), new TreeSet<>());
+					requiredParameters.get(paramAPI.getCode()).add(serviceAPI.getServiceName());
+				}
+			}
+		}
+		return requiredParameters;
+	}
+	
+	public static Map<String, Set<String>> getAllProvidedParameters(List<ServiceAPI> completeAPI) {
+		Map<String, Set<String>> providedParameters = new HashMap<>();
+		for (ServiceAPI serviceAPI : completeAPI) {
+			for (ListenerAPI listenerAPI : serviceAPI.getListeners()) {
+				if (listenerAPI.getResponseParameters() == null)
+					continue;
+				for (ParameterAPI paramAPI : listenerAPI.getResponseParameters()) {
+					if (!providedParameters.containsKey(paramAPI.getCode()))
+						providedParameters.put(paramAPI.getCode(), new TreeSet<>());
+					providedParameters.get(paramAPI.getCode()).add(serviceAPI.getServiceName());
+				}
+			}
+		}
+		return providedParameters;
+	}
+	
+	public static Set<String> getAllParameterCodes(String sharedDir) {
+		Set<String> allParameterCodes = new TreeSet<String>();
+		allParameterCodes.addAll(getBuiltInParameterCodes());
+		allParameterCodes.addAll(getUserParameterCodes(sharedDir));
+		return allParameterCodes;
+	}
+	
+	public static Set<String> getBuiltInParameterCodes() {
+		String[] networkConstants = Arrays.stream(NetworkConstants.class.getEnumConstants()).map(Enum::name).toArray(String[]::new);
+		return new TreeSet<String>(Arrays.asList(networkConstants));
+	}
+	
+	public static Set<String> getUserParameterCodes(String sharedDir) {
+		return readParameters(sharedDir);
+	}
+	
 	public static void contributeParameters(Set<String> contributedCodes, String sharedDir) {
 		File parameterCodeFile = getParameterCodeFile(sharedDir);
+		Set<String> builtInParameterCodes = getBuiltInParameterCodes();
+		contributedCodes.removeAll(builtInParameterCodes);
 		
 	    try {
 	        semaphore.acquire();
@@ -60,6 +132,8 @@ public class SyncParameterCodes {
 	
 	public static void removeParameters(Set<String> removedCodes, String sharedDir) {
 		File parameterCodeFile = getParameterCodeFile(sharedDir);
+		Set<String> builtInParameterCodes = getBuiltInParameterCodes();
+		removedCodes.removeAll(builtInParameterCodes);
 		
 	    try {
 	        semaphore.acquire();
@@ -90,7 +164,7 @@ public class SyncParameterCodes {
 	    }
 	}
 	
-	public static Set<String> readParameters(String sharedDir) {
+	private static Set<String> readParameters(String sharedDir) {
 		File parameterCodeFile = getParameterCodeFile(sharedDir);
 		
 	    try {

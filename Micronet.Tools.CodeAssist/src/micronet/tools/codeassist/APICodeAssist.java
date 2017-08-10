@@ -17,6 +17,7 @@ import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.swt.graphics.Image;
 
 import micronet.tools.api.ListenerAPI;
+import micronet.tools.api.ParameterAPI;
 import micronet.tools.api.ServiceAPI;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
@@ -64,26 +65,25 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 			boolean cursorInService = context.getInvocationOffset() < pathStartIdx;
 
 			if (cursorInService) {
-				return fullServiceProposal(uriStartIdx, currentString.length());
+				return serviceProposals(uriStartIdx, currentString.length());
 			} else {
 
 				Optional<ServiceAPI> service = fullAPI.stream()
 						.filter(s -> s.getServiceUri().equals("mn://" + tokens[0])).findFirst();
 
 				if (!service.isPresent())
-					return fullServiceProposal(uriStartIdx, currentString.length());
+					return serviceProposals(uriStartIdx, currentString.length());
 
 				for (ListenerAPI listenerApi : service.get().getListeners()) {
-					
-					String replacementString = listenerApi.getListenerUri();
-					int replacementOffset = pathStartIdx;
-					int replacementLength = uriEndIdx - pathStartIdx;
-					int cursorPosition = listenerApi.getListenerUri().length();
-					Image image = Icons.IMG_LETTERBOX.createImage();
-					String displayString = replacementString;
-					String additionalProposalInfo = "Additional Proposal Info";
-					
-					proposals.add(new CompletionProposal(replacementString, replacementOffset, replacementLength, cursorPosition, image, displayString, null, additionalProposalInfo));
+
+					APICompletionProposal proposal = new APICompletionProposal();
+					proposal.replacementString = listenerApi.getListenerUri();
+					proposal.replacementOffset = pathStartIdx;
+					proposal.replacementLength = uriEndIdx - pathStartIdx;
+					proposal.cursorPosition = listenerApi.getListenerUri().length();
+					proposal.image = Icons.IMG_LETTERBOX.createImage();
+					proposal.additionalProposalInfo = getListenerDescription(service.get(), listenerApi);
+					proposals.add(proposal);
 				}
 			}
 
@@ -94,17 +94,56 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 		return proposals;
 	}
 
-	List<ICompletionProposal> fullServiceProposal(int replacementOffset, int replacementLength) {
+	private String getListenerDescription(ServiceAPI serviceAPI, ListenerAPI listenerApi) {
+		String description = String.format("Message Listener: %s%s\n", serviceAPI.getServiceUri(), listenerApi.getListenerUri());
+		
+		if (listenerApi.getDescription() != null && !listenerApi.getDescription().equals(""))
+			description += listenerApi.getDescription();
+		description += "\n";
+		
+		if (listenerApi.getRequestParameters() != null) {
+			description += "\nRequired Request Parameters:\n";
+			for (ParameterAPI parameter : listenerApi.getRequestParameters()) {
+				String descriptionString = parameter.getDescription() == null && !parameter.getDescription().equals("") ? "" : " (" + parameter.getDescription() + ")";
+				description += " " + parameter.getCode() + ": " + parameter.getType() + descriptionString + "\n";
+			}
+		}
+		if (listenerApi.getRequestPayload() != null && !listenerApi.getRequestPayload().equals("")) {
+			String descriptionString = listenerApi.getRequestPayloadDescription() == null && !listenerApi.getRequestPayloadDescription().equals("") ? "" : " (" + listenerApi.getRequestPayloadDescription() + ")";
+			description += "\nRequest Payload Type:\n " + listenerApi.getRequestPayload() + descriptionString + "\n";
+		}
+			
+		if (listenerApi.getResponseParameters() != null) {
+			description += "\nProvided Response Parameters:\n";
+			for (ParameterAPI parameter : listenerApi.getResponseParameters()) {
+				String descriptionString = parameter.getDescription() == null && !parameter.getDescription().equals("") ? "" : " (" + parameter.getDescription() + ")";
+				description += " " + parameter.getCode() + ": " + parameter.getType() + descriptionString + "\n";
+			}
+		}
+		if (listenerApi.getResponsePayload() != null && !listenerApi.getResponsePayload().equals("")) {
+			String descriptionString = listenerApi.getResponsePayloadDescription() == null && !listenerApi.getResponsePayloadDescription().equals("") ? "" : " (" + listenerApi.getResponsePayloadDescription() + ")";
+			description += "\nResponse Payload Type:\n " + listenerApi.getResponsePayload() + descriptionString + "\n";
+		}
+		
+		return description;
+	}
+
+	private List<ICompletionProposal> serviceProposals(int replacementOffset, int replacementLength) {
 		List<ICompletionProposal> proposals = new ArrayList<ICompletionProposal>();
 		for (ServiceAPI serviceApi : fullAPI) {
+
+			APICompletionProposal proposal = new APICompletionProposal();
+			proposal.replacementString = serviceApi.getServiceUri();
+			proposal.replacementOffset = replacementOffset;
+			proposal.replacementLength = replacementLength;
+			proposal.cursorPosition = serviceApi.getServiceUri().length();
+			proposal.image = Icons.IMG_MICRONET.createImage();
+			proposal.additionalProposalInfo = "Service: " + serviceApi.getServiceName() + "\n";
+			proposal.additionalProposalInfo += "URI: " + serviceApi.getServiceUri() + "\n";
 			
-			String replacementString = serviceApi.getServiceUri();
-			int cursorPosition = serviceApi.getServiceUri().length();
-			Image image = Icons.IMG_MICRONET.createImage();
-			String displayString = replacementString;
-			String additionalProposalInfo = "Additional Proposal Info";
-			
-			proposals.add(new CompletionProposal(replacementString, replacementOffset, replacementLength, cursorPosition, image, displayString, null, additionalProposalInfo));
+			if (serviceApi.getDescription() != null && !serviceApi.getDescription().equals(""))
+			proposal.additionalProposalInfo += "\n" + serviceApi.getDescription();
+			proposals.add(proposal);
 		}
 		return proposals;
 	}
