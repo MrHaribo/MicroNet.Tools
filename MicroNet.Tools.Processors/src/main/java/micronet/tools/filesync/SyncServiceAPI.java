@@ -179,7 +179,7 @@ public class SyncServiceAPI {
 	private static String parseMTE(MirroredTypeException mte) {
 		if (mte.getTypeMirror().getKind().equals(TypeKind.ARRAY)) {
 			ArrayType arrayType = (ArrayType)mte.getTypeMirror();
-			return arrayType.toString().substring(arrayType.toString().lastIndexOf("."));
+			return arrayType.toString().substring(arrayType.toString().lastIndexOf(".") + 1);
 		}
 		DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
 		TypeElement classTypeElement = (TypeElement) classTypeMirror.asElement();

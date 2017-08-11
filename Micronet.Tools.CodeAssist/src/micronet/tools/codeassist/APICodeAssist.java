@@ -68,13 +68,18 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 				return serviceProposals(uriStartIdx, currentString.length());
 			} else {
 
-				Optional<ServiceAPI> service = fullAPI.stream()
-						.filter(s -> s.getServiceUri().equals("mn://" + tokens[0])).findFirst();
+				ServiceAPI service = null;
+				for (ServiceAPI serviceAPI : fullAPI) {
+					if (serviceAPI.getServiceUri().equals("mn://" + tokens[0])) {
+						service = serviceAPI;
+						break;
+					}
+				}
 
-				if (!service.isPresent())
+				if (service == null)
 					return serviceProposals(uriStartIdx, currentString.length());
 
-				for (ListenerAPI listenerApi : service.get().getListeners()) {
+				for (ListenerAPI listenerApi : service.getListeners()) {
 
 					APICompletionProposal proposal = new APICompletionProposal();
 					proposal.replacementString = listenerApi.getListenerUri();
@@ -82,7 +87,7 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 					proposal.replacementLength = uriEndIdx - pathStartIdx;
 					proposal.cursorPosition = listenerApi.getListenerUri().length();
 					proposal.image = Icons.IMG_LETTERBOX.createImage();
-					proposal.additionalProposalInfo = getListenerDescription(service.get(), listenerApi);
+					proposal.additionalProposalInfo = getListenerDescription(service, listenerApi);
 					proposals.add(proposal);
 				}
 			}

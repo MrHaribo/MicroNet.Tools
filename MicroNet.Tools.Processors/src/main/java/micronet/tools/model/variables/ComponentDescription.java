@@ -21,4 +21,14 @@ public class ComponentDescription extends VariableDescription  {
 	public String toString() {
 		return componentType;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!super.equals(other))
+			return false;
+	    if (!(other instanceof ComponentDescription))
+	        return false;
+	    ComponentDescription castOther = (ComponentDescription) other;
+	    return getComponentType().equals(castOther.getComponentType());
+	}
 }

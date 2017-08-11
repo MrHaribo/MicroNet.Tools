@@ -16,4 +16,19 @@ public class MapDescription extends CollectionDescription {
 	public void setKeyType(VariableDescription keyType) {
 		this.keyType = keyType;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!super.equals(other))
+			return false;
+	    if (!(other instanceof MapDescription))
+	        return false;
+	    MapDescription castOther = (MapDescription) other;
+	    return getKeyType().equals(castOther.getKeyType());
+	}
+	
+	@Override
+	public String toString() {
+		return "MAP<" + keyType + "," + entryType + ">";
+	}
 }

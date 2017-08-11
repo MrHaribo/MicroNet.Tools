@@ -21,4 +21,14 @@ public class NumberDescription extends VariableDescription  {
 	public String toString() {
 		return numberType.toString();
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!super.equals(other))
+			return false;
+	    if (!(other instanceof NumberDescription))
+	        return false;
+	    NumberDescription castOther = (NumberDescription) other;
+		return getNumberType().equals(castOther.getNumberType());
+	}
 }

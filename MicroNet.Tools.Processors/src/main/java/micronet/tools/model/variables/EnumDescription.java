@@ -21,4 +21,14 @@ public class EnumDescription extends VariableDescription {
 	public String toString() {
 		return enumType;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!super.equals(other))
+			return false;
+	    if (!(other instanceof EnumDescription))
+	        return false;
+	    EnumDescription castOther = (EnumDescription) other;
+	    return getEnumType().equals(castOther.getEnumType());
+	}
 }

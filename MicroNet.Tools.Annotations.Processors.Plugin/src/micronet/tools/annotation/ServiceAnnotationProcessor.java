@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import micronet.tools.api.ServiceAPI;
+import micronet.tools.contribution.ModelContribution;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
@@ -35,7 +36,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
-		//super.init(processingEnv);
+		super.init(processingEnv);
 		
 		elementUtils = processingEnv.getElementUtils();
 		typeUtils = processingEnv.getTypeUtils();
@@ -50,6 +51,12 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		if (serviceProject != null) {
 			Set<String> contributedParameters = serviceProject.getRequiredParameters();
 			SyncParameterCodes.contributeParameters(contributedParameters, sharedDir);
+			
+			String contributedSharedDir = serviceProject.getContributedSharedDir();
+			if (contributedSharedDir != null) {
+				ModelContribution.contributeSharedDir(contributedSharedDir, sharedDir);
+				ModelProvider.INSTANCE.notifyTemplatesChangedListeners();
+			}
 			
 			if (serviceProject.hasNature(Nature.MAVEN)) {
 				String groupString = serviceProject.getGroupID().replaceAll("[^a-zA-Z0-9]+",".");

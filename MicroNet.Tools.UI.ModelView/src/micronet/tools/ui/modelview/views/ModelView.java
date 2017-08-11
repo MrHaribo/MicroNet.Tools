@@ -139,16 +139,9 @@ public class ModelView extends ViewPart {
 		}
 	}
 
-	/**
-	 * The constructor.
-	 */
 	public ModelView() {
 	}
 
-	/**
-	 * This is a callback that will allow us to create the viewer and initialize
-	 * it.
-	 */
 	public void createPartControl(Composite parent) {
 
 		parent.setLayout(new GridLayout(2, false));
@@ -165,6 +158,16 @@ public class ModelView extends ViewPart {
 		viewer.setInput(getViewSite());
 		viewer.setLabelProvider(new ViewLabelProvider());
 		viewer.getTree().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		
+		ModelProvider.INSTANCE.registerTemplatesChangedListener(()-> {
+			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				@Override
+				public void run() {
+					entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
+					viewer.refresh();
+				}
+			});
+		});
 
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			@Override

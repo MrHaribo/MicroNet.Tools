@@ -1,5 +1,6 @@
 package micronet.tools.core;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -192,6 +193,13 @@ public class ServiceProject {
 		Set<String> result = new HashSet<>(Arrays.asList(parameterString.split(SPLIT_STRING)));
 		result.remove("");
 		return result;
+	}
+	
+	public String getContributedSharedDir() {
+		File contributedSharedDir = project.getLocation().append("shared_contribution").toFile();
+		if (contributedSharedDir.exists())
+			return contributedSharedDir.getPath() + "/";
+		return null;
 	}
 	
 	public String getVersion() {

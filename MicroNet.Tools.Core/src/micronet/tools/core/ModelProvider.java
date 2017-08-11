@@ -29,6 +29,7 @@ public enum ModelProvider {
 	Map<String, ServiceProject> serviceProjects = new HashMap<>();
 	
 	private List<ServicesChangedListener> servicesChangedListeners = new ArrayList<>();
+	private List<Runnable> templatesChangedListeners = new ArrayList<>();
 	
 	private ModelProvider() {
 
@@ -215,6 +216,16 @@ public enum ModelProvider {
 	protected void notifyServicesChangedListeners() {
 		refreshServiceProjects();
 		this.servicesChangedListeners.forEach(listener -> listener.onServicesChanged());
+	}
+	
+	public void registerTemplatesChangedListener(Runnable listener) {
+		this.templatesChangedListeners.add(listener);
+	}
+	public void unregisterTemplatesChangedListener(Runnable listener) {
+		this.templatesChangedListeners.remove(listener);
+	}
+	public void notifyTemplatesChangedListeners() {
+		this.templatesChangedListeners.forEach(listener -> listener.run());
 	}
 	
 	public IPreferenceStore getPreferenceStore() {
