@@ -7,6 +7,7 @@ Bundle-Activator: micronet.tools.ui.parametercodeview.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  MicroNet.Tools.Core,
- org.eclipse.core.resources
+ org.eclipse.core.resources,
+ MicroNet.Tools.Console
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

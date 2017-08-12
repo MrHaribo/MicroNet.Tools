@@ -12,6 +12,7 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.m2e.core;bundle-version="1.7.0",
  org.eclipse.m2e.maven.runtime;bundle-version="1.7.0",
  MicroNet.Tools.Launch,
- MicroNet.Tools.Core
+ MicroNet.Tools.Core,
+ MicroNet.Tools.Console
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

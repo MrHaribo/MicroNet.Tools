@@ -1,7 +1,6 @@
 package micronet.tools.ui.serviceexplorer.views;
 
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.List;
 
 import org.eclipse.jface.action.Action;
@@ -45,6 +44,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import micronet.tools.console.Console;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
@@ -428,13 +428,11 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			public void run() {
 				if (selectedProject != null) {
 					InputStream containerStream = BuildServiceContainerUtility.buildContainer(selectedProject);
-					PrintStream consoleStream = Console.getConsole(selectedProject.getName());
 					if (containerStream == null)
 						showMessage("Error starting container: " + selectedProject.getName());
 					
 					IWorkbenchPage page = getSite().getPage();
-					Console.showConsole(selectedProject.getName(), page);
-					Console.printStream(containerStream, consoleStream);
+					Console.createConsole(selectedProject.getName() + "Build", containerStream, page);
 				}
 			}
 		};
@@ -476,14 +474,12 @@ public class ServiceExplorer extends ViewPart implements Listener {
 					if (!selectedProject.hasNature(Nature.DOCKER)) {
 						showMessage(selectedProject.getName() + " does not have the Docker Nature.");
 					} else {
-						PrintStream consoleStream = Console.getConsole(selectedProject.getName());
 						InputStream containerStream = LaunchServiceContainerUtility.launchContainer(selectedProject);
 						if (containerStream == null)
 							showMessage("Error starting container: " + selectedProject.getName());
 						
 						IWorkbenchPage page = getSite().getPage();
-						Console.showConsole(selectedProject.getName(), page);
-						Console.printStream(containerStream, consoleStream);
+						Console.createConsole(selectedProject.getName(), containerStream, page);
 					}
 				}
 			}
@@ -581,14 +577,12 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 		buildGameCompose = new Action() {
 			public void run() {
-				PrintStream consoleStream = Console.getConsole("game-compose-build");
 				InputStream buildStream = BuildGameComposeUtility.buildGame();
 				if (buildStream == null)
 					showMessage("Error starting game-compose-build");
 				
 				IWorkbenchPage page = getSite().getPage();
-				Console.showConsole("game-compose-build", page);
-				Console.printStream(buildStream, consoleStream);
+				Console.createConsole("game-compose Build", buildStream, page);
 			}
 		};
 		buildGameCompose.setText("Build Game Compose");

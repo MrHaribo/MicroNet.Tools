@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+	<extension
+         point="org.eclipse.ui.console.consolePageParticipants">
+      <consolePageParticipant
+            class="micronet.tools.console.ConsolePageParticipant"
+            id="micronet.tools.console.ConsolePageParticipant">
+         <enablement>
+            <instanceof value="micronet.tools.console.Console"/>
+         </enablement>
+      </consolePageParticipant>
+   </extension>
+</plugin>

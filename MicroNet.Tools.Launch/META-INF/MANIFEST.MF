@@ -16,7 +16,8 @@ Require-Bundle: MicroNet.Tools.Core,
  org.eclipse.core.resources,
  org.eclipse.m2e.maven.runtime,
  org.eclipse.m2e.archetype.common;bundle-version="1.7.0",
- org.apache.commons.lang
+ org.apache.commons.lang,
+ MicroNet.Tools.Console
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
