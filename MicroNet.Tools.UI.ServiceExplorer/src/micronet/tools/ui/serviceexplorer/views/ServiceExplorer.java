@@ -373,12 +373,16 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	private void fillContextMenu(IMenuManager manager) {
 		manager.add(buildServiceFull);
-		manager.add(buildServiceMaven);
-		manager.add(buildServiceContainer);
+		MenuManager individualBuildMenu = new MenuManager("Individual Build Steps");
+		individualBuildMenu.add(buildServiceMaven);
+		individualBuildMenu.add(buildServiceContainer);
+		manager.add(individualBuildMenu);
+
 		manager.add(new Separator());
 		manager.add(debugService);
 		manager.add(runService);
 		manager.add(runServiceContainer);
+		
 		manager.add(new Separator());
 		manager.add(setNetwork);
 		manager.add(addPorts);
@@ -409,7 +413,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 				}
 			}
 		};
-		buildServiceFull.setText("Build Maven and Docker");
+		buildServiceFull.setText("Full Service Build");
 		buildServiceFull.setToolTipText("Builds the selected service using Maven and Docker.");
 		buildServiceFull.setImageDescriptor(Icons.IMG_MICRONET);
 		
