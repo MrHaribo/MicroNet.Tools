@@ -2,3 +2,4 @@
 .recommenders/
 MicroNet.Tools.Core/lib/
 MicroNet.Tools.Annotations.Processors.Plugin/lib/
+*.class

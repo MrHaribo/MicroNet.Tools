@@ -5,10 +5,9 @@ import static micronet.tools.model.ModelConstants.VARIABLES_PROP_KEY;
 import static micronet.tools.model.ModelConstants.getModelDir;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Scanner;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.concurrent.Semaphore;
 
 import com.google.gson.Gson;
@@ -83,16 +82,13 @@ public class SyncEnumTree {
 		String data = null;
 		try {
 			semaphore.acquire();
-			try (Scanner scanner = new Scanner(enumFile)) {
-				scanner.useDelimiter("\\A");
-				data = scanner.next();
+			try {
+				data = new String(Files.readAllBytes(enumFile.toPath()), StandardCharsets.UTF_8);
 			} catch (IOException e) {
 				e.printStackTrace();
-				return null;
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			return null;
 		} finally {
 			semaphore.release();
 		}
@@ -155,9 +151,9 @@ public class SyncEnumTree {
 
 			try {
 				semaphore.acquire();
-				try (PrintWriter printer = new PrintWriter(enumFile)) {
-					printer.print(data);
-				} catch (FileNotFoundException e) {
+				try {
+					Files.write(enumFile.toPath(), data.getBytes());
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			} catch (InterruptedException e) {

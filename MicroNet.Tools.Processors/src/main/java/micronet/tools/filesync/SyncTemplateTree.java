@@ -6,15 +6,14 @@ import static micronet.tools.model.ModelConstants.PARENT_PROP_KEY;
 import static micronet.tools.model.ModelConstants.VARIABLES_PROP_KEY;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.Semaphore;
@@ -149,10 +148,8 @@ public class SyncTemplateTree {
 			semaphore.acquire();
 
 			for (File templateFile : directoryListing) {
-				try (Scanner scanner = new Scanner(templateFile)) {
-					scanner.useDelimiter("\\A");
-					String data = scanner.next();
-
+				try {
+					String data = new String(Files.readAllBytes(templateFile.toPath()), StandardCharsets.UTF_8);
 					JsonElement templateObject = parser.parse(data);
 					templateNames.add(templateObject.getAsJsonObject().getAsJsonPrimitive(NAME_PROP_KEY).getAsString());
 				} catch (IOException e) {
@@ -209,26 +206,8 @@ public class SyncTemplateTree {
 		if (!templateFile.exists())
 			return null;
 		
-		JsonElement templateObject = null;
-
-		try {
-			semaphore.acquire();
-
-			try (Scanner scanner = new Scanner(templateFile)) {
-				scanner.useDelimiter("\\A");
-				String data = scanner.next();
-
-				JsonParser parser = new JsonParser();
-				templateObject = parser.parse(data);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} finally {
-			semaphore.release();
-		}
-		
+		String data = loadTemplateFile(templateFile);
+		JsonElement templateObject = new JsonParser().parse(data);
 		if (templateObject == null)
 			return null;
 		
@@ -261,10 +240,8 @@ public class SyncTemplateTree {
 			semaphore.acquire();
 
 			for (File templateFile : directoryListing) {
-				try (Scanner scanner = new Scanner(templateFile)) {
-					scanner.useDelimiter("\\A");
-					String data = scanner.next();
-
+				try {
+					String data = new String(Files.readAllBytes(templateFile.toPath()), StandardCharsets.UTF_8);
 					JsonElement templateObject = parser.parse(data);
 					templateFileObjects.add(templateObject);
 				} catch (IOException e) {
@@ -405,10 +382,9 @@ public class SyncTemplateTree {
 
 			try {
 				semaphore.acquire();
-
-				try (PrintWriter printer = new PrintWriter(templateFile)) {
-					printer.print(data);
-				} catch (FileNotFoundException e) {
+				try {
+					Files.write(templateFile.toPath(), data.getBytes());
+				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			} catch (InterruptedException e) {
@@ -498,5 +474,22 @@ public class SyncTemplateTree {
 		if (!templateDir.exists())
 			templateDir.mkdir();
 		return templateDir;
+	}
+	
+	private static String loadTemplateFile(File templateFile) {
+		try {
+			semaphore.acquire();
+
+			try {
+				return new String(Files.readAllBytes(templateFile.toPath()), StandardCharsets.UTF_8);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			semaphore.release();
+		}
+		return null;
 	}
 }

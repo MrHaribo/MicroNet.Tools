@@ -4,13 +4,12 @@ import static micronet.tools.model.ModelConstants.TYPE_PROP_KEY;
 import static micronet.tools.model.ModelConstants.getModelDir;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 
@@ -452,9 +451,9 @@ public class SyncPrefabTree {
 	private static void saveFile(File file, String data) {
 		try {
 			semaphore.acquire();
-			try (PrintWriter printer = new PrintWriter(file)) {
-				printer.print(data);
-			} catch (FileNotFoundException e) {
+			try {
+				Files.write(file.toPath(), data.getBytes());
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} catch (InterruptedException e) {
@@ -468,16 +467,13 @@ public class SyncPrefabTree {
 		String data = null;
 		try {
 			semaphore.acquire();
-			try (Scanner scanner = new Scanner(file)) {
-				scanner.useDelimiter("\\A");
-				data = scanner.next();
+			try {
+				data = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
 			} catch (IOException e) {
 				e.printStackTrace();
-				return null;
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			return null;
 		} finally {
 			semaphore.release();
 		}

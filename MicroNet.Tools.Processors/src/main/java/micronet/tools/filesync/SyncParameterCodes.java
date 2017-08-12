@@ -1,13 +1,7 @@
 package micronet.tools.filesync;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -15,7 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Semaphore;
@@ -104,7 +97,7 @@ public class SyncParameterCodes {
 	    try {
 	        semaphore.acquire();
 
-	        try (Scanner scanner = new Scanner(parameterCodeFile)) {
+	        try {
 	        	String data = new String(Files.readAllBytes(parameterCodeFile.toPath()), StandardCharsets.UTF_8);
 				String[] codeArray = Serialization.deserialize(data, String[].class);
 				
@@ -114,17 +107,12 @@ public class SyncParameterCodes {
 				codeArray = existingParameterCodes.toArray(new String[existingParameterCodes.size()]);
 				data = Serialization.serializePretty(codeArray);
 				
-				try (PrintWriter printer = new PrintWriter(parameterCodeFile)) {
-					printer.print(data);
-				}
-	        } catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				Files.write(parameterCodeFile.toPath(), data.getBytes());
+	        } catch (IOException e) {
 				e.printStackTrace();
 			}
-	    } catch (InterruptedException e1) {
-			e1.printStackTrace();
+	    } catch (InterruptedException e) {
+			e.printStackTrace();
 		} finally {
 	        semaphore.release();
 	    }
@@ -138,7 +126,7 @@ public class SyncParameterCodes {
 	    try {
 	        semaphore.acquire();
 
-	        try (Scanner scanner = new Scanner(parameterCodeFile)) {
+	        try {
 	        	String data = new String(Files.readAllBytes(parameterCodeFile.toPath()), StandardCharsets.UTF_8);
 				String[] codeArray = Serialization.deserialize(data, String[].class);
 				
@@ -148,13 +136,8 @@ public class SyncParameterCodes {
 				codeArray = existingParameterCodes.toArray(new String[existingParameterCodes.size()]);
 				data = Serialization.serializePretty(codeArray);
 				
-				try (PrintWriter printer = new PrintWriter(parameterCodeFile)) {
-					printer.print(data);
-				}
-	        } catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				Files.write(parameterCodeFile.toPath(), data.getBytes());
+	        } catch (IOException e) {
 				e.printStackTrace();
 			}
 	    } catch (InterruptedException e1) {
@@ -176,17 +159,12 @@ public class SyncParameterCodes {
 				
 				if (codeArray == null)
 					return new TreeSet<>();
-				
 				return new TreeSet<String>(Arrays.asList(codeArray));
-	        } catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
+	        } catch (IOException e) {
 				e.printStackTrace();
 			}
-	    } catch (InterruptedException e1) {
-			e1.printStackTrace();
+	    } catch (InterruptedException e) {
+			e.printStackTrace();
 		} finally {
 	        semaphore.release();
 	    }
@@ -197,9 +175,7 @@ public class SyncParameterCodes {
 		try {
 			File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
 			if (!parameterCodeFile.exists()) {
-				try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(parameterCodeFile), "utf-8"))) {
-					writer.write("[\"DUMMY_CODE\"]");
-				}
+				Files.write(parameterCodeFile.toPath(), "[\"DUMMY_CODE\"]".getBytes());
 			}
 			return parameterCodeFile;
 		} catch (IOException e) {
