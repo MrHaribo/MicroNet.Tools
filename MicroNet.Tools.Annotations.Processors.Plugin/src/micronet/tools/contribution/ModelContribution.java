@@ -1,5 +1,7 @@
 package micronet.tools.contribution;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -9,11 +11,14 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
 import micronet.tools.contribution.ContributionChoiceDialog.ContributionChoice;
+import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncParameterCodes;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityVariableNode;
+import micronet.tools.model.nodes.EnumNode;
+import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.model.nodes.ModelNode;
 
 public class ModelContribution {
@@ -21,8 +26,46 @@ public class ModelContribution {
 	public static void contributeSharedDir(String contributedSharedDir, String sharedDir) {
 		contributeTemplates(contributedSharedDir, sharedDir);
 		contributeParameterCodes(contributedSharedDir, sharedDir);
+		contributeEnums(contributedSharedDir, sharedDir);
 	}
 	
+	private static void contributeEnums(String contributedSharedDir, String sharedDir) {
+		
+		EnumRootNode existingEnums = SyncEnumTree.loadEnumTree(sharedDir);
+		EnumRootNode contributedEnums = SyncEnumTree.loadEnumTree(contributedSharedDir);
+		
+		for (INode contributedEnumNode : contributedEnums.getChildren()) {
+			if (contributedEnumNode instanceof EnumNode) {
+				EnumNode contributedEnum = (EnumNode)contributedEnumNode;
+				
+				boolean enumIsNew = true;
+				for (INode existingEnumNode : existingEnums.getChildren()) {
+					if (existingEnumNode instanceof EnumNode) {
+						EnumNode existingEnum = (EnumNode)existingEnumNode;
+					
+						if (contributedEnum.getName().equals(existingEnum.getName())) {
+							enumIsNew = false;
+							EnumNode combinedEnum = combineEnums(contributedEnum, existingEnum);
+							SyncEnumTree.saveEnumNode(combinedEnum, sharedDir);
+							break;
+						}
+					}
+				}
+				
+				if (enumIsNew) {
+					SyncEnumTree.saveEnumNode(contributedEnum, sharedDir);
+				}
+			}
+		}
+	}
+	
+	private static EnumNode combineEnums(EnumNode contributedEnum, EnumNode existingEnum) {
+		Set<String> existingConstants = new HashSet<>(existingEnum.getEnumConstants());
+		existingConstants.addAll(contributedEnum.getEnumConstants());
+		existingEnum.setEnumConstants(new ArrayList<String>(existingConstants));
+		return existingEnum;
+	}
+
 	private static void contributeParameterCodes(String contributedSharedDir, String sharedDir) {
 		Set<String> contributedParameterCodes = SyncParameterCodes.getUserParameterCodes(contributedSharedDir);
 		SyncParameterCodes.contributeParameters(contributedParameterCodes, sharedDir);

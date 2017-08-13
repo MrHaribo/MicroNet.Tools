@@ -89,6 +89,30 @@ public class ServiceProject {
     	return natures.contains(nature);
     }
     
+    public boolean isSharedDirContributionEnabled() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+		return preferences.getBoolean("contribute.shared.dir", false);
+    }
+    
+	public void setSharedDirContributionEnabled(boolean isEnabled) {
+		try {
+			ProjectScope projectScope = new ProjectScope(project);
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+			preferences.putBoolean("contribute.shared.dir", isEnabled);
+			preferences.flush();
+		} catch (BackingStoreException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public String getContributedSharedDir() {
+		File contributedSharedDir = project.getLocation().append("shared_contribution").toFile();
+		if (contributedSharedDir.exists())
+			return contributedSharedDir.getPath() + "/";
+		return null;
+	}
+    
 	public boolean isEnabled() {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
@@ -164,42 +188,6 @@ public class ServiceProject {
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
-	}
-
-//	public void setRequiredParameters(Set<String> requiredParameters) {
-//		ProjectScope projectScope = new ProjectScope(project);
-//		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-//		
-//		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
-//		for (String param : requiredParameters) {
-//			if (param == null || param.equals(""))
-//				continue;
-//		    joiner.add(param);
-//		}
-//		
-//		try {
-//			preferences.put("parameters.required", joiner.toString());
-//			preferences.flush();
-//		} catch (BackingStoreException e) {
-//			e.printStackTrace();
-//		}
-//	}
-//	
-//	public Set<String> getRequiredParameters() {
-//		ProjectScope projectScope = new ProjectScope(project);
-//		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-//		String parameterString = preferences.get("parameters.required", "");
-//
-//		Set<String> result = new HashSet<>(Arrays.asList(parameterString.split(SPLIT_STRING)));
-//		result.remove("");
-//		return result;
-//	}
-	
-	public String getContributedSharedDir() {
-		File contributedSharedDir = project.getLocation().append("shared_contribution").toFile();
-		if (contributedSharedDir.exists())
-			return contributedSharedDir.getPath() + "/";
-		return null;
 	}
 	
 	public String getVersion() {

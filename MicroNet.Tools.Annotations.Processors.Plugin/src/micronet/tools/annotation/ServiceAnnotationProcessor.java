@@ -48,9 +48,10 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		String packageName = null;
 		if (serviceProject != null) {
 			String contributedSharedDir = serviceProject.getContributedSharedDir();
-			if (contributedSharedDir != null) {
+			if (serviceProject.isSharedDirContributionEnabled() && contributedSharedDir != null) {
 				ModelContribution.contributeSharedDir(contributedSharedDir, sharedDir);
-				ModelProvider.INSTANCE.notifyTemplatesChangedListeners();
+				ModelProvider.INSTANCE.notifyModelChangedListeners();
+				serviceProject.setSharedDirContributionEnabled(false);
 			}
 			
 			if (serviceProject.hasNature(Nature.MAVEN)) {

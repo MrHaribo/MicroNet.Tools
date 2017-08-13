@@ -29,7 +29,7 @@ public enum ModelProvider {
 	Map<String, ServiceProject> serviceProjects = new HashMap<>();
 	
 	private List<ServicesChangedListener> servicesChangedListeners = new ArrayList<>();
-	private List<Runnable> templatesChangedListeners = new ArrayList<>();
+	private List<Runnable> modelChangedListeners = new ArrayList<>();
 	
 	private ModelProvider() {
 
@@ -92,7 +92,7 @@ public enum ModelProvider {
 				if (res instanceof IProject) {
 					System.out.println("Project was removed: " + res.getFullPath());
 					serviceProjects.remove(((IProject)res).getName());
-					notifyServicesChangedListeners();
+					//notifyServicesChangedListeners();
 				}
 				break;
 			case IResourceDelta.CHANGED:
@@ -218,14 +218,14 @@ public enum ModelProvider {
 		this.servicesChangedListeners.forEach(listener -> listener.onServicesChanged());
 	}
 	
-	public void registerTemplatesChangedListener(Runnable listener) {
-		this.templatesChangedListeners.add(listener);
+	public void registerModelChangedListener(Runnable listener) {
+		this.modelChangedListeners.add(listener);
 	}
-	public void unregisterTemplatesChangedListener(Runnable listener) {
-		this.templatesChangedListeners.remove(listener);
+	public void unregisterModelChangedListener(Runnable listener) {
+		this.modelChangedListeners.remove(listener);
 	}
-	public void notifyTemplatesChangedListeners() {
-		this.templatesChangedListeners.forEach(listener -> listener.run());
+	public void notifyModelChangedListeners() {
+		this.modelChangedListeners.forEach(listener -> listener.run());
 	}
 	
 	public IPreferenceStore getPreferenceStore() {

@@ -159,11 +159,14 @@ public class ModelView extends ViewPart {
 		viewer.setLabelProvider(new ViewLabelProvider());
 		viewer.getTree().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
-		ModelProvider.INSTANCE.registerTemplatesChangedListener(()-> {
+		ModelProvider.INSTANCE.registerModelChangedListener(()-> {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				@Override
 				public void run() {
+					if (viewer.getControl().isDisposed())
+						return;
 					entityTemplateRoot = SyncTemplateTree.loadTemplateTree(sharedDir);
+					enumRoot = SyncEnumTree.loadEnumTree(sharedDir);
 					viewer.refresh();
 				}
 			});
