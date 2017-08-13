@@ -166,34 +166,34 @@ public class ServiceProject {
 		}
 	}
 
-	public void setRequiredParameters(Set<String> requiredParameters) {
-		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		
-		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
-		for (String param : requiredParameters) {
-			if (param == null || param.equals(""))
-				continue;
-		    joiner.add(param);
-		}
-		
-		try {
-			preferences.put("parameters.required", joiner.toString());
-			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public Set<String> getRequiredParameters() {
-		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		String parameterString = preferences.get("parameters.required", "");
-
-		Set<String> result = new HashSet<>(Arrays.asList(parameterString.split(SPLIT_STRING)));
-		result.remove("");
-		return result;
-	}
+//	public void setRequiredParameters(Set<String> requiredParameters) {
+//		ProjectScope projectScope = new ProjectScope(project);
+//		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+//		
+//		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
+//		for (String param : requiredParameters) {
+//			if (param == null || param.equals(""))
+//				continue;
+//		    joiner.add(param);
+//		}
+//		
+//		try {
+//			preferences.put("parameters.required", joiner.toString());
+//			preferences.flush();
+//		} catch (BackingStoreException e) {
+//			e.printStackTrace();
+//		}
+//	}
+//	
+//	public Set<String> getRequiredParameters() {
+//		ProjectScope projectScope = new ProjectScope(project);
+//		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+//		String parameterString = preferences.get("parameters.required", "");
+//
+//		Set<String> result = new HashSet<>(Arrays.asList(parameterString.split(SPLIT_STRING)));
+//		result.remove("");
+//		return result;
+//	}
 	
 	public String getContributedSharedDir() {
 		File contributedSharedDir = project.getLocation().append("shared_contribution").toFile();

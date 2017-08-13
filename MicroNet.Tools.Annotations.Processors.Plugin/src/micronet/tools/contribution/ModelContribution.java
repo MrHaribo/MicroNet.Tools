@@ -1,6 +1,7 @@
 package micronet.tools.contribution;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.ws.Holder;
 
@@ -8,6 +9,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
 import micronet.tools.contribution.ContributionChoiceDialog.ContributionChoice;
+import micronet.tools.filesync.SyncParameterCodes;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
@@ -18,6 +20,12 @@ public class ModelContribution {
 
 	public static void contributeSharedDir(String contributedSharedDir, String sharedDir) {
 		contributeTemplates(contributedSharedDir, sharedDir);
+		contributeParameterCodes(contributedSharedDir, sharedDir);
+	}
+	
+	private static void contributeParameterCodes(String contributedSharedDir, String sharedDir) {
+		Set<String> contributedParameterCodes = SyncParameterCodes.getUserParameterCodes(contributedSharedDir);
+		SyncParameterCodes.contributeParameters(contributedParameterCodes, sharedDir);
 	}
 	
 	private static void contributeTemplates(String contributedSharedDir, String sharedDir) {

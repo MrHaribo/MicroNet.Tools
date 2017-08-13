@@ -18,12 +18,10 @@ import javax.tools.StandardLocation;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 
-import micronet.tools.api.ServiceAPI;
 import micronet.tools.contribution.ModelContribution;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
-import micronet.tools.filesync.SyncParameterCodes;
 import micronet.tools.filesync.SyncServiceAPI;
 
 public class ServiceAnnotationProcessor extends AbstractProcessor {
@@ -49,9 +47,6 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		
 		String packageName = null;
 		if (serviceProject != null) {
-			Set<String> contributedParameters = serviceProject.getRequiredParameters();
-			SyncParameterCodes.contributeParameters(contributedParameters, sharedDir);
-			
 			String contributedSharedDir = serviceProject.getContributedSharedDir();
 			if (contributedSharedDir != null) {
 				ModelContribution.contributeSharedDir(contributedSharedDir, sharedDir);
@@ -100,9 +95,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		context.process(roundEnv);
 
 		if (context.getServiceDescription() != null) {
-			ServiceAPI apiDescription = SyncServiceAPI.generateAPIDescription(context.getServiceDescription(), elementUtils, sharedDir);
-			Set<String> requiredParameters = SyncParameterCodes.getUsedParameters(apiDescription);
-			serviceProject.setRequiredParameters(requiredParameters);
+			SyncServiceAPI.generateAPIDescription(context.getServiceDescription(), elementUtils, sharedDir);
 		}
 		return true;
 	}
