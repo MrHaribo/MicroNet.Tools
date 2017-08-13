@@ -14,6 +14,8 @@ import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleConstants;
 import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.IConsoleView;
+import org.eclipse.ui.console.IOConsole;
+import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
@@ -33,7 +35,7 @@ public class Console extends MessageConsole {
 		showConsole(console, page);
 	}
 	
-	private static void showConsole(IConsole console, IWorkbenchPage page) {
+	public static void showConsole(IConsole console, IWorkbenchPage page) {
 		try {
 			String id = IConsoleConstants.ID_CONSOLE_VIEW;
 			IConsoleView view = (IConsoleView) page.showView(id);
@@ -43,16 +45,22 @@ public class Console extends MessageConsole {
 		}
 	}
 
-	private static IConsole findConsole(String name) {
+	public static IConsole findConsole(String name) {
 		IConsoleManager conMan = ConsolePlugin.getDefault().getConsoleManager();
 		IConsole[] existing = conMan.getConsoles();
 		for (int i = 0; i < existing.length; i++)
-			if (name.equals(existing[i].getName()))
-				return (MessageConsole) existing[i];
+			if (existing[i].getName().startsWith(name))
+				return existing[i];
 		return null;
 	}
 	
-	private static void printStream(InputStream inStream, PrintStream outStream) {
+	public static PrintStream reuseConsole(String launchName) {
+		IOConsole launchConsole = (IOConsole) Console.findConsole(launchName);
+		IOConsoleOutputStream out = launchConsole.newOutputStream();
+		return new PrintStream(out);
+	}
+	
+	public static void printStream(InputStream inStream, PrintStream outStream) {
 		new Thread() {
 			public void run() {
 				BufferedReader input = new BufferedReader(new InputStreamReader(inStream));

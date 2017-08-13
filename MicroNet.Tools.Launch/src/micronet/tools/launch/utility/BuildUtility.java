@@ -1,8 +1,8 @@
 package micronet.tools.launch.utility;
 
 import java.io.InputStream;
+import java.io.PrintStream;
 
-import org.eclipse.ui.IWorkbenchWindow;
 
 import micronet.tools.console.Console;
 import micronet.tools.core.ServiceProject;
@@ -20,19 +20,15 @@ public final class BuildUtility {
 	public static void buildFull(ServiceProject project, String mode) {
 		BuildServiceMavenUtility.buildMavenProject(project, mode, launch -> {
 			InputStream containerStream = BuildServiceContainerUtility.buildContainer(project);
-
-			IWorkbenchWindow[] workbenchWindows = micronet.tools.console.Activator.getDefault().getWorkbench()
-					.getWorkbenchWindows();
-			workbenchWindows[0].getActivePage();
-
-			if (workbenchWindows[0].getActivePage() != null) {
-				workbenchWindows[0].getShell().getDisplay().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						Console.createConsole(project.getName() + "Build", containerStream, workbenchWindows[0].getActivePage());
-					}
-				});
-			}
+			
+			String launchName = launch.getLaunchConfiguration().getName();
+			PrintStream printStream = Console.reuseConsole(launchName);
+			
+			printStream.print("----------------------------------------------\n");
+			printStream.print("|          Staring Container Build           |\n");
+			printStream.print("----------------------------------------------\n");
+			
+			Console.printStream(containerStream, printStream);
 		});
 	}
 }
