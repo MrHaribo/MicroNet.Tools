@@ -2,6 +2,7 @@ package micronet.tools.filesync;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -82,7 +83,12 @@ public class SyncServiceAPI {
 		ListenerAPI listener = new ListenerAPI();
 		MessageListener listenerAnnotation = listenerElement.getAnnotation(MessageListener.class);
 		listener.setListenerUri(listenerAnnotation.uri());
-		listener.setDescription(listenerAnnotation.desc());
+		try {
+			listener.setDescription(listenerAnnotation.desc());
+		} catch (UndeclaredThrowableException e) {
+			if (!(e.getUndeclaredThrowable() instanceof NoSuchMethodException))
+				e.getUndeclaredThrowable().printStackTrace();
+		}
 		
 		RequestPayload requestPayloadAnnotation = listenerElement.getAnnotation(RequestPayload.class);
 		if (requestPayloadAnnotation != null) {
@@ -122,7 +128,13 @@ public class SyncServiceAPI {
 		ParameterAPI parameterAPI = new ParameterAPI();
 		parameterAPI.setCode(messageParameterAnnotation.code());
 		parameterAPI.setType(readMessageParameterType(messageParameterAnnotation));
-		parameterAPI.setDescription(messageParameterAnnotation.desc());
+		try {
+			parameterAPI.setDescription(messageParameterAnnotation.desc());
+		} catch (UndeclaredThrowableException e) {
+			if (!(e.getUndeclaredThrowable() instanceof NoSuchMethodException))
+				e.getUndeclaredThrowable().printStackTrace();
+		}
+		
 		return parameterAPI;
 	}
 

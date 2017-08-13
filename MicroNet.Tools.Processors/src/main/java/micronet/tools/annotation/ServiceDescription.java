@@ -1,5 +1,6 @@
 package micronet.tools.annotation;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -90,6 +91,12 @@ public class ServiceDescription {
 	public String getDescription() {
 		if (service == null)
 			return null;
-		return service.getAnnotation(MessageService.class).desc();
+		try {
+			return service.getAnnotation(MessageService.class).desc();
+		} catch (UndeclaredThrowableException e) {
+			if (!(e.getUndeclaredThrowable() instanceof NoSuchMethodException))
+				e.getUndeclaredThrowable().printStackTrace();
+		}
+		return null;
 	}
 }

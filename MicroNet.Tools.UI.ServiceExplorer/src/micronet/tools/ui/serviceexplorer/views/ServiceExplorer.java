@@ -94,6 +94,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private Action buildServiceFull;
 	private Action buildServiceMaven;
 	private Action buildServiceContainer;
+	private Action refreshServicesAction;
 
 	private Action nativeDebugEnabledServices;
 	private Action nativeRunEnabledServices;
@@ -109,6 +110,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 
 	private ServiceProject selectedProject = null;
+
 
 	// SWT.CHECK
 	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
@@ -391,6 +393,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	}
 
 	private void fillLocalToolBar(IToolBarManager manager) {
+		manager.add(refreshServicesAction);
 		manager.add(nativeDebugEnabledServices);
 		manager.add(nativeRunEnabledServices);
 	}
@@ -406,6 +409,16 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	
 	private void createServiceActions() {
+		
+		refreshServicesAction = new Action() {
+			public void run() {
+				ModelProvider.INSTANCE.buildServiceProjects();
+			}
+		};
+		refreshServicesAction.setText("Rebuild Services");
+		refreshServicesAction.setToolTipText("Rebuild all service Projects in the Workspace");
+		refreshServicesAction.setImageDescriptor(Icons.IMG_BUILD);
+		
 		buildServiceFull = new Action() {
 			public void run() {
 				if (selectedProject != null) {
