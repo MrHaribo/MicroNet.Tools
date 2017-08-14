@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
@@ -21,15 +24,30 @@ import org.eclipse.ui.console.MessageConsoleStream;
 
 public class Console extends MessageConsole {
 
+	private boolean terminated = false;
+	
+	private List<Consumer<Boolean>> terminationListeners = new ArrayList<>();
+	
 	public Console(String name, ImageDescriptor imageDescriptor) {
 		super(name, imageDescriptor);
 	}
 	
+	public boolean isTerminated() {
+		return terminated;
+	}
+
+	public void setTerminated(boolean terminated) {
+		notifyTerminationListeners(terminated);
+		this.terminated = terminated;
+	}
+
 	public static void createConsole(String name, InputStream inStream, IWorkbenchPage page) {
 		Console console = new Console(name, null);
 		
 		MessageConsoleStream out = console.newMessageStream();
-		printStream(inStream, new PrintStream(out));
+		printStream(inStream, new PrintStream(out), () -> {
+			console.setTerminated(true);
+		});
 		
 		ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[]{console});
 		showConsole(console, page);
@@ -61,6 +79,10 @@ public class Console extends MessageConsole {
 	}
 	
 	public static void printStream(InputStream inStream, PrintStream outStream) {
+		printStream(inStream, outStream, null);
+	}
+	
+	public static void printStream(InputStream inStream, PrintStream outStream, Runnable terminationCallback) {
 		new Thread() {
 			public void run() {
 				BufferedReader input = new BufferedReader(new InputStreamReader(inStream));
@@ -69,10 +91,25 @@ public class Console extends MessageConsole {
 					while ((line = input.readLine()) != null) {
 						outStream.println(line);
 					}
+					inStream.close();
+					outStream.close();
+					if (terminationCallback != null)
+						terminationCallback.run();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}.start();
+	}
+	
+	public void addTerminationListener(Consumer<Boolean> listener) {
+		terminationListeners.add(listener);
+	}
+	public void removeTerminationListener(Consumer<Boolean>  listener) {
+		terminationListeners.remove(listener);
+	}
+	public void notifyTerminationListeners(boolean terminated) {
+		for (Consumer<Boolean> listener : terminationListeners)
+			listener.accept(terminated);
 	}
 }

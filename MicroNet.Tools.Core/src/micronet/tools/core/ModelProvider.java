@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
+import micronet.tools.composition.SyncPom;
 import micronet.tools.core.ServiceProject.Nature;
 
 public enum ModelProvider {

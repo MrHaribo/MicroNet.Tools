@@ -21,11 +21,11 @@ public class ConsolePageParticipant  implements IConsolePageParticipant {
     private IPageBookViewPage page;
     private Action remove, removeAll;
     private IActionBars bars;
-    private IConsole console;
+    private Console console;
 
     @Override
     public void init(final IPageBookViewPage page, final IConsole console) {
-        this.console = console;
+        this.console = (Console) console;
         this.page = page;
         IPageSite site = page.getSite();
         this.bars = site.getActionBars();
@@ -43,16 +43,30 @@ public class ConsolePageParticipant  implements IConsolePageParticipant {
         toolbarManager.appendToGroup(IConsoleConstants.LAUNCH_GROUP, removeAll);
 
         bars.updateActionBars();
-
+        this.console.addTerminationListener(terminated -> {
+    		setTerminated(terminated);
+    	});
+        setTerminated(this.console.isTerminated());
+    }
+    
+    private void setTerminated(boolean terminated) {
+        removeAll.setEnabled(terminated);
+        remove.setEnabled(terminated);
+        page.getSite().getShell().getDisplay().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				bars.updateActionBars();
+			}
+		});
     }
 
     private void createRemoveAllButton() {
     	ImageDescriptor icon = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(org.eclipse.ui.ISharedImages.IMG_ELCL_REMOVEALL);
-        this.removeAll = new Action("Remove all MicroNet Launches", icon) {
+        this.removeAll = new Action("Remove all Terminated MicroNet Launches", icon) {
             public void run() {
             	List<IConsole> microNetConsoles = new ArrayList<>();
             	for (IConsole c : ConsolePlugin.getDefault().getConsoleManager().getConsoles()) {
-            		if (c instanceof Console)
+            		if (c instanceof Console && ((Console) c).isTerminated())
             			microNetConsoles.add(c);
             	}
             	ConsolePlugin.getDefault().getConsoleManager().removeConsoles(microNetConsoles.toArray(new IConsole[microNetConsoles.size()]));
@@ -65,7 +79,8 @@ public class ConsolePageParticipant  implements IConsolePageParticipant {
     	ImageDescriptor icon = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(org.eclipse.ui.ISharedImages.IMG_ELCL_REMOVE);
         this.remove= new Action("Remove Launch", icon) {
             public void run() {
-            	ConsolePlugin.getDefault().getConsoleManager().removeConsoles(new IConsole[]{console});
+            	if (console instanceof Console && ((Console) console).isTerminated())
+            		ConsolePlugin.getDefault().getConsoleManager().removeConsoles(new IConsole[]{console});
             }
         };
     }
@@ -79,28 +94,26 @@ public class ConsolePageParticipant  implements IConsolePageParticipant {
     }
 
     @Override
-    public Object getAdapter(Class adapter) {
-        return null;
+    public <T> T getAdapter(Class<T> arg0) {
+    	return null;
     }
 
     @Override
     public void activated() {
-        updateVis();
+        updateVis(console.isTerminated());
     }
 
     @Override
     public void deactivated() {
-        updateVis();
+        updateVis(false);
     }
 
-    private void updateVis() {
+    private void updateVis(boolean isEnabled) {
 
         if (page == null)
             return;
-        boolean isEnabled = true;
         removeAll.setEnabled(isEnabled);
         remove.setEnabled(isEnabled);
         bars.updateActionBars();
     }
-
 }

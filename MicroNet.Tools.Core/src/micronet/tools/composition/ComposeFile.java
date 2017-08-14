@@ -1,4 +1,4 @@
-package micronet.tools.core;
+package micronet.tools.composition;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.Map;
 public class ComposeFile {
 	private String version;
 	private Map<String, ComposeService> services = new HashMap<>();
+	private Map<String, OverlayNetwork> networks = new HashMap<>();
 	
 	public ComposeFile() {
 	}
@@ -24,5 +25,13 @@ public class ComposeFile {
 	}
 	public void setServices(Map<String, ComposeService> services) {
 		this.services = services;
+	}
+
+	public Map<String, OverlayNetwork> getNetworks() {
+		return networks;
+	}
+
+	public void setNetworks(Map<String, OverlayNetwork> networks) {
+		this.networks = networks;
 	}
 }

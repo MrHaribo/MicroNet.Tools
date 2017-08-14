@@ -1,4 +1,4 @@
-package micronet.tools.core;
+package micronet.tools.composition;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -33,12 +33,18 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
+import micronet.tools.core.PreferenceConstants;
+import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
 
 public final class SyncPom {
 	private SyncPom() {
 	}
 
+	public static boolean isServiceInApplicationPom(ServiceProject project) {
+		return getServicesFromApplicationPom().contains(project.getName());
+	}
+	
 	public static List<String> getServicesFromApplicationPom() {
 		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		String pomFilepath = myWorkspaceRoot.getLocation().append("pom.xml").toOSString();
@@ -58,8 +64,8 @@ public final class SyncPom {
 			NodeList list = doc.getElementsByTagName("module");
 			for (int i = 0; i < list.getLength(); i++) {
 				Node node = list.item(i);
-				String serviceName = node.getTextContent();
-				result.add(serviceName);
+				String servicePath = node.getTextContent();
+				result.add(new File(servicePath).getName());
 			}
 			return result;
 		} catch (ParserConfigurationException pce) {
@@ -164,7 +170,7 @@ public final class SyncPom {
 				
 				Element nameNode = doc.createElement("module");
 				newModulesNode.appendChild(nameNode);
-				Text moduleNameNode = doc.createTextNode(project.getName());
+				Text moduleNameNode = doc.createTextNode(project.getRelativePath());
 				nameNode.appendChild(moduleNameNode);
 			}
 

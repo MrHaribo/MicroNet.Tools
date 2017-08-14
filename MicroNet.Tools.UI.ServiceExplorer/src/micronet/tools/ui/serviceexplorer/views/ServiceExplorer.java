@@ -44,13 +44,13 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
+import micronet.tools.composition.SyncCompose;
+import micronet.tools.composition.SyncPom;
 import micronet.tools.console.Console;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
-import micronet.tools.core.SyncCompose;
-import micronet.tools.core.SyncPom;
 import micronet.tools.launch.utility.BuildGameComposeUtility;
 import micronet.tools.launch.utility.BuildGameMavenUtility;
 import micronet.tools.launch.utility.BuildServiceContainerUtility;
@@ -558,6 +558,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 				List<ServiceProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
 				SyncPom.updateServicesInApplicationPom(enabledProjects);
 				ModelProvider.INSTANCE.refreshServiceProjects();
+				viewer.refresh();
 				showMessage("Game Pom has been generated from Enabled Services.");
 			}
 		};
@@ -570,7 +571,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 				List<ServiceProject> enabledProjects = ModelProvider.INSTANCE.getEnabledServiceProjects();
 				SyncCompose.updateGameCompose(enabledProjects);
 				ModelProvider.INSTANCE.refreshServiceProjects();
-				showMessage("Generate Game Compose from Enabled Services executed");
+				viewer.refresh();
+				showMessage("Game Compose has been generated from Enabled Services");
 			}
 		};
 		generateGameCompose.setText("Generate Game Compose");

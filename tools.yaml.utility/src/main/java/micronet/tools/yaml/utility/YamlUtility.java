@@ -23,7 +23,7 @@ public class YamlUtility {
 	public static void writeYaml(File file, Object object) {
         try {
         	ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            mapper.setSerializationInclusion(Include.NON_NULL);
+            mapper.setSerializationInclusion(Include.NON_EMPTY);
             mapper.writeValue(file, object);
         } catch (Exception e) {
             e.printStackTrace();

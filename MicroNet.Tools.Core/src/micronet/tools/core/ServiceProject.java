@@ -1,6 +1,7 @@
 package micronet.tools.core;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,6 +19,9 @@ import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.service.prefs.BackingStoreException;
+
+import micronet.tools.composition.SyncCompose;
+import micronet.tools.composition.SyncPom;
 
 public class ServiceProject {
 	
@@ -49,7 +53,7 @@ public class ServiceProject {
 	}
 
 	public boolean isInGamePom() {
-		return SyncPom.getServicesFromApplicationPom().contains(project.getName());
+		return SyncPom.isServiceInApplicationPom(this);
 	}
 
 	public boolean isInGameCompose() {
@@ -67,6 +71,12 @@ public class ServiceProject {
 	
 	public IPath getPath() {
 		return project.getLocation();
+	}
+	
+	public String getRelativePath() {
+		Path workspacePath = new File(ModelProvider.INSTANCE.getWorkspaceDir()).toPath();
+		Path projectPath = new File(getPath().toString()).toPath();
+		return workspacePath.relativize(projectPath).toString();
 	}
 
 	public String getNatureString() {

@@ -1,23 +1,23 @@
-package micronet.tools.core;
+package micronet.tools.composition;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 
+import micronet.tools.core.ServiceProject;
 import micronet.tools.yaml.utility.YamlUtility;
 
 public class SyncCompose {
 	
 	public static void updateGameCompose(List<ServiceProject> serviceProjects) {
-		Map<String, ComposeService> composeServices = new HashMap<>();
+		ComposeFile composeFile = new ComposeFile("3");
+
 		for (ServiceProject serviceProject : serviceProjects) {
 			ComposeService composeService = new ComposeService();
 			composeService.setImage(serviceProject.getName().toLowerCase());
-			composeService.setBuild("./" + serviceProject.getName());
+			composeService.setBuild(serviceProject.getRelativePath());
 			
 			if (serviceProject.getPorts().size() > 0)
 				composeService.setPorts((String[]) serviceProject.getPorts().toArray(new String[serviceProject.getPorts().size()]));
@@ -27,10 +27,9 @@ public class SyncCompose {
 				composeService.setNetworks(networks);
 			}
 			
-			composeServices.put(serviceProject.getName().toLowerCase(), composeService);
+			composeFile.getServices().put(serviceProject.getName().toLowerCase(), composeService);
+			composeFile.getNetworks().put(serviceProject.getNetwork(), new OverlayNetwork());
 		}
-		ComposeFile composeFile = new ComposeFile("3");
-		composeFile.setServices(composeServices);
 		
 		saveComposeFile(composeFile);
 	}

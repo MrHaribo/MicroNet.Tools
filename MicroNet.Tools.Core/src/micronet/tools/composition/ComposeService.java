@@ -1,4 +1,4 @@
-package micronet.tools.core;
+package micronet.tools.composition;
 
 public class ComposeService {
 	private String image;
