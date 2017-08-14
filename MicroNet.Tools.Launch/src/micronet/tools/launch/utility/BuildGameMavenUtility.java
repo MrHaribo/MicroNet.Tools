@@ -1,9 +1,12 @@
 package micronet.tools.launch.utility;
 
+import java.util.function.Consumer;
+
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
@@ -20,6 +23,10 @@ public final class BuildGameMavenUtility {
 	}
 
 	public static void buildGame() {
+		buildGame(launch -> {});
+	}
+	
+	public static void buildGame(Consumer<ILaunch> endCallback) {
 
 		if (LaunchUtility.isLaunchRunning(buildName)) {
 			System.out.println("Launch is already there");
@@ -27,6 +34,11 @@ public final class BuildGameMavenUtility {
 					"Wait for build to end or terminate build");
 			return;
 		}
+		
+		LaunchUtility.waitForLaunchTermination(buildName, launch -> {
+			System.out.println("Maven build launch terminated: " + launch.getLaunchConfiguration().getName());
+			endCallback.accept(launch);
+		});
 
 		ILaunchConfiguration buildConfig = getMavenGameBuildConfig();
 		DebugUITools.launch(buildConfig, "run");

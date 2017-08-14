@@ -104,6 +104,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	private Action buildGamePom;
 	private Action buildGameCompose;
+	private Action buildGame;
 
 	private Action localRunGameCompose;
 	private Action localRunGameSwarm;
@@ -361,10 +362,13 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(nativeRunEnabledServices);
 		manager.add(new Separator());
 		manager.add(generateGamePom);
-		manager.add(buildGamePom);
-		manager.add(new Separator());
 		manager.add(generateGameCompose);
-		manager.add(buildGameCompose);
+		manager.add(new Separator());
+		manager.add(buildGame);
+		MenuManager individualBuildMenu = new MenuManager("Individual Build Steps");
+		individualBuildMenu.add(buildGamePom);
+		individualBuildMenu.add(buildGameCompose);
+		manager.add(individualBuildMenu);
 		manager.add(new Separator());
 		manager.add(localRunGameCompose);
 		manager.add(localRunGameSwarm);
@@ -584,9 +588,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private void createBuildGameActions() {
 		buildGamePom = new Action() {
 			public void run() {
-
-				if (promptQuestion("Update Game Pom", "So you want to update the Game Pom before executing the build?"))
-					generateGamePom.run();
 				BuildGameMavenUtility.buildGame();
 			}
 		};
@@ -607,6 +608,15 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		buildGameCompose.setText("Build Game Compose");
 		buildGameCompose.setToolTipText("Builds the Game Compose File using the \"docker-compose build\" command.");
 		buildGameCompose.setImageDescriptor(Icons.IMG_DOCKER);
+		
+		buildGame = new Action() {
+			public void run() {
+				BuildUtility.buildGame();
+			}
+		};
+		buildGame.setText("Build Full Game");
+		buildGame.setToolTipText("Builds the Game by performing a Maven Build followed by a Compose build of all services.");
+		buildGame.setImageDescriptor(Icons.IMG_MICRONET);
 	}
 
 	private void createRunGameActions() {
@@ -628,6 +638,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		localRunGameSwarm.setText("Run Game Local Swarm");
 		localRunGameSwarm.setToolTipText("Deploys the Game Compose File (docker-compose.xml) in the local docker swarm. Swarm mode must be enabled.");
 		localRunGameSwarm.setImageDescriptor(Icons.IMG_DOCKER);
+		localRunGameSwarm.setEnabled(false);
 	}
 
 	@Override
