@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.model.IProcess;
+import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -18,7 +21,6 @@ import org.eclipse.ui.console.IConsoleConstants;
 import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.console.IOConsole;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
@@ -52,7 +54,7 @@ public class Console extends MessageConsole {
 		ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[]{console});
 		showConsole(console, page);
 	}
-	
+
 	public static void showConsole(IConsole console, IWorkbenchPage page) {
 		try {
 			String id = IConsoleConstants.ID_CONSOLE_VIEW;
@@ -72,10 +74,16 @@ public class Console extends MessageConsole {
 		return null;
 	}
 	
-	public static PrintStream reuseConsole(String launchName) {
-		IOConsole launchConsole = (IOConsole) Console.findConsole(launchName);
-		IOConsoleOutputStream out = launchConsole.newOutputStream();
-		return new PrintStream(out);
+	public static PrintStream reuseConsole(ILaunch launch) {
+		IProcess[] processes = launch.getProcesses();
+		if (processes.length > 0) {
+			IConsole c = DebugUITools.getConsole(processes[0]);
+			if (c instanceof IOConsole) {
+				IOConsole console = (IOConsole)c;
+				return new PrintStream(console.newOutputStream());
+			}
+		}
+		return null;
 	}
 	
 	public static void printStream(InputStream inStream, PrintStream outStream) {

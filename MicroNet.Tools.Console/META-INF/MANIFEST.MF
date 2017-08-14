@@ -7,7 +7,9 @@ Bundle-Activator: micronet.tools.console.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.ui.console,
- MicroNet.Tools.Core
+ MicroNet.Tools.Core,
+ org.eclipse.debug.core,
+ org.eclipse.debug.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: micronet.tools.console
