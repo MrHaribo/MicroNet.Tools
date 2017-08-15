@@ -54,26 +54,7 @@ public class SyncServiceAPI {
 
 		serviceApi.setListeners(listeners.toArray(new ListenerAPI[listeners.size()]));
 
-		try {
-			String apiData = Serialization.serializePretty(serviceApi);
-			String apiFileName = description.getName() + "API";
-
-			semaphore.acquire();
-			
-			File apiDir = new File(sharedDir + "api/");
-			if (!apiDir.exists())
-				apiDir.mkdir();
-
-			File apiFile = new File(sharedDir + "api/" + apiFileName);
-			Files.write(apiFile.toPath(), apiData.getBytes());
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} finally {
-			semaphore.release();
-		}
+		saveServiceAPI(description, serviceApi, sharedDir);
 
 		return serviceApi;
 	}
@@ -98,8 +79,8 @@ public class SyncServiceAPI {
 		
 		ResponsePayload responsePayloadAnnotation = listenerElement.getAnnotation(ResponsePayload.class);
 		if (responsePayloadAnnotation != null) {
-			listener.setRequestPayload(readResponsePayloadType(responsePayloadAnnotation));
-			listener.setRequestPayloadDescription(responsePayloadAnnotation.desc());
+			listener.setResponsePayload(readResponsePayloadType(responsePayloadAnnotation));
+			listener.setResponsePayloadDescription(responsePayloadAnnotation.desc());
 		}
 
 		RequestParameters requestParametersAnnotation = listenerElement.getAnnotation(RequestParameters.class);
@@ -166,16 +147,39 @@ public class SyncServiceAPI {
 		return result;
 	}
 	
-	private static String readRequestPayloadType(RequestPayload requestPayloadAnnotation) {
+	public static void saveServiceAPI(ServiceDescription description, ServiceAPI serviceApi, String sharedDir) {
 		try {
-			return requestPayloadAnnotation.value().getSimpleName();
+			String apiData = Serialization.serializePretty(serviceApi);
+			String apiFileName = description.getName() + "API";
+
+			semaphore.acquire();
+			
+			File apiDir = new File(sharedDir + "api/");
+			if (!apiDir.exists())
+				apiDir.mkdir();
+
+			File apiFile = new File(sharedDir + "api/" + apiFileName);
+			Files.write(apiFile.toPath(), apiData.getBytes());
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			semaphore.release();
+		}
+	}
+	
+	private static String readRequestPayloadType(RequestPayload payloadAnnotation) {
+		try {
+			return payloadAnnotation.value().getSimpleName();
 		} catch (MirroredTypeException mte) {
 			return parseMTE(mte);
 		}
 	}
-	private static String readResponsePayloadType(ResponsePayload requestPayloadAnnotation) {
+	private static String readResponsePayloadType(ResponsePayload payloadAnnotation) {
 		try {
-			return requestPayloadAnnotation.value().getSimpleName();
+			return payloadAnnotation.value().getSimpleName();
 		} catch (MirroredTypeException mte) {
 			return parseMTE(mte);
 		}

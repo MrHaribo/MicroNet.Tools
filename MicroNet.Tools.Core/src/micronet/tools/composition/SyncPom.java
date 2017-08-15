@@ -110,6 +110,42 @@ public final class SyncPom {
 		updateMetadataInApplicationPom(groupID, artifactID, version);
 	}
 	
+	public static String getMetadataFromApplicationPom(String metadataPrefConstant) {
+		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		String pomFilepath = myWorkspaceRoot.getLocation().append("pom.xml").toOSString();
+		File pom = new File(pomFilepath);
+		if (!pom.exists()) {
+			return null;
+		}
+		
+		try {
+			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+			Document doc = docBuilder.parse(pomFilepath);
+
+			switch (metadataPrefConstant) {
+			case PreferenceConstants.APP_GROUP_ID:
+				Node groupIDNode = doc.getElementsByTagName("groupId").item(0);
+				return groupIDNode.getFirstChild().getTextContent();
+			case PreferenceConstants.APP_ARTIFACT_ID:
+				Node artifactIdNode = doc.getElementsByTagName("artifactId").item(0);
+				return artifactIdNode.getFirstChild().getTextContent();
+			case PreferenceConstants.APP_VERSION:
+				Node versionNode = doc.getElementsByTagName("version").item(0);
+				return versionNode.getFirstChild().getTextContent();
+			default:
+				break;
+			}
+		} catch (ParserConfigurationException pce) {
+			pce.printStackTrace();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		} catch (SAXException sae) {
+			sae.printStackTrace();
+		}
+		return null;
+	}
+	
 	public static void updateMetadataInApplicationPom(String groupID, String artifactID, String version) {
 		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		String pomFilepath = myWorkspaceRoot.getLocation().append("pom.xml").toOSString();

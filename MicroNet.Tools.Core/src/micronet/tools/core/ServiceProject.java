@@ -87,6 +87,22 @@ public class ServiceProject {
 		return joiner.toString();
 	}
 	
+	public String getPackageName() {
+		if (hasNature(Nature.MAVEN)) {
+			String groupString = getGroupID().replaceAll("[^a-zA-Z0-9]+", ".");
+			String artifactString = getArtifactID().replaceAll("[^a-zA-Z0-9]+", ".");
+			if (!groupString.equals("") && !artifactString.equals(""))
+				return groupString + "." + artifactString;
+		}
+		
+		String groupID = SyncPom.getMetadataFromApplicationPom(PreferenceConstants.APP_GROUP_ID);
+		String artifactID = getName();
+		
+		if (groupID != null && !groupID.equals(""))
+			return groupID + "." + artifactID;
+		return artifactID;
+	}
+	
     public void addNature(Nature nature) {
     	natures.add(nature);
     }

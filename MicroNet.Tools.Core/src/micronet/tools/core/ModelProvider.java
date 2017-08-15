@@ -137,22 +137,19 @@ public enum ModelProvider {
 		if (!project.isOpen() || project.getName().equals("External Plug-in Libraries"))
 			return;
 		try {
-			ServiceProject serviceProject = null;
+			List<Nature> natures = new ArrayList<>();
 			if (project.hasNature("org.eclipse.m2e.core.maven2Nature")) {
-				serviceProject = new ServiceProject(project, Nature.JAVA, Nature.MAVEN);
-			} else if (project.hasNature(JavaCore.NATURE_ID)) {
-				serviceProject = new ServiceProject(project, Nature.JAVA);
+				natures.add(Nature.MAVEN);
+			}
+			if (project.hasNature(JavaCore.NATURE_ID)) {
+				natures.add(Nature.JAVA);
 			} 
-			
 			if (project.getFile("Dockerfile").exists()) {
-				if (serviceProject == null) {
-					serviceProject = new ServiceProject(project, Nature.DOCKER);
-				} else {
-					serviceProject.addNature(Nature.DOCKER);
-				}
+				natures.add(Nature.DOCKER);
 			}
 			
-			if (serviceProject != null) {
+			if (natures.size() > 0) {
+				ServiceProject serviceProject = new ServiceProject(project, natures.toArray(new Nature[natures.size()]));
 				serviceProjects.put(project.getName(), serviceProject);
 			}
 		} catch (CoreException e) {

@@ -24,7 +24,31 @@ public class ParameterCodesGenerator {
 	}
 
 	public void generateParameterCodeEnum(String packageName, String sharedDir) {
+		JavaFile javaFile = createParameterCodeEnum(packageName, sharedDir);
+		try {
+			JavaFileObject file = filer.createSourceFile(packageName + "." + PARAMETER_CODE);
+			Writer writer = file.openWriter();
 
+			javaFile.writeTo(writer);
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static String getParameterCodeEnum(String packageName, String sharedDir) {
+		JavaFile javaFile = createParameterCodeEnum(packageName, sharedDir);
+		try {
+			StringBuilder stringBuilder = new StringBuilder();
+			javaFile.writeTo(stringBuilder);
+			return stringBuilder.toString();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private static JavaFile createParameterCodeEnum(String packageName, String sharedDir) {
 		TypeSpec.Builder builder = TypeSpec.classBuilder(PARAMETER_CODE).addModifiers(Modifier.PUBLIC);
 		Set<String> params = SyncParameterCodes.getAllParameterCodes(sharedDir);
 		
@@ -36,17 +60,6 @@ public class ParameterCodesGenerator {
 		}
 		
 		TypeSpec typeSpec = builder.build();
-		JavaFile javaFile = JavaFile.builder(packageName, typeSpec).build();
-
-		try {
-			JavaFileObject file = filer.createSourceFile(packageName + "." + PARAMETER_CODE);
-			Writer writer = file.openWriter();
-
-			javaFile.writeTo(writer);
-			writer.close();
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		return JavaFile.builder(packageName, typeSpec).build();
 	}
 }

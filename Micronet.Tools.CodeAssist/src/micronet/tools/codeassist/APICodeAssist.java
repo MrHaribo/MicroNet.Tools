@@ -109,24 +109,24 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 		if (listenerApi.getRequestParameters() != null) {
 			description += "\nRequired Request Parameters:\n";
 			for (ParameterAPI parameter : listenerApi.getRequestParameters()) {
-				String descriptionString = parameter.getDescription() == null && !parameter.getDescription().equals("") ? "" : " (" + parameter.getDescription() + ")";
+				String descriptionString = parameter.getDescription() != null && !parameter.getDescription().equals("") ? " (" + parameter.getDescription() + ")" : "";
 				description += " " + parameter.getCode() + ": " + parameter.getType() + descriptionString + "\n";
 			}
 		}
 		if (listenerApi.getRequestPayload() != null && !listenerApi.getRequestPayload().equals("")) {
-			String descriptionString = listenerApi.getRequestPayloadDescription() == null && !listenerApi.getRequestPayloadDescription().equals("") ? "" : " (" + listenerApi.getRequestPayloadDescription() + ")";
+			String descriptionString = listenerApi.getRequestPayloadDescription() != null && !listenerApi.getRequestPayloadDescription().equals("") ? " (" + listenerApi.getRequestPayloadDescription() + ")" : "";
 			description += "\nRequest Payload Type:\n " + listenerApi.getRequestPayload() + descriptionString + "\n";
 		}
 			
 		if (listenerApi.getResponseParameters() != null) {
 			description += "\nProvided Response Parameters:\n";
 			for (ParameterAPI parameter : listenerApi.getResponseParameters()) {
-				String descriptionString = parameter.getDescription() == null && !parameter.getDescription().equals("") ? "" : " (" + parameter.getDescription() + ")";
+				String descriptionString = parameter.getDescription() != null && !parameter.getDescription().equals("") ? " (" + parameter.getDescription() + ")" : "";
 				description += " " + parameter.getCode() + ": " + parameter.getType() + descriptionString + "\n";
 			}
 		}
 		if (listenerApi.getResponsePayload() != null && !listenerApi.getResponsePayload().equals("")) {
-			String descriptionString = listenerApi.getResponsePayloadDescription() == null && !listenerApi.getResponsePayloadDescription().equals("") ? "" : " (" + listenerApi.getResponsePayloadDescription() + ")";
+			String descriptionString = listenerApi.getResponsePayloadDescription() != null && !listenerApi.getResponsePayloadDescription().equals("") ? " (" + listenerApi.getResponsePayloadDescription() + ")" : "";
 			description += "\nResponse Payload Type:\n " + listenerApi.getResponsePayload() + descriptionString + "\n";
 		}
 		
