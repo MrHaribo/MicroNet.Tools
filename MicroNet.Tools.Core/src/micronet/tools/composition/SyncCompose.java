@@ -28,7 +28,11 @@ public class SyncCompose {
 			}
 			
 			composeFile.getServices().put(serviceProject.getName().toLowerCase(), composeService);
-			composeFile.getNetworks().put(serviceProject.getNetwork(), new OverlayNetwork());
+			
+			ExternalNetwork network = new ExternalNetwork();
+			network.getExternal().put("name", serviceProject.getNetwork());
+			
+			composeFile.getNetworks().put(serviceProject.getNetwork(), network);
 		}
 		
 		saveComposeFile(composeFile);

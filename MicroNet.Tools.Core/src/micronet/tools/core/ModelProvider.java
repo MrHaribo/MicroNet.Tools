@@ -2,6 +2,7 @@ package micronet.tools.core;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ import micronet.tools.core.ServiceProject.Nature;
 public enum ModelProvider {
 	INSTANCE;
 
-	Map<String, ServiceProject> serviceProjects = new HashMap<>();
+	Map<String, ServiceProject> serviceProjects = Collections.synchronizedMap(new HashMap<>());
 	
 	private List<ServicesChangedListener> servicesChangedListeners = new ArrayList<>();
 	private List<Runnable> modelChangedListeners = new ArrayList<>();

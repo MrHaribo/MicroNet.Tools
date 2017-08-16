@@ -6,7 +6,7 @@ import java.util.Map;
 public class ComposeFile {
 	private String version;
 	private Map<String, ComposeService> services = new HashMap<>();
-	private Map<String, OverlayNetwork> networks = new HashMap<>();
+	private Map<String, Object> networks = new HashMap<>();
 	
 	public ComposeFile() {
 	}
@@ -27,11 +27,11 @@ public class ComposeFile {
 		this.services = services;
 	}
 
-	public Map<String, OverlayNetwork> getNetworks() {
+	public Map<String, Object> getNetworks() {
 		return networks;
 	}
 
-	public void setNetworks(Map<String, OverlayNetwork> networks) {
+	public void setNetworks(Map<String, Object> networks) {
 		this.networks = networks;
 	}
 }

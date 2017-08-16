@@ -186,6 +186,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			Display.getDefault().asyncExec(() -> {
 				if (viewer.getControl().isDisposed())
 					return;
+				//TODO: Concurrent Modification
 				viewer.setInput(ModelProvider.INSTANCE.getServiceProjects());
 				viewer.refresh();
 			});
