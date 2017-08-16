@@ -30,6 +30,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
 
+import micronet.tools.console.Console;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncEnumTree;
@@ -73,6 +74,7 @@ public class ModelView extends ViewPart {
 	private ModelAction createPrefabAction;
 	
 	private Action refreshServicesAction;
+	private Action showConsole;
 
 	private ModelNode selectedNode;
 
@@ -324,6 +326,7 @@ public class ModelView extends ViewPart {
 
 	private void fillLocalToolBar(IToolBarManager manager) {
 		manager.add(refreshServicesAction);
+		manager.add(showConsole);
 		manager.add(new Separator());
 		drillDownAdapter.addNavigationActions(manager);
 	}
@@ -364,6 +367,15 @@ public class ModelView extends ViewPart {
 		refreshServicesAction.setText("Rebuild Services");
 		refreshServicesAction.setToolTipText("Rebuild all service Projects in the Workspace");
 		refreshServicesAction.setImageDescriptor(Icons.IMG_BUILD);
+		
+		showConsole = new Action() {
+			public void run() {
+				Console.showGlobalConsole(getSite().getPage());
+			}
+		};
+		showConsole.setText("MicroNet Console");
+		showConsole.setToolTipText("Opens the MicroNet Console which provides framework information.");
+		showConsole.setImageDescriptor(Icons.IMG_TERMINAL);
 	}
 
 	/**

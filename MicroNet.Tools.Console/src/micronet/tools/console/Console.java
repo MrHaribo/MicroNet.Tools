@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
 import org.eclipse.debug.core.ILaunch;
@@ -24,11 +25,24 @@ import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
+import micronet.tools.core.Icons;
+
 public class Console extends MessageConsole {
 
+	private static final String globalConsoleName = "MicroNet";
+	private static final Semaphore globalConsoleLock = new Semaphore(0);
+	private static MessageConsole globalConsole = null;
+	private static MessageConsoleStream globalConsoleStream = null;
+	
 	private boolean terminated = false;
 	
 	private List<Consumer<Boolean>> terminationListeners = new ArrayList<>();
+	
+	static {
+		globalConsole = new MessageConsole(globalConsoleName, Icons.IMG_MICRONET);
+		globalConsoleStream = globalConsole.newMessageStream();
+		globalConsoleLock.release();
+    }
 	
 	public Console(String name, ImageDescriptor imageDescriptor) {
 		super(name, imageDescriptor);
@@ -42,9 +56,38 @@ public class Console extends MessageConsole {
 		notifyTerminationListeners(terminated);
 		this.terminated = terminated;
 	}
+	
+	public static void print(String str) {
+		try {
+			globalConsoleLock.acquire();
+			globalConsoleStream.print(str);
+		} catch (InterruptedException e) {
+		} finally {
+			globalConsoleLock.release();
+		}
+	}
+	
+	public static void println(String str) {
+		try {
+			globalConsoleLock.acquire();
+			globalConsoleStream.println(str);
+		} catch (InterruptedException e) {
+		} finally {
+			globalConsoleLock.release();
+		}
+	}
 
+	public static void showGlobalConsole(IWorkbenchPage page) {
+		ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[]{globalConsole});
+		showConsole(globalConsole, page);
+	}
+	
 	public static void createConsole(String name, InputStream inStream, IWorkbenchPage page) {
-		Console console = new Console(name, null);
+		createConsole(name, inStream, page, null);
+	}
+	
+	public static void createConsole(String name, InputStream inStream, IWorkbenchPage page, ImageDescriptor icon) {
+		Console console = new Console(name, icon);
 		
 		MessageConsoleStream out = console.newMessageStream();
 		printStream(inStream, new PrintStream(out), () -> {

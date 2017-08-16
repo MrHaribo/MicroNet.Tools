@@ -11,6 +11,7 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -42,6 +43,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.dialogs.PreferencesUtil;
 import org.eclipse.ui.part.ViewPart;
 
 import micronet.tools.composition.SyncCompose;
@@ -109,6 +111,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private Action localRunGameCompose;
 	private Action localRunGameSwarm;
 
+	private Action showConsole;
+	private Action showPreferences;
 
 	private ServiceProject selectedProject = null;
 
@@ -373,6 +377,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(localRunGameCompose);
 		manager.add(localRunGameSwarm);
+		manager.add(new Separator());
+		manager.add(showConsole);
+		manager.add(showPreferences);
 		
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
@@ -398,9 +405,10 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	}
 
 	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(refreshServicesAction);
 		manager.add(nativeDebugEnabledServices);
 		manager.add(nativeRunEnabledServices);
+		manager.add(refreshServicesAction);
+		manager.add(showConsole);
 	}
 
 	private void makeActions() {
@@ -409,7 +417,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		createGenerateGameActions();
 		createBuildGameActions();
 		createRunGameActions();
-
+		createSettingsActions();
 	}
 
 	
@@ -454,7 +462,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 						showMessage("Error starting container: " + selectedProject.getName());
 					
 					IWorkbenchPage page = getSite().getPage();
-					Console.createConsole(selectedProject.getName() + "Build", containerStream, page);
+					Console.createConsole(selectedProject.getName() + "Build", containerStream, page, Icons.IMG_DOCKER);
 				}
 			}
 		};
@@ -501,7 +509,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 							showMessage("Error starting container: " + selectedProject.getName());
 						
 						IWorkbenchPage page = getSite().getPage();
-						Console.createConsole(selectedProject.getName(), containerStream, page);
+						Console.createConsole(selectedProject.getName(), containerStream, page, Icons.IMG_DOCKER);
 					}
 				}
 			}
@@ -641,6 +649,30 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		localRunGameSwarm.setImageDescriptor(Icons.IMG_DOCKER);
 		localRunGameSwarm.setEnabled(false);
 	}
+	
+	private void createSettingsActions() {
+		showConsole = new Action() {
+			public void run() {
+				Console.showGlobalConsole(getSite().getPage());
+			}
+		};
+		showConsole.setText("MicroNet Console");
+		showConsole.setToolTipText("Opens the MicroNet Console which provides framework information.");
+		showConsole.setImageDescriptor(Icons.IMG_TERMINAL);
+		
+		showPreferences = new Action() {
+			public void run() {
+				PreferenceDialog pref = PreferencesUtil.createPreferenceDialogOn(viewer.getControl().getShell(), "micronet.tools.preferences.MicroNetSettings", null, null);
+				if (pref != null)
+					pref.open();
+				
+				Console.println("hiho");
+			}
+		};
+		showPreferences.setText("MicroNet Preferences");
+		showPreferences.setToolTipText("Opens the MicroNet Preferences to configure the workspace.");
+		showPreferences.setImageDescriptor(Icons.IMG_PROPERTIES);
+	}
 
 	@Override
 	public void handleEvent(Event event) {
@@ -658,10 +690,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	private void showMessage(String message) {
 		MessageDialog.openInformation(viewer.getControl().getShell(), "Service Explorer", message);
-	}
-
-	private boolean promptQuestion(String title, String message) {
-		return MessageDialog.openQuestion(viewer.getControl().getShell(), title, message);
 	}
 	
 	private void showNetworkSelectionDialog(ServiceProject serviceProject) {

@@ -39,6 +39,9 @@ public class Icons {
 	public static final ImageDescriptor IMG_ENUM = getImageDescriptor("enum.png");
 	public static final ImageDescriptor IMG_BUILD = getImageDescriptor("build.png");
 	
+	public static final ImageDescriptor IMG_TERMINAL = getImageDescriptor("terminal.gif");
+	public static final ImageDescriptor IMG_PROPERTIES = getImageDescriptor("properties.gif");
+	
 	public static ImageDescriptor getImageDescriptor(String file) {
 		Bundle bundle = FrameworkUtil.getBundle(Icons.class);
 		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);

@@ -7,6 +7,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 import micronet.tools.console.Console;
+import micronet.tools.core.Icons;
 import micronet.tools.core.ServiceProject;
 
 public final class BuildUtility {
@@ -38,7 +39,7 @@ public final class BuildUtility {
 				if (win == null || win.getActivePage() == null)
 					return;
 				
-				Console.createConsole(project.getName() + " Container Build", containerStream, win.getActivePage());
+				Console.createConsole(project.getName() + " Container Build", containerStream, win.getActivePage(), Icons.IMG_DOCKER);
 			}
 			
 		});
@@ -63,7 +64,7 @@ public final class BuildUtility {
 				if (win == null || win.getActivePage() == null)
 					return;
 				
-				Console.createConsole("Game Compose Build", buildStream, win.getActivePage());
+				Console.createConsole("Game Compose Build", buildStream, win.getActivePage(), Icons.IMG_DOCKER);
 			}
 		});
 	}

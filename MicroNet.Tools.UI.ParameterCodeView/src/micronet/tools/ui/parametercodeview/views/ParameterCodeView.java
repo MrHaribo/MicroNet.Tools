@@ -37,6 +37,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import micronet.tools.api.ServiceAPI;
+import micronet.tools.console.Console;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncParameterCodes;
@@ -71,6 +72,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 	private Action removeParameterCodeAction;
 	
 	private Action refreshServicesAction;
+	private Action showConsole;
 	
 	private Map<String, Set<String>> requiredParameters;
 	private Map<String, Set<String>> providedParameters;
@@ -238,6 +240,7 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		manager.add(addParameterCodeAction);
 		manager.add(removeParameterCodeAction);
 		manager.add(refreshServicesAction);
+		manager.add(showConsole);
 	}
 
 	private void makeActions() {
@@ -291,7 +294,16 @@ public class ParameterCodeView extends ViewPart implements DirChangedListener {
 		};
 		refreshServicesAction.setText("Rebuild Services");
 		refreshServicesAction.setToolTipText("Rebuild all service Projects in the Workspace");
-		refreshServicesAction.setImageDescriptor(Icons.IMG_REFRESH);
+		refreshServicesAction.setImageDescriptor(Icons.IMG_BUILD);
+		
+		showConsole = new Action() {
+			public void run() {
+				Console.showGlobalConsole(getSite().getPage());
+			}
+		};
+		showConsole.setText("MicroNet Console");
+		showConsole.setToolTipText("Opens the MicroNet Console which provides framework information.");
+		showConsole.setImageDescriptor(Icons.IMG_TERMINAL);
 	}
 
 	private boolean promptQuestion(String title, String message) {
