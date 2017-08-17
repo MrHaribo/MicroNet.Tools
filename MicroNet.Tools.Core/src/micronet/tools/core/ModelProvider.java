@@ -88,7 +88,7 @@ public enum ModelProvider {
 			case IResourceDelta.REMOVED:
 				if (res instanceof IProject) {
 					serviceProjects.remove(((IProject)res).getName());
-					//notifyServicesChangedListeners();
+					notifyServicesChangedListeners();
 				}
 				break;
 			case IResourceDelta.CHANGED:

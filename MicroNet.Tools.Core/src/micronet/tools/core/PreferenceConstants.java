@@ -20,6 +20,7 @@ public class PreferenceConstants {
 	//Project Specific Settings
 	public static final String PREF_PORTS = "ports";
 	public static final String PREF_NETWORK = "network";
+	public static final String PREF_ALIAS = "alias";
 	public static final String PREF_CONTAINER_NAME = "container.name";
 	public static final String PREF_ENABLED = "enabled";
 	public static final String PREF_CONTRIBUTE_SHARED_DIR = "contribute.shared.dir";

@@ -3,7 +3,7 @@ package micronet.tools.composition;
 public class ComposeService {
 	private String image;
 	private String build;
-	private String[] networks;
+	private Object networks;
 	private String[] links;
 	private String[] ports;
 
@@ -39,11 +39,11 @@ public class ComposeService {
 		this.ports = ports;
 	}
 
-	public String[] getNetworks() {
+	public Object getNetworks() {
 		return networks;
 	}
 
-	public void setNetworks(String[] networks) {
+	public void setNetworks(Object networks) {
 		this.networks = networks;
 	}
 }

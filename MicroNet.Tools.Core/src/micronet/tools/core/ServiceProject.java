@@ -1,10 +1,12 @@
 package micronet.tools.core;
 
 import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_SERVICE_PROJECT;
+import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_GLOBAL;
 import static micronet.tools.core.PreferenceConstants.PREF_CONTAINER_NAME;
 import static micronet.tools.core.PreferenceConstants.PREF_CONTRIBUTE_SHARED_DIR;
 import static micronet.tools.core.PreferenceConstants.PREF_ENABLED;
 import static micronet.tools.core.PreferenceConstants.PREF_NETWORK;
+import static micronet.tools.core.PreferenceConstants.PREF_ALIAS;
 import static micronet.tools.core.PreferenceConstants.PREF_PORTS;
 import static micronet.tools.core.PreferenceConstants.SPLIT_STRING;
 
@@ -173,7 +175,7 @@ public class ServiceProject {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
 		
-		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Preferences");
+		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, PREFERENCE_NAME_GLOBAL);
 		String defaultValue = preferenceStore.getString(PreferenceConstants.PREF_DOCKER_NETWORK_NAME);
 		
 		return preferences.get(PREF_NETWORK, defaultValue);
@@ -189,6 +191,12 @@ public class ServiceProject {
 			Console.println("Error saving Preference of " + getName() + ": " + PREF_NETWORK);
 			Console.printStackTrace(e);
 		}
+	}
+	
+	public String getAlias() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+		return preferences.get(PREF_ALIAS, null);
 	}
 
 	public String getPortsRaw() {

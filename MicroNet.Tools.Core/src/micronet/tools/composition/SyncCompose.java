@@ -1,7 +1,9 @@
 package micronet.tools.composition;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -23,14 +25,30 @@ public class SyncCompose {
 				composeService.setPorts((String[]) serviceProject.getPorts().toArray(new String[serviceProject.getPorts().size()]));
 			
 			if (serviceProject.getNetwork() != null) {
-				String[] networks = new String[] {serviceProject.getNetwork()};				
-				composeService.setNetworks(networks);
+				
+				String alias = serviceProject.getAlias();
+				if (alias != null) {
+					
+					Map<String, Map<String, Object>> networkMap = new HashMap<>();
+					Map<String, Object> networkPropertyMap = new HashMap<>();
+					String[] aliases  = new String[] {alias};
+					
+					networkPropertyMap.put("aliases", aliases);
+					networkMap.put(serviceProject.getNetwork(), networkPropertyMap);
+					
+					composeService.setNetworks(networkMap);
+				} else {
+					String[] networks = new String[] {serviceProject.getNetwork()};				
+					composeService.setNetworks(networks);
+				}
 			}
 			
 			composeFile.getServices().put(serviceProject.getName().toLowerCase(), composeService);
 			
 			ExternalNetwork network = new ExternalNetwork();
 			network.getExternal().put("name", serviceProject.getNetwork());
+			
+
 			
 			composeFile.getNetworks().put(serviceProject.getNetwork(), network);
 		}
