@@ -19,11 +19,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	public void initializeDefaultPreferences() {
 		
 		IPreferenceStore store = ModelProvider.INSTANCE.getPreferenceStore();
-		store.setDefault(PreferenceConstants.USE_DOCKER_TOOLBOX, false);
-		store.setDefault(PreferenceConstants.DOCKER_NETWORK_NAME, "bridge");
-		store.setDefault(PreferenceConstants.APP_GROUP_ID, "MyGame");
-		store.setDefault(PreferenceConstants.APP_ARTIFACT_ID, "MyGameApp");
-		store.setDefault(PreferenceConstants.APP_VERSION, "0.0.1-SNAPSHOT");
+		store.setDefault(PreferenceConstants.PREF_USE_DOCKER_TOOLBOX, false);
+		store.setDefault(PreferenceConstants.PREF_DOCKER_NETWORK_NAME, "bridge");
+		store.setDefault(PreferenceConstants.PREF_APP_GROUP_ID, "MyGame");
+		store.setDefault(PreferenceConstants.PREF_APP_ARTIFACT_ID, "MyGameApp");
+		store.setDefault(PreferenceConstants.PREF_APP_VERSION, "0.0.1-SNAPSHOT");
 		
 	}
 

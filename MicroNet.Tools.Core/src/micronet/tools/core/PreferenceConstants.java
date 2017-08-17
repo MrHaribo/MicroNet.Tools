@@ -5,15 +5,22 @@ package micronet.tools.core;
  */
 public class PreferenceConstants {
 
-	public static final String DOCKER_TOOLBOX_PATH = "dockerToolboxPathPreference";
+	public static final String SPLIT_STRING = ",";
+	public static final String PREFERENCE_NAME_SERVICE_PROJECT = "com.github.mrharibo.micronet.preferences";
+	public static final String PREFERENCE_NAME_GLOBAL = "MicroNet.Tools.Preferences";
 
-	public static final String USE_DOCKER_TOOLBOX = "useDockerToolboxPreference";
-	
-	public static final String DOCKER_NETWORK_NAME = "dockerNetworkName";
-	
-	public static final String APP_GROUP_ID = "appGroupID";
-	
-	public static final String APP_ARTIFACT_ID = "appArtifactID";
-	
-	public static final String APP_VERSION = "appVersion";
+	//Global Settings
+	public static final String PREF_DOCKER_TOOLBOX_PATH = "dockerToolboxPathPreference";
+	public static final String PREF_USE_DOCKER_TOOLBOX = "useDockerToolboxPreference";
+	public static final String PREF_DOCKER_NETWORK_NAME = "dockerNetworkName";
+	public static final String PREF_APP_GROUP_ID = "appGroupID";
+	public static final String PREF_APP_ARTIFACT_ID = "appArtifactID";
+	public static final String PREF_APP_VERSION = "appVersion";
+
+	//Project Specific Settings
+	public static final String PREF_PORTS = "ports";
+	public static final String PREF_NETWORK = "network";
+	public static final String PREF_CONTAINER_NAME = "container.name";
+	public static final String PREF_ENABLED = "enabled";
+	public static final String PREF_CONTRIBUTE_SHARED_DIR = "contribute.shared.dir";
 }

@@ -15,7 +15,6 @@ import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
@@ -23,6 +22,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import micronet.tools.composition.SyncPom;
+import micronet.tools.console.Console;
 import micronet.tools.core.ServiceProject.Nature;
 
 public enum ModelProvider {
@@ -44,33 +44,29 @@ public enum ModelProvider {
 				switch (event.getType()) {
 					case IResourceChangeEvent.PRE_CLOSE:
 						if (res instanceof IProject) {
-							System.out.println("Project is about to close: " + res.getFullPath());
 							serviceProjects.remove(((IProject)res).getName());
 							notifyServicesChangedListeners();
 						}
 						break;
 		            case IResourceChangeEvent.PRE_DELETE:
 		            	if (res instanceof IProject) {
-							System.out.println("Project is about to be deleted: " + res.getFullPath());
 							serviceProjects.remove(((IProject)res).getName());
 							notifyServicesChangedListeners();
 		            	}
 		            	break;
 		            case IResourceChangeEvent.POST_CHANGE:
-		            	System.out.println("Resources have changed.");
 		            	event.getDelta().accept(new DeltaPrinter());
 		            	break;
 		            case IResourceChangeEvent.PRE_BUILD:
-		            	System.out.println("Build about to run.");
 		            	event.getDelta().accept(new DeltaPrinter());
 		            	break;
 		            case IResourceChangeEvent.POST_BUILD:
-		            	System.out.println("Build complete.");
 		            	event.getDelta().accept(new DeltaPrinter());
 		            	break;
 				}
-			} catch (CoreException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				Console.println("Error in Resources Changed Listener");
+				Console.printStackTrace(e);
 			}
 		},  IResourceChangeEvent.PRE_CLOSE
 	      | IResourceChangeEvent.PRE_DELETE
@@ -85,28 +81,25 @@ public enum ModelProvider {
 			switch (delta.getKind()) {
 			case IResourceDelta.ADDED:
 				if (res instanceof IProject) {
-					System.out.println("Project was added: " + res.getFullPath());
 					addProject((IProject)res);
 					notifyServicesChangedListeners();
 		        }
 				break;
 			case IResourceDelta.REMOVED:
 				if (res instanceof IProject) {
-					System.out.println("Project was removed: " + res.getFullPath());
 					serviceProjects.remove(((IProject)res).getName());
 					//notifyServicesChangedListeners();
 				}
 				break;
 			case IResourceDelta.CHANGED:
 				if (res instanceof IProject) {
-					System.out.println("Project has changed: " + res.getFullPath());
 					if (!serviceProjects.containsKey((IProject)res))
 						addProject((IProject)res);
 					notifyServicesChangedListeners();
 				}
 				break;
 			}
-			return true; // visit the children
+			return true;
 		}
 	}
 	
@@ -129,8 +122,9 @@ public enum ModelProvider {
 	public void buildServiceProjects() {
 		try {
 			ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, null);
-		} catch (CoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error Building Workspace Projects");
+			Console.printStackTrace(e);
 		}
 	}
 	
@@ -153,8 +147,9 @@ public enum ModelProvider {
 				ServiceProject serviceProject = new ServiceProject(project, natures.toArray(new Nature[natures.size()]));
 				serviceProjects.put(project.getName(), serviceProject);
 			}
-		} catch (CoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error Adding Project" + project.getName());
+			Console.printStackTrace(e);
 		}
 	}
 	
@@ -228,6 +223,6 @@ public enum ModelProvider {
 	}
 	
 	public IPreferenceStore getPreferenceStore() {
-		return new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Preferences");
+		return new ScopedPreferenceStore(InstanceScope.INSTANCE, PreferenceConstants.PREFERENCE_NAME_GLOBAL);
 	}
 }

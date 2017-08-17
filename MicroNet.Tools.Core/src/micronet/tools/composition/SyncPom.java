@@ -2,7 +2,6 @@ package micronet.tools.composition;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -10,10 +9,8 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -31,8 +28,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
-import org.xml.sax.SAXException;
 
+import micronet.tools.console.Console;
 import micronet.tools.core.PreferenceConstants;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
@@ -68,12 +65,9 @@ public final class SyncPom {
 				result.add(new File(servicePath).getName());
 			}
 			return result;
-		} catch (ParserConfigurationException pce) {
-			pce.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		} catch (SAXException sae) {
-			sae.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error getting Services from Application POM");
+			Console.printStackTrace(e);
 		}
 		return new ArrayList<>();
 	}
@@ -96,17 +90,17 @@ public final class SyncPom {
 			OutputStream outStream = new FileOutputStream(pom);
 			outStream.write(buffer);
 			outStream.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error Creating Application POM");
+			Console.printStackTrace(e);
 		}
 	}
 	
 	public static void updateMetadataInApplicationPom() {
-		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Preferences");
-		String groupID = preferenceStore.getString(PreferenceConstants.APP_GROUP_ID);
-		String artifactID = preferenceStore.getString(PreferenceConstants.APP_ARTIFACT_ID);
-		String version = preferenceStore.getString(PreferenceConstants.APP_VERSION);
+		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, PreferenceConstants.PREFERENCE_NAME_GLOBAL);
+		String groupID = preferenceStore.getString(PreferenceConstants.PREF_APP_GROUP_ID);
+		String artifactID = preferenceStore.getString(PreferenceConstants.PREF_APP_ARTIFACT_ID);
+		String version = preferenceStore.getString(PreferenceConstants.PREF_APP_VERSION);
 		updateMetadataInApplicationPom(groupID, artifactID, version);
 	}
 	
@@ -124,24 +118,21 @@ public final class SyncPom {
 			Document doc = docBuilder.parse(pomFilepath);
 
 			switch (metadataPrefConstant) {
-			case PreferenceConstants.APP_GROUP_ID:
+			case PreferenceConstants.PREF_APP_GROUP_ID:
 				Node groupIDNode = doc.getElementsByTagName("groupId").item(0);
 				return groupIDNode.getFirstChild().getTextContent();
-			case PreferenceConstants.APP_ARTIFACT_ID:
+			case PreferenceConstants.PREF_APP_ARTIFACT_ID:
 				Node artifactIdNode = doc.getElementsByTagName("artifactId").item(0);
 				return artifactIdNode.getFirstChild().getTextContent();
-			case PreferenceConstants.APP_VERSION:
+			case PreferenceConstants.PREF_APP_VERSION:
 				Node versionNode = doc.getElementsByTagName("version").item(0);
 				return versionNode.getFirstChild().getTextContent();
 			default:
 				break;
 			}
-		} catch (ParserConfigurationException pce) {
-			pce.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		} catch (SAXException sae) {
-			sae.printStackTrace();
+		}  catch (Exception e) {
+			Console.println("Error getting Metadata from Application POM");
+			Console.printStackTrace(e);
 		}
 		return null;
 	}
@@ -176,12 +167,9 @@ public final class SyncPom {
 			
 			writeToPom(pomFilepath, doc);
 			
-		} catch (ParserConfigurationException pce) {
-			pce.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		} catch (SAXException sae) {
-			sae.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error updating Metadata in Application POM");
+			Console.printStackTrace(e);
 		}
 	}
 
@@ -218,12 +206,9 @@ public final class SyncPom {
 
 			System.out.println("Pom update Done");
 
-		} catch (ParserConfigurationException pce) {
-			pce.printStackTrace();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		} catch (SAXException sae) {
-			sae.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error updating Services in Application POM");
+			Console.printStackTrace(e);
 		}
 	}
 
@@ -236,8 +221,9 @@ public final class SyncPom {
 			DOMSource source = new DOMSource(doc);
 			StreamResult result = new StreamResult(new File(pomFilepath));
 			transformer.transform(source, result);
-		} catch (TransformerException tfe) {
-			tfe.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error writing POM file");
+			Console.printStackTrace(e);
 		}
 	}
 }

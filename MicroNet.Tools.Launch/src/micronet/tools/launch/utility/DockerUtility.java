@@ -16,11 +16,11 @@ import micronet.tools.core.PreferenceConstants;
 public class DockerUtility {
 
 	public static boolean useDockerToolbox() {
-		return ModelProvider.INSTANCE.getPreferenceStore().getBoolean(PreferenceConstants.USE_DOCKER_TOOLBOX);
+		return ModelProvider.INSTANCE.getPreferenceStore().getBoolean(PreferenceConstants.PREF_USE_DOCKER_TOOLBOX);
 	}
 
 	public static String getDockerToolboxPath() {
-		return ModelProvider.INSTANCE.getPreferenceStore().getString(PreferenceConstants.DOCKER_TOOLBOX_PATH);
+		return ModelProvider.INSTANCE.getPreferenceStore().getString(PreferenceConstants.PREF_DOCKER_TOOLBOX_PATH);
 	}
 
 	public static String getDockerCommand() {

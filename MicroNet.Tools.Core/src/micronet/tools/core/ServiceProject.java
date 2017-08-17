@@ -1,5 +1,13 @@
 package micronet.tools.core;
 
+import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_SERVICE_PROJECT;
+import static micronet.tools.core.PreferenceConstants.PREF_CONTAINER_NAME;
+import static micronet.tools.core.PreferenceConstants.PREF_CONTRIBUTE_SHARED_DIR;
+import static micronet.tools.core.PreferenceConstants.PREF_ENABLED;
+import static micronet.tools.core.PreferenceConstants.PREF_NETWORK;
+import static micronet.tools.core.PreferenceConstants.PREF_PORTS;
+import static micronet.tools.core.PreferenceConstants.SPLIT_STRING;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,16 +26,13 @@ import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
-import org.osgi.service.prefs.BackingStoreException;
 
 import micronet.tools.composition.SyncCompose;
 import micronet.tools.composition.SyncPom;
+import micronet.tools.console.Console;
 
 public class ServiceProject {
 	
-	private static final String SPLIT_STRING = ",";
-	private static final String PREFERENCE_NAME = "com.github.mrharibo.micronet.preferences";
-
 	public enum Nature {
 		MAVEN,
 	    DOCKER, 
@@ -95,7 +100,7 @@ public class ServiceProject {
 				return groupString + "." + artifactString;
 		}
 		
-		String groupID = SyncPom.getMetadataFromApplicationPom(PreferenceConstants.APP_GROUP_ID);
+		String groupID = SyncPom.getMetadataFromApplicationPom(PreferenceConstants.PREF_APP_GROUP_ID);
 		String artifactID = getName();
 		
 		if (groupID != null && !groupID.equals(""))
@@ -117,18 +122,19 @@ public class ServiceProject {
     
     public boolean isSharedDirContributionEnabled() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		return preferences.getBoolean("contribute.shared.dir", false);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+		return preferences.getBoolean(PREF_CONTRIBUTE_SHARED_DIR, false);
     }
     
 	public void setSharedDirContributionEnabled(boolean isEnabled) {
 		try {
 			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-			preferences.putBoolean("contribute.shared.dir", isEnabled);
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+			preferences.putBoolean(PREF_CONTRIBUTE_SHARED_DIR, isEnabled);
 			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error saving Preference of " + getName() + ": " + PREF_CONTRIBUTE_SHARED_DIR);
+			Console.printStackTrace(e);
 		}
 	}
 	
@@ -141,52 +147,54 @@ public class ServiceProject {
     
 	public boolean isEnabled() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		return preferences.getBoolean("enabled", false);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+		return preferences.getBoolean(PREF_ENABLED, false);
 	}
 
 	public void setEnabled(boolean isEnabled) {
 		try {
 			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-			preferences.putBoolean("enabled", isEnabled);
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+			preferences.putBoolean(PREF_ENABLED, isEnabled);
 			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error saving Preference of " + getName() + ": " + PREF_ENABLED);
+			Console.printStackTrace(e);
 		}
 	}
     
     public String getContainerName() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		return preferences.get("container.name", getName().toLowerCase());
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+		return preferences.get(PREF_CONTAINER_NAME, getName().toLowerCase());
     }
 
 	public String getNetwork() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
 		
 		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, "MicroNet.Tools.Preferences");
-		String defaultValue = preferenceStore.getString(PreferenceConstants.DOCKER_NETWORK_NAME);
+		String defaultValue = preferenceStore.getString(PreferenceConstants.PREF_DOCKER_NETWORK_NAME);
 		
-		return preferences.get("network", defaultValue);
+		return preferences.get(PREF_NETWORK, defaultValue);
 	}
 	
 	public void setNetwork(String network) {
 		try {
 			ProjectScope projectScope = new ProjectScope(project);
-			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-			preferences.put("network", network);
+			IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+			preferences.put(PREF_NETWORK, network);
 			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error saving Preference of " + getName() + ": " + PREF_NETWORK);
+			Console.printStackTrace(e);
 		}
 	}
 
 	public String getPortsRaw() {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
-		String portString = preferences.get("ports", "");
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
+		String portString = preferences.get(PREF_PORTS, "");
 		return portString;
 	}
 	
@@ -199,7 +207,7 @@ public class ServiceProject {
 
 	public void setPorts(List<String> ports) {
 		ProjectScope projectScope = new ProjectScope(project);
-		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);
 		
 		StringJoiner joiner = new StringJoiner(SPLIT_STRING);
 		for (String port : ports) {
@@ -209,10 +217,11 @@ public class ServiceProject {
 		}
 		
 		try {
-			preferences.put("ports", joiner.toString());
+			preferences.put(PREF_PORTS, joiner.toString());
 			preferences.flush();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.println("Error saving Preference of " + getName() + ": " + PREF_PORTS);
+			Console.printStackTrace(e);
 		}
 	}
 	

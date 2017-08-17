@@ -66,9 +66,9 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		workspacePanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		workspacePanel.setText("Application Workspace");
 
-		addField(new StringFieldEditor(PreferenceConstants.APP_GROUP_ID, "&Application GroupID", workspacePanel));
-		addField(new StringFieldEditor(PreferenceConstants.APP_ARTIFACT_ID, "&Application ArtifactID", workspacePanel));
-		addField(new StringFieldEditor(PreferenceConstants.APP_VERSION, "&Application Version", workspacePanel));
+		addField(new StringFieldEditor(PreferenceConstants.PREF_APP_GROUP_ID, "&Application GroupID", workspacePanel));
+		addField(new StringFieldEditor(PreferenceConstants.PREF_APP_ARTIFACT_ID, "&Application ArtifactID", workspacePanel));
+		addField(new StringFieldEditor(PreferenceConstants.PREF_APP_VERSION, "&Application Version", workspacePanel));
 
 		Composite workspaceStatusPanel = new Composite(workspacePanel, SWT.NONE);
 		workspaceStatusPanel.setLayout(new GridLayout(3, false));
@@ -90,7 +90,7 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		dockerNetworkPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		dockerNetworkPanel.setText("Application Docker Network");
 
-		StringFieldEditor networkNameEditor = new StringFieldEditor(PreferenceConstants.DOCKER_NETWORK_NAME,
+		StringFieldEditor networkNameEditor = new StringFieldEditor(PreferenceConstants.PREF_DOCKER_NETWORK_NAME,
 				"&Docker Network Name", dockerNetworkPanel);
 		addField(networkNameEditor);
 
@@ -154,9 +154,9 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		dockerPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		dockerPanel.setText("Docker Settings");
 
-		addField(new BooleanFieldEditor(PreferenceConstants.USE_DOCKER_TOOLBOX, "&Use Docker Toolbox", dockerPanel));
+		addField(new BooleanFieldEditor(PreferenceConstants.PREF_USE_DOCKER_TOOLBOX, "&Use Docker Toolbox", dockerPanel));
 
-		addField(new DirectoryFieldEditor(PreferenceConstants.DOCKER_TOOLBOX_PATH, "&Docker Toolbox Directory:", dockerPanel));
+		addField(new DirectoryFieldEditor(PreferenceConstants.PREF_DOCKER_TOOLBOX_PATH, "&Docker Toolbox Directory:", dockerPanel));
 
 		Button button = new Button(dockerPanel, SWT.NONE);
 		button.setText("Test Docker");
