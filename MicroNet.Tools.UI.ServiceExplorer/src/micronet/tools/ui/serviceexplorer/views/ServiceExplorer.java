@@ -234,7 +234,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		});
 		col.setEditingSupport(new ServiceEnablingSupport(viewer));
 
-		// first column is for the service name
 		col = createTableViewerColumn(titles[1], bounds[1], 1);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -244,7 +243,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			}
 		});
 
-		// second column is for the version
 		col = createTableViewerColumn(titles[2], bounds[2], 2);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -254,7 +252,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			}
 		});
 
-		// second column is for the version
 		col = createTableViewerColumn(titles[3], bounds[3], 3);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -264,7 +261,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			}
 		});
 
-		// second column is for the version
 		col = createTableViewerColumn(titles[4], bounds[4], 4);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -277,7 +273,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			}
 		});
 
-		// second column is for the version
 		col = createTableViewerColumn(titles[5], bounds[5], 5);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -290,7 +285,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			}
 		});
 		
-		// second column is for the version
 		col = createTableViewerColumn(titles[6], bounds[6], 6);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override
@@ -300,7 +294,6 @@ public class ServiceExplorer extends ViewPart implements Listener {
 			}
 		});
 		
-		// second column is for the version
 		col = createTableViewerColumn(titles[7], bounds[7], 7);
 		col.setLabelProvider(new ColumnLabelProvider() {
 			@Override

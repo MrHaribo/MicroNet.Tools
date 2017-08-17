@@ -1,7 +1,5 @@
 package micronet.tools.launch.utility;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -9,6 +7,8 @@ import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
+
+import micronet.tools.console.Console;
 
 public final class LaunchGameComposeUtility {
 	private final static String gameComposeName = "game-compose";
@@ -25,8 +25,9 @@ public final class LaunchGameComposeUtility {
 				launch.terminate();
 				ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
 				manager.removeLaunch(launch);
-			} catch (DebugException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				Console.print("Error launching Game Compose");
+				Console.printStackTrace(e);
 			}
 		}
 		
@@ -46,8 +47,9 @@ public final class LaunchGameComposeUtility {
 			
 			ILaunchConfiguration config = workingCopy.doSave();
 			return config;
-		} catch (CoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.print("Error getting Game Compose Launch Config");
+			Console.printStackTrace(e);
 		}
 		return null;
 	}

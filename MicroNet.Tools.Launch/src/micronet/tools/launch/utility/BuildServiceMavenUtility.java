@@ -3,7 +3,6 @@ package micronet.tools.launch.utility;
 import java.util.function.Consumer;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -13,6 +12,7 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.m2e.actions.MavenLaunchConstants;
 
+import micronet.tools.console.Console;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
 
@@ -27,28 +27,32 @@ public final class BuildServiceMavenUtility {
 	}
 
 	public static void buildMavenProject(ServiceProject serviceProject, String mode, Consumer<ILaunch> endCallback) {
-		
-		if (!serviceProject.hasNature(Nature.MAVEN))
-			return;
-		
-		IProject project = serviceProject.getProject();
-		String buildName = getBuildName(project);
-		System.out.println("Building: " + buildName);
-
-		if (LaunchUtility.isLaunchRunning(buildName)) {
-			System.out.println("Launch is already there");
-			LaunchUtility.showWarningMessageBox(buildName + " is currently building.",
-					"Wait for build to end or terminate build");
-			return;
+		try {
+			if (!serviceProject.hasNature(Nature.MAVEN))
+				return;
+			
+			IProject project = serviceProject.getProject();
+			String buildName = getBuildName(project);
+			System.out.println("Building: " + buildName);
+	
+			if (LaunchUtility.isLaunchRunning(buildName)) {
+				System.out.println("Launch is already there");
+				LaunchUtility.showWarningMessageBox(buildName + " is currently building.",
+						"Wait for build to end or terminate build");
+				return;
+			}
+	
+			LaunchUtility.waitForLaunchTermination(buildName, launch -> {
+				System.out.println("Maven build launch terminated: " + launch.getLaunchConfiguration().getName());
+				endCallback.accept(launch);
+			});
+	
+			ILaunchConfiguration buildConfig = getMavenBuildConfig(project);
+			DebugUITools.launch(buildConfig, mode);
+		} catch (Exception e) {
+			Console.print("Error building Service Pom " + serviceProject.getName());
+			Console.printStackTrace(e);
 		}
-
-		LaunchUtility.waitForLaunchTermination(buildName, launch -> {
-			System.out.println("Maven build launch terminated: " + launch.getLaunchConfiguration().getName());
-			endCallback.accept(launch);
-		});
-
-		ILaunchConfiguration buildConfig = getMavenBuildConfig(project);
-		DebugUITools.launch(buildConfig, mode);
 	}
 
 	private static ILaunchConfiguration getMavenBuildConfig(IProject project) {
@@ -64,8 +68,9 @@ public final class BuildServiceMavenUtility {
 			workingCopy.setAttribute(MavenLaunchConstants.ATTR_RUNTIME, "EMBEDDED");
 			ILaunchConfiguration config = workingCopy.doSave();
 			return config;
-		} catch (CoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.print("Error getting Service Pom Launch Configuration" + project.getName());
+			Console.printStackTrace(e);
 		}
 		return null;
 	}

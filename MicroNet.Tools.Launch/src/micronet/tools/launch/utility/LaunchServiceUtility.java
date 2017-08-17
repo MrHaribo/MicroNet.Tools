@@ -1,6 +1,5 @@
 package micronet.tools.launch.utility;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
@@ -11,6 +10,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 
+import micronet.tools.console.Console;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
 
@@ -19,15 +19,25 @@ public final class LaunchServiceUtility {
 	}
 	
 	public static void launchNative(ServiceProject project, String mode) {
-		if (!project.hasNature(Nature.JAVA))
-			return;
-		IJavaProject javaProject = JavaCore.create(project.getProject());
-		launchNative(javaProject, mode);
+		try {
+			if (!project.hasNature(Nature.JAVA))
+				return;
+			IJavaProject javaProject = JavaCore.create(project.getProject());
+			launchNative(javaProject, mode);
+		} catch (Exception e) {
+			Console.print("Error launching native Service");
+			Console.printStackTrace(e);
+		} 
 	}
 	
 	public static void launchNative(IJavaProject javaProject, String mode) {
-		ILaunchConfiguration launchConfig = getNativeLaunchConfiguration(javaProject);
-		DebugUITools.launch(launchConfig, mode);
+		try {
+			ILaunchConfiguration launchConfig = getNativeLaunchConfiguration(javaProject);
+			DebugUITools.launch(launchConfig, mode);
+		} catch (Exception e) {
+			Console.print("Error launching native Java Project");
+			Console.printStackTrace(e);
+		}
 	}
 
 	public static ILaunchConfiguration getNativeLaunchConfiguration(IJavaProject project) {
@@ -41,8 +51,9 @@ public final class LaunchServiceUtility {
 			workingCopy.setAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "ServiceImpl");
 			ILaunchConfiguration config = workingCopy.doSave();
 			return config;
-		} catch (CoreException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.print("Error getting native launch configuration");
+			Console.printStackTrace(e);
 		}
 		return null;
 	}

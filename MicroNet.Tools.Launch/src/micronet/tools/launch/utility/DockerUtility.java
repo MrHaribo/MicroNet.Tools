@@ -1,7 +1,6 @@
 package micronet.tools.launch.utility;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -10,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import micronet.tools.console.Console;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.PreferenceConstants;
 
@@ -32,41 +32,55 @@ public class DockerUtility {
 	}
 	
 	public static void testNetwork(String networkName, Consumer<String> resultCallback) {
-		String dockerCommand = DockerUtility.getDockerCommand();
-
-		ProcessBuilder builder = getProcessBuilder();
-		builder.command(dockerCommand, "network", "inspect", networkName);
-		
-		runDockerProcessAsync(builder, result->{
-			resultCallback.accept(result);
-		});
+		try {
+			String dockerCommand = DockerUtility.getDockerCommand();
+	
+			ProcessBuilder builder = getProcessBuilder();
+			builder.command(dockerCommand, "network", "inspect", networkName);
+			
+			runDockerProcessAsync(builder, result->{
+				resultCallback.accept(result);
+			});
+		} catch (Exception e) {
+			Console.print("Error testing Docker Network " + networkName);
+			Console.printStackTrace(e);
+		}
 	}
 	
 	public static void createNetwork(String networkName, Consumer<String> resultCallback) {
-		String dockerCommand = DockerUtility.getDockerCommand();
-
-		ProcessBuilder builder = getProcessBuilder();
-		builder.command(dockerCommand, "network", "create", "--driver", "bridge", networkName);
-		
-		runDockerProcessAsync(builder, result->{
-			resultCallback.accept(result);
-		});
+		try {
+			String dockerCommand = DockerUtility.getDockerCommand();
+	
+			ProcessBuilder builder = getProcessBuilder();
+			builder.command(dockerCommand, "network", "create", "--driver", "bridge", networkName);
+			
+			runDockerProcessAsync(builder, result->{
+				resultCallback.accept(result);
+			});
+		} catch (Exception e) {
+			Console.print("Error creating Docker Network " + networkName);
+			Console.printStackTrace(e);
+		}
 	}
 
 	public static void testDocker(Consumer<String> resultCallback) {
-
-		String dockerCommand = DockerUtility.getDockerCommand();
-
-		List<String> argArray = new ArrayList<>();
-		argArray.add(dockerCommand);
-		argArray.add("info");
-
-		ProcessBuilder builder = getProcessBuilder();
-		builder.command(argArray);
-		
-		runDockerProcessAsync(builder, result->{
-			resultCallback.accept(result);
-		});
+		try {
+			String dockerCommand = DockerUtility.getDockerCommand();
+	
+			List<String> argArray = new ArrayList<>();
+			argArray.add(dockerCommand);
+			argArray.add("info");
+	
+			ProcessBuilder builder = getProcessBuilder();
+			builder.command(argArray);
+			
+			runDockerProcessAsync(builder, result->{
+				resultCallback.accept(result);
+			});
+		} catch (Exception e) {
+			Console.print("Error testing Docker Installation");
+			Console.printStackTrace(e);
+		}
 	}
 	
 	private static void runDockerProcessAsync(ProcessBuilder builder, Consumer<String> resultCallback) {
@@ -92,8 +106,9 @@ public class DockerUtility {
 					resultCallback.accept(result);
 					break;
 				}
-			} catch (IOException | InterruptedException e) {
-				e.printStackTrace();
+			} catch (Exception e) {
+				Console.print("Error running Docker Process");
+				Console.printStackTrace(e);
 			}
 		}).start();
 	}
@@ -111,8 +126,9 @@ public class DockerUtility {
 			Map<String, String> envVariables = parseEnvVariables(process.getInputStream());
 			System.out.print(envVariables);
 			return envVariables;
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.print("Error retrieving Docker Env Variables");
+			Console.printStackTrace(e);
 			return null;
 		}
 	}
@@ -132,8 +148,9 @@ public class DockerUtility {
 				int keyStart = tokens[0].indexOf("DOCKER");
 				result.put(tokens[0].substring(keyStart), tokens[1]);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Console.print("Error parsing Docker Env Variables");
+			Console.printStackTrace(e);
 		}
 
 		return result;
