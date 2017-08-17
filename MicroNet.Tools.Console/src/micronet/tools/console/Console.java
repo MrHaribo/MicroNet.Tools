@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.ui.DebugUITools;
@@ -24,10 +26,12 @@ import org.eclipse.ui.console.IConsoleView;
 import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
-
-import micronet.tools.core.Icons;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 public class Console extends MessageConsole {
+	
+	private static final ImageDescriptor IMG_MICRONET = getImageDescriptor("micronet_icon.png");
 
 	private static final String globalConsoleName = "MicroNet";
 	private static final Semaphore globalConsoleLock = new Semaphore(0);
@@ -39,10 +43,16 @@ public class Console extends MessageConsole {
 	private List<Consumer<Boolean>> terminationListeners = new ArrayList<>();
 	
 	static {
-		globalConsole = new MessageConsole(globalConsoleName, Icons.IMG_MICRONET);
+		globalConsole = new MessageConsole(globalConsoleName, IMG_MICRONET);
 		globalConsoleStream = globalConsole.newMessageStream();
 		globalConsoleLock.release();
     }
+	
+	public static ImageDescriptor getImageDescriptor(String file) {
+		Bundle bundle = FrameworkUtil.getBundle(Console.class);
+		URL url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path("icons/" + file), null);
+		return ImageDescriptor.createFromURL(url);
+	}
 	
 	public Console(String name, ImageDescriptor imageDescriptor) {
 		super(name, imageDescriptor);
@@ -114,7 +124,11 @@ public class Console extends MessageConsole {
 			IConsoleView view = (IConsoleView) page.showView(id);
 			view.display(console);
 		} catch (PartInitException e) {
-			e.printStackTrace();
+			print("Show Console PartInitException for " + console.getName());
+			printStackTrace(e);
+		} catch (Exception e) {
+			print("Show Console Error for " + console.getName());
+			printStackTrace(e);
 		}
 	}
 
@@ -157,7 +171,11 @@ public class Console extends MessageConsole {
 					if (terminationCallback != null)
 						terminationCallback.run();
 				} catch (IOException e) {
-					e.printStackTrace();
+					print("Print Console Stream IO Error");
+					printStackTrace(e);
+				} catch (Exception e) {
+					print("Print Console Stream Error");
+					printStackTrace(e);
 				}
 			}
 		}.start();
