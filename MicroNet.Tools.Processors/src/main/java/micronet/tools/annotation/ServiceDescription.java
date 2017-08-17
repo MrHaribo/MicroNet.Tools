@@ -68,6 +68,11 @@ public class ServiceDescription {
 		return service.getSimpleName().toString();
 	}
 	
+	@Override
+	public String toString() {
+		return getName();
+	}
+	
 	public String getTypename() {
 		return getPackage() + "." + getName();
 	}

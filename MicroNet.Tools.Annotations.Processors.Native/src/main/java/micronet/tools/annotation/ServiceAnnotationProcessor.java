@@ -19,13 +19,10 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 		String sharedDir = workspacePath + "/shared/";
 		
 		String packageName = processingEnv.getOptions().get("package_name");
-		System.out.println(packageName);
-		
 		context = new ServiceAnnotationProcessorContext(processingEnv, packageName, sharedDir);
 		
 		String generateModelArg = processingEnv.getOptions().get("generate_model");
 		if (generateModelArg != null && generateModelArg.equals("true")) {
-			System.out.println("generate_model=true -> Generate global code");
 			context.generateGlobalCode();
 		}
 	}

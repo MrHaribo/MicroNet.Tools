@@ -76,6 +76,16 @@ public class Console extends MessageConsole {
 			globalConsoleLock.release();
 		}
 	}
+	
+	public static void printStackTrace(Exception exception) {
+		try {
+			globalConsoleLock.acquire();
+			exception.printStackTrace(new PrintStream(globalConsoleStream));
+		} catch (InterruptedException e) {
+		} finally {
+			globalConsoleLock.release();
+		}
+	}
 
 	public static void showGlobalConsole(IWorkbenchPage page) {
 		ConsolePlugin.getDefault().getConsoleManager().addConsoles(new IConsole[]{globalConsole});

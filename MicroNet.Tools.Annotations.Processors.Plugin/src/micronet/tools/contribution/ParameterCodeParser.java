@@ -82,8 +82,6 @@ public class ParameterCodeParser {
 			methodOrder.add(annotation.uri());
 			
 			currentIndex++;
-			
-			System.out.println(closestElement.getSimpleName() + annotation.uri() + "");
 		}
 		
 		for (int i = 0; i < methodOrder.size(); i++) {
@@ -99,8 +97,6 @@ public class ParameterCodeParser {
 			
 			String prefixString = data.substring(previousIndex, methodIndex);
 			parseParameterLists(currentMethod, prefixString);
-			System.out.println("FRAGMENT::::" + methodOrder.get(i));
-			System.out.println(prefixString);
 		}
 	}
 	

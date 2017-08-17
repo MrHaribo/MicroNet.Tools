@@ -93,8 +93,6 @@ public class ModelContribution {
 			if (templateIsNew)
 				SyncTemplateTree.saveTemplateTree(contributedTemplate, sharedDir);
 		}
-		
-		System.out.println(existingTemplateTypes + "");
 	}
 
 	private static EntityTemplateNode combineTemplates(EntityTemplateNode contributedTemplate, EntityTemplateNode existingTemplate) {
@@ -122,7 +120,6 @@ public class ModelContribution {
 								ContributionChoice choice = showStringChoice(title, message, replaceChoice, keepChoice);
 								if (choice == ContributionChoice.REPLACE) {
 									existingVariable.setVariabelDescription(contributedVariable.getVariabelDescription());
-									System.out.println("Variable Type Changed: " + contributedVariable.getVariabelDescription());
 								}
 							}
 							break;
@@ -134,7 +131,6 @@ public class ModelContribution {
 					EntityVariableNode newVariable = new EntityVariableNode(contributedVariable.getName());
 					newVariable.setVariabelDescription(contributedVariable.getVariabelDescription());
 					existingTemplate.addChild(newVariable);
-					System.out.println("Variable Added: " + newVariable.getName());
 				}
 			}
 		}
@@ -174,7 +170,6 @@ public class ModelContribution {
 						contributedParent.addChild(existingTemplate);
 					}
 				}
-				System.out.println("Parent Changed: " + keepChoice);
 			}
 		}
 		
