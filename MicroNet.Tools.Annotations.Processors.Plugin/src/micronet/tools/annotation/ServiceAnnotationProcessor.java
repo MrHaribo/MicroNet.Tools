@@ -118,6 +118,8 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 				String data = new String(Files.readAllBytes(codeFile.toPath()));
 				
 				ParameterCodeParser parser = new ParameterCodeParser(context.getServiceDescription(), data);
+				parser.println = str -> Console.println(str);
+				parser.printStackTrace = e -> Console.printStackTrace(e);
 				api = parser.parseParameterCodes(api);
 				SyncServiceAPI.saveServiceAPI(context.getServiceDescription(), api, sharedDir);
 			} catch (IOException e) {
