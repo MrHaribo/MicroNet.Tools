@@ -2,7 +2,6 @@ package micronet.tools.codeassist;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ui.text.java.ContentAssistInvocationContext;
@@ -10,15 +9,14 @@ import org.eclipse.jdt.ui.text.java.IJavaCompletionProposalComputer;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
-import org.eclipse.jface.text.contentassist.CompletionProposal;
 import org.eclipse.jface.text.contentassist.ContextInformation;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.IContextInformation;
-import org.eclipse.swt.graphics.Image;
 
 import micronet.tools.api.ListenerAPI;
 import micronet.tools.api.ParameterAPI;
 import micronet.tools.api.ServiceAPI;
+import micronet.tools.console.Console;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncServiceAPI;
@@ -29,15 +27,12 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 
 	@Override
 	public void sessionStarted() {
-		System.out.println("Code Assist Session Start");
-
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		fullAPI = SyncServiceAPI.readServiceApi(sharedDir);
 	}
 
 	@Override
-	public List<ICompletionProposal> computeCompletionProposals(ContentAssistInvocationContext context,
-			IProgressMonitor monitor) {
+	public List<ICompletionProposal> computeCompletionProposals(ContentAssistInvocationContext context,	IProgressMonitor monitor) {
 
 		List<ICompletionProposal> proposals = new ArrayList<ICompletionProposal>();
 
@@ -81,19 +76,28 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 
 				for (ListenerAPI listenerApi : service.getListeners()) {
 
-					APICompletionProposal proposal = new APICompletionProposal();
-					proposal.replacementString = listenerApi.getListenerUri();
-					proposal.replacementOffset = pathStartIdx;
-					proposal.replacementLength = uriEndIdx - pathStartIdx;
-					proposal.cursorPosition = listenerApi.getListenerUri().length();
-					proposal.image = Icons.IMG_LETTERBOX.createImage();
-					proposal.additionalProposalInfo = getListenerDescription(service, listenerApi);
-					proposals.add(proposal);
+					try {
+						APICompletionProposal proposal = new APICompletionProposal();
+						proposal.replacementString = listenerApi.getListenerUri();
+						proposal.replacementOffset = pathStartIdx;
+						proposal.replacementLength = uriEndIdx - pathStartIdx;
+						proposal.cursorPosition = listenerApi.getListenerUri().length();
+						proposal.image = Icons.IMG_LETTERBOX.createImage();
+						proposal.additionalProposalInfo = getListenerDescription(service, listenerApi);
+						proposals.add(proposal);
+					} catch (Exception e) {
+						Console.print("Listener Proposal Creation Error for " + listenerApi.getListenerUri());
+						Console.printStackTrace(e);
+					}
 				}
 			}
 
 		} catch (BadLocationException e) {
-			System.out.println("Bad Matcher Location: " + context.getInvocationOffset());
+			Console.print("Completion Proposal Bad Matcher Location" + context.getInvocationOffset());
+			Console.printStackTrace(e);
+		} catch (Exception e) {
+			Console.print("Completion Proposal computing Error");
+			Console.printStackTrace(e);
 		}
 
 		return proposals;
@@ -136,45 +140,43 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 	private List<ICompletionProposal> serviceProposals(int replacementOffset, int replacementLength) {
 		List<ICompletionProposal> proposals = new ArrayList<ICompletionProposal>();
 		for (ServiceAPI serviceApi : fullAPI) {
+			try {
+				APICompletionProposal proposal = new APICompletionProposal();
+				proposal.replacementString = serviceApi.getServiceUri();
+				proposal.replacementOffset = replacementOffset;
+				proposal.replacementLength = replacementLength;
+				proposal.cursorPosition = serviceApi.getServiceUri().length();
+				proposal.image = Icons.IMG_MICRONET.createImage();
+				proposal.additionalProposalInfo = "Service: " + serviceApi.getServiceName() + "\n";
+				proposal.additionalProposalInfo += "URI: " + serviceApi.getServiceUri() + "\n";
 
-			APICompletionProposal proposal = new APICompletionProposal();
-			proposal.replacementString = serviceApi.getServiceUri();
-			proposal.replacementOffset = replacementOffset;
-			proposal.replacementLength = replacementLength;
-			proposal.cursorPosition = serviceApi.getServiceUri().length();
-			proposal.image = Icons.IMG_MICRONET.createImage();
-			proposal.additionalProposalInfo = "Service: " + serviceApi.getServiceName() + "\n";
-			proposal.additionalProposalInfo += "URI: " + serviceApi.getServiceUri() + "\n";
-			
-			if (serviceApi.getDescription() != null && !serviceApi.getDescription().equals(""))
-			proposal.additionalProposalInfo += "\n" + serviceApi.getDescription();
-			proposals.add(proposal);
+				if (serviceApi.getDescription() != null && !serviceApi.getDescription().equals(""))
+					proposal.additionalProposalInfo += "\n" + serviceApi.getDescription();
+				proposals.add(proposal);
+
+			} catch (Exception e) {
+				Console.print("Service Proposal Creation Error for " + serviceApi.getServiceUri());
+				Console.printStackTrace(e);
+			}
 		}
 		return proposals;
 	}
 
 	@Override
-	public List<IContextInformation> computeContextInformation(ContentAssistInvocationContext context,
-			IProgressMonitor monitor) {
-
+	public List<IContextInformation> computeContextInformation(ContentAssistInvocationContext context, IProgressMonitor monitor) {
 		ContextInformation info = new ContextInformation("Context", "Info");
 		List<IContextInformation> proposals = new ArrayList<IContextInformation>();
 		proposals.add(info);
-		System.out.println("Complete Proposals Info");
-
 		return proposals;
 	}
 
 	@Override
 	public String getErrorMessage() {
-
-		System.out.println("Compute Complete Proposals Error Msg");
 		return null;
 	}
 
 	@Override
 	public void sessionEnded() {
-		System.out.println("Session End");
 	}
 
 	protected String getCurrentLine(final ContentAssistInvocationContext context) throws BadLocationException {
