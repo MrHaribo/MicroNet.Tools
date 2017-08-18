@@ -5,14 +5,10 @@ Bundle-SymbolicName: Micronet.Tools.CodeAssist;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: micronet.tools.codeassist.Activator
 Require-Bundle: MicroNet.Tools.Core;bundle-version="1.0.0",
+ MicroNet.Tools.Console,
  org.eclipse.core.runtime,
- org.eclipse.core.resources;bundle-version="3.11.1",
- org.eclipse.core.variables;bundle-version="3.3.0",
  org.eclipse.jdt.ui;bundle-version="3.12.2",
  org.eclipse.jface.text;bundle-version="3.11.2",
- MicroNet.Tools.Annotations.Processors.Plugin;bundle-version="1.0.0",
- org.eclipse.jface,
- MicroNet.Tools.Console,
- org.eclipse.ui.console;bundle-version="3.6.201"
+ org.eclipse.jface
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

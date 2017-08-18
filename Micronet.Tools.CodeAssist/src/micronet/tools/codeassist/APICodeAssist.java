@@ -92,9 +92,6 @@ public class APICodeAssist implements IJavaCompletionProposalComputer {
 				}
 			}
 
-		} catch (BadLocationException e) {
-			Console.print("Completion Proposal Bad Matcher Location" + context.getInvocationOffset());
-			Console.printStackTrace(e);
 		} catch (Exception e) {
 			Console.print("Completion Proposal computing Error");
 			Console.printStackTrace(e);

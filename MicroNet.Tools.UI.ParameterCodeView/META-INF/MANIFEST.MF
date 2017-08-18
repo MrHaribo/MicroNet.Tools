@@ -4,10 +4,9 @@ Bundle-Name: ParameterCodeView
 Bundle-SymbolicName: MicroNet.Tools.UI.ParameterCodeView;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: micronet.tools.ui.parametercodeview.Activator
-Require-Bundle: org.eclipse.ui,
- org.eclipse.core.runtime,
- MicroNet.Tools.Core,
- org.eclipse.core.resources,
- MicroNet.Tools.Console
+Require-Bundle: MicroNet.Tools.Core,
+ MicroNet.Tools.Console,
+ org.eclipse.ui,
+ org.eclipse.core.runtime
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

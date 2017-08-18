@@ -6,14 +6,10 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: micronet.tools.annotation.Activator
 Require-Bundle: MicroNet.Tools.Core;bundle-version="1.0.0",
  org.eclipse.core.runtime,
- org.eclipse.core.variables;bundle-version="3.3.0",
  org.eclipse.core.resources,
- org.eclipse.jdt.core,
  org.eclipse.ui.workbench,
- org.eclipse.swt,
  org.eclipse.jface,
- MicroNet.Tools.Console,
- org.eclipse.ui.console;bundle-version="3.6.201"
+ MicroNet.Tools.Console
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .

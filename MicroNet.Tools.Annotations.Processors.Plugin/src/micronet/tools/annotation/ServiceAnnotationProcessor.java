@@ -1,7 +1,6 @@
 package micronet.tools.annotation;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Set;
 
@@ -122,9 +121,6 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 				parser.printStackTrace = e -> Console.printStackTrace(e);
 				api = parser.parseParameterCodes(api);
 				SyncServiceAPI.saveServiceAPI(context.getServiceDescription(), api, sharedDir);
-			} catch (IOException e) {
-				Console.printStackTrace(e);
-				Console.println("Annotation Processing IO Exception: Generating API Description for " + serviceProject.getName());
 			} catch (Exception e) {
 				Console.println("Annotation Processing Exception: Generating API Description for " + serviceProject.getName());
 				Console.printStackTrace(e);
@@ -141,7 +137,7 @@ public class ServiceAnnotationProcessor extends AbstractProcessor {
 			FileObject resource = filer.getResource(StandardLocation.SOURCE_OUTPUT, "", "");
 			File file = new File(resource.toUri().getPath().replaceAll(resource.getName(), ""));
 			return file.getName();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Console.println("Annotation Processing Exception: Error finding Service Project Location");
 			Console.printStackTrace(e);
 		}

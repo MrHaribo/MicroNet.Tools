@@ -182,7 +182,8 @@ public class ModelContribution {
 		Holder<ContributionChoice> result = new Holder<>();
 		
 		PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
-		    public void run() {
+		    @Override
+			public void run() {
 		        Shell activeShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 		        
 		        ContributionChoiceDialog choiceDialog = new ContributionChoiceDialog(activeShell, title, message, replaceChoice, keepChoice);
