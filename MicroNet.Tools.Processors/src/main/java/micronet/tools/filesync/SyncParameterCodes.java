@@ -175,7 +175,7 @@ public class SyncParameterCodes {
 		try {
 			File parameterCodeFile = new File(sharedDir + CodegenConstants.PARAMETER_CODE);
 			if (!parameterCodeFile.exists()) {
-				String data = Serialization.serializePretty(getBuiltInParameterCodes());
+				String data = Serialization.serializePretty(new String[0]);
 				Files.write(parameterCodeFile.toPath(), data.getBytes());
 			}
 			return parameterCodeFile;

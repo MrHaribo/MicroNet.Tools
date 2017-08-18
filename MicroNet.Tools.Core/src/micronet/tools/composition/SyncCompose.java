@@ -48,8 +48,6 @@ public class SyncCompose {
 			ExternalNetwork network = new ExternalNetwork();
 			network.getExternal().put("name", serviceProject.getNetwork());
 			
-
-			
 			composeFile.getNetworks().put(serviceProject.getNetwork(), network);
 		}
 		
@@ -57,13 +55,18 @@ public class SyncCompose {
 	}
 	
 	public static boolean isServiceInCompose(ServiceProject serviceProject) {
-		return loadComposeFile().getServices().containsKey(serviceProject.getName().toLowerCase());
+		ComposeFile composeFile = loadComposeFile();
+		if (composeFile == null)
+			return false;
+		return composeFile.getServices().containsKey(serviceProject.getName().toLowerCase());
 	}
 	
 	public static ComposeFile loadComposeFile() {
 		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		String ymlFilepath = myWorkspaceRoot.getLocation().append("docker-compose.yml").toOSString();
-		return YamlUtility.readYaml(new File(ymlFilepath), ComposeFile.class);
+		File ymlFile = new File(myWorkspaceRoot.getLocation().append("docker-compose.yml").toOSString());
+		if (!ymlFile.exists())
+			return null;
+		return YamlUtility.readYaml(ymlFile, ComposeFile.class);
 	}
 	
 	public static void saveComposeFile(ComposeFile composeFile) {

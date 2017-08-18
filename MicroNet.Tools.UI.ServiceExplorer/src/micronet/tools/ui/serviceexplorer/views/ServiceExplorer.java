@@ -3,6 +3,10 @@ package micronet.tools.ui.serviceexplorer.views;
 import java.io.InputStream;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -39,11 +43,14 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
+import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.ViewPart;
 
 import micronet.tools.composition.SyncCompose;
@@ -96,6 +103,8 @@ public class ServiceExplorer extends ViewPart implements Listener {
 	private Action buildServiceFull;
 	private Action buildServiceMaven;
 	private Action buildServiceContainer;
+	private Action showServiceConfig;
+	
 	private Action refreshServicesAction;
 
 	private Action nativeDebugEnabledServices;
@@ -393,6 +402,10 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(setNetwork);
 		manager.add(addPorts);
+		
+		manager.add(new Separator());
+		manager.add(showServiceConfig);
+		
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 	}
@@ -532,6 +545,25 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		addPorts.setText("Add Ports...");
 		addPorts.setToolTipText("Specifies exposed ports of the service.");
 		addPorts.setImageDescriptor(Icons.IMG_DOCKER);
+		
+		showServiceConfig = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					try {
+						IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path(selectedProject.getName() + "/.settings/com.github.mrharibo.micronet.preferences.prefs"));
+						IWorkbenchPage page = getSite().getPage();
+						IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(file.getName());
+						page.openEditor(new FileEditorInput(file), desc.getId());
+					} catch (Exception e) {
+						Console.println("Error opening Service Config");
+						Console.printStackTrace(e);
+					}
+				}
+			}
+		};
+		showServiceConfig.setText("Edit Service Config");
+		showServiceConfig.setToolTipText("Opens the Service's MicroNet Serrings File.");
+		showServiceConfig.setImageDescriptor(Icons.IMG_PROPERTIES);
 	}
 
 	private void createLanuchGroupActions() {

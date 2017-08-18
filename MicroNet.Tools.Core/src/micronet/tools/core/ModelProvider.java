@@ -1,6 +1,9 @@
 package micronet.tools.core;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,11 +18,14 @@ import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
+import org.osgi.framework.Bundle;
 
 import micronet.tools.composition.SyncPom;
 import micronet.tools.console.Console;
@@ -188,6 +194,32 @@ public enum ModelProvider {
 			new File(getSharedDir()).mkdir();
 		if (!isApplicationPomPresent())
 			SyncPom.updateMetadataInApplicationPom();
+		syncArchetypeCatalog();
+	}
+	
+	private void syncArchetypeCatalog() {
+		try {
+			File file = new File(getWorkspaceDir() + ".metadata/.plugins/org.eclipse.m2e.core/archetypesInfo.xml");
+			if (file.exists())
+				return;
+			
+			Bundle bundle = Platform.getBundle("com.github.mrharibo.micronet.tools.core");
+			InputStream stream = FileLocator.openStream(bundle, new Path("resources/reference-archetypesInfo.xml"), false);
+	
+			byte[] buffer = new byte[stream.available()];
+			stream.read(buffer);
+	
+			OutputStream outStream = new FileOutputStream(file);
+			outStream.write(buffer);
+			outStream.close();
+			
+			Platform.getBundle("org.eclipse.m2e.core").stop();
+			Platform.getBundle("org.eclipse.m2e.core").start();
+			
+		} catch (Exception e) {
+			Console.println("Error Syncing Archetype Catalog");
+			Console.printStackTrace(e);
+		}
 	}
 	
 	private boolean isSharedDirPresent() {

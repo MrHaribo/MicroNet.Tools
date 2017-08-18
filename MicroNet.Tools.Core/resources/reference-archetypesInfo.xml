@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archetypeCatalogs>
+	<catalog type="remote" location="https://raw.github.com/MrHaribo/Micronet.Archetypes/master/archetype-catalog.xml" description="MicroNet"/>
+	<catalog type="remote" location="https://raw.github.com/MrHaribo/Micronet.Archetypes/master/example-archetype-catalog.xml" description="MicroNet Examples"/>
+</archetypeCatalogs>

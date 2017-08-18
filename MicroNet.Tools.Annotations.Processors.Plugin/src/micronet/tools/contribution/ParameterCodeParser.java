@@ -136,9 +136,17 @@ public class ParameterCodeParser {
 			int codeStart = dataFragment.indexOf("=", currentIndex);
 			int codeEnd = dataFragment.indexOf(",", currentIndex);
 			String codeSnipplet = dataFragment.substring(codeStart, codeEnd);
-			codeSnipplet = codeSnipplet.replaceAll("\\p{Punct}ParameterCode\\p{Punct}", "");
-			params.add(codeSnipplet);
 			
+			
+			String regex = "\\w*ParameterCode\\s*.\\s*";
+			Pattern p = Pattern.compile(regex);
+			Matcher m = p.matcher(codeSnipplet);
+			if (m.find()) {
+				codeSnipplet = codeSnipplet.substring(m.end());
+				codeSnipplet.replaceAll("\\s*", "");
+				codeSnipplet.replaceAll("\\p{Punct}", "");
+				params.add(codeSnipplet);
+			}
 			if (currentIndex != -1)
 				currentIndex++;
 		}

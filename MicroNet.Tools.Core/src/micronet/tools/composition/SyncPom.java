@@ -81,7 +81,7 @@ public final class SyncPom {
 			return;
 		
 		try {
-			Bundle bundle = Platform.getBundle("MicroNet.Tools.Core");
+			Bundle bundle = Platform.getBundle("com.github.mrharibo.micronet.tools.core");
 			InputStream stream = FileLocator.openStream(bundle, new Path("resources/reference-pom.xml"), false);
 	
 			byte[] buffer = new byte[stream.available()];

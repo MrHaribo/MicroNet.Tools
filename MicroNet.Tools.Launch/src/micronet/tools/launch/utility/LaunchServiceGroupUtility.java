@@ -58,17 +58,18 @@ public final class LaunchServiceGroupUtility {
 	public static ILaunchConfiguration getNativeLaunchGroupConfiguration(List<IJavaProject> javaProjects, String mode) {
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			ILaunchConfigurationType type = manager.getLaunchConfigurationType("org.eclipse.cdt.launch.launchGroup");
+			ILaunchConfigurationType type = manager.getLaunchConfigurationType("org.eclipse.debug.core.groups.GroupLaunchConfigurationType");
 			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, launchName);
 			
 			int idx = 0;
 			for (IJavaProject javaProject : javaProjects) {
 				ILaunchConfiguration servicelaunch = LaunchServiceUtility.getNativeLaunchConfiguration(javaProject);
 				
-				workingCopy.setAttribute("org.eclipse.cdt.launch.launchGroup." + idx + ".action", "NONE");
-				workingCopy.setAttribute("org.eclipse.cdt.launch.launchGroup." + idx + ".enabled", "true");
-				workingCopy.setAttribute("org.eclipse.cdt.launch.launchGroup." + idx + ".mode", mode);
-				workingCopy.setAttribute("org.eclipse.cdt.launch.launchGroup." + idx + ".name", servicelaunch.getName());
+				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".action", "NONE");
+				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".adoptIfRunning", false);
+				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".enabled", true);
+				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".mode", mode);
+				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".name", servicelaunch.getName());
 				idx++;
 			}
 			
