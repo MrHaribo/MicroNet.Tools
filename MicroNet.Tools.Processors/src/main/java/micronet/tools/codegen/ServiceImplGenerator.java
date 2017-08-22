@@ -28,11 +28,9 @@ import micronet.tools.annotation.ServiceDescription;
 public class ServiceImplGenerator {
 
 	private Filer filer;
-	private Messager messager;
 
 	public ServiceImplGenerator(Filer filer, Messager messager) {
 		this.filer = filer;
-		this.messager = messager;
 	}
 	
 	public void generateServiceImplementation(ServiceDescription serviceDescription) {

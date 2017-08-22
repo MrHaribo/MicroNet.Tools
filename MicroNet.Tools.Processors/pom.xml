@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	
+
 	<groupId>com.github.mrharibo.micronet</groupId>
 	<artifactId>mn-tools-processors</artifactId>
 	<version>0.1.0</version>
@@ -12,8 +12,67 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
+	<name>mn-tools-processors</name>
+	<description>MicroNet Processors Plug-in to Generate Code from Annotations</description>
+	<url>https://github.com/MrHaribo/MicroNet</url>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License (GPL)</name>
+			<url>http://www.gnu.org/licenses/gpl.txt</url>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<name>Jonas Biedermann</name>
+			<email>jonas.biedermann@gmail.com</email>
+			<organization>Jonas Biedermann Development</organization>
+			<organizationUrl>https://github.com/MrHaribo</organizationUrl>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:git://github.com/MrHaribo/MicroNet.git</connection>
+		<developerConnection>scm:git:ssh://github.com:MrHaribo/MicroNet.git</developerConnection>
+		<url>http://github.com/MrHaribo/MicroNet/tree/master</url>
+	</scm>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.mrharibo.micronet</groupId>
+			<artifactId>mn-micronet</artifactId>
+			<version>0.1.0</version>
+			<type>pom</type>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/com.squareup/javapoet -->
+		<dependency>
+			<groupId>com.squareup</groupId>
+			<artifactId>javapoet</artifactId>
+			<version>1.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
 	<build>
 		<plugins>
+		
+			<!-- jar-with-dependencies is used to inject MicroNet to Plugins 
+		
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<executions>
@@ -30,22 +89,7 @@
 					</descriptorRefs>
 				</configuration>
 			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<phase>verify</phase>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
+			
 			<plugin>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.0.2</version>
@@ -69,28 +113,49 @@
 					</execution>
 				</executions>
 			</plugin>
+			
+			-->
 
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
-
-	<dependencies>
-		<dependency>
-			<groupId>com.github.mrharibo.micronet</groupId>
-			<artifactId>mn-micronet</artifactId>
-			<version>0.1.0</version>
-			<type>pom</type>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/com.squareup/javapoet -->
-		<dependency>
-			<groupId>com.squareup</groupId>
-			<artifactId>javapoet</artifactId>
-			<version>1.9.0</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
 </project>
