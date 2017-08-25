@@ -86,11 +86,11 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		addField(groupIdFieldEditor);
 		
 		StringFieldEditor atrifactIdFieldEditor = new StringFieldEditor(PreferenceConstants.PREF_APP_ARTIFACT_ID, "&Application ArtifactID (required)", workspacePanel);
-		//atrifactIdFieldEditor.setEmptyStringAllowed(false);
+		atrifactIdFieldEditor.setEmptyStringAllowed(false);
 		addField(atrifactIdFieldEditor);
 		
 		StringFieldEditor versionFieldEditor = new StringFieldEditor(PreferenceConstants.PREF_APP_VERSION, "&Application Version (required)", workspacePanel);
-		//versionFieldEditor.setEmptyStringAllowed(false);
+		versionFieldEditor.setEmptyStringAllowed(false);
 		addField(versionFieldEditor);
 	}
 
@@ -170,11 +170,11 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		addField(useToolboxEdit);
 		
 		tolboxInfoLabel = new Label(dockerPanel, SWT.NONE);
-		tolboxInfoLabel.setText("Specify the Docker Toolbox /bin Directory containing the docker, docker-compose executables");
+		tolboxInfoLabel.setText("Specify the Docker Toolbox Directory containing the docker, docker-compose executables");
 		tolboxInfoLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		tolboxInfoLabel.setEnabled(toolboxEnabled);
 		
-		toolboxDirectoryEdit = new DirectoryFieldEditor(PreferenceConstants.PREF_DOCKER_TOOLBOX_PATH, "&Docker Toolbox Bin", dockerPanel);
+		toolboxDirectoryEdit = new DirectoryFieldEditor(PreferenceConstants.PREF_DOCKER_TOOLBOX_PATH, "&Docker Toolbox Directory", dockerPanel);
 		toolboxDirectoryEdit.setEnabled(toolboxEnabled, dockerPanel);
 		addField(toolboxDirectoryEdit);
 		

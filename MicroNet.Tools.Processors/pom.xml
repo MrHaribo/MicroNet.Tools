@@ -4,7 +4,7 @@
 
 	<groupId>com.github.mrharibo.micronet</groupId>
 	<artifactId>mn-tools-processors</artifactId>
-	<version>0.1.0</version>
+	<version>0.2.0</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>com.github.mrharibo.micronet</groupId>
 			<artifactId>mn-micronet</artifactId>
-			<version>0.1.0</version>
+			<version>0.2.0</version>
 			<type>pom</type>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.squareup/javapoet -->
@@ -72,6 +72,7 @@
 		<plugins>
 		
 			<!-- jar-with-dependencies is used to inject MicroNet to Plugins 
+			-->
 		
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -114,7 +115,6 @@
 				</executions>
 			</plugin>
 			
-			-->
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

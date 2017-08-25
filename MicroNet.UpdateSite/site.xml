@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/com.github.mrharibo.micronet_1.0.0.201708191049.jar" id="com.github.mrharibo.micronet" version="1.0.0.201708191049">
+   <feature url="features/com.github.mrharibo.micronet_1.0.0.201708251738.jar" id="com.github.mrharibo.micronet" version="1.0.0.201708251738">
       <category name="com.github.mrharibo.micronet.category"/>
    </feature>
    <category-def name="com.github.mrharibo.micronet.category" label="MicroNet">

@@ -214,32 +214,6 @@ public enum ModelProvider {
 			new File(getSharedDir()).mkdir();
 		if (!isApplicationPomPresent())
 			SyncPom.createApplicationPom();
-		syncArchetypeCatalog();
-	}
-	
-	private void syncArchetypeCatalog() {
-		try {
-			File file = new File(getWorkspaceDir() + ".metadata/.plugins/org.eclipse.m2e.core/archetypesInfo.xml");
-			if (file.exists())
-				return;
-			
-			Bundle bundle = Platform.getBundle("com.github.mrharibo.micronet.tools.core");
-			InputStream stream = FileLocator.openStream(bundle, new Path("resources/reference-archetypesInfo.xml"), false);
-	
-			byte[] buffer = new byte[stream.available()];
-			stream.read(buffer);
-	
-			OutputStream outStream = new FileOutputStream(file);
-			outStream.write(buffer);
-			outStream.close();
-			
-			Platform.getBundle("org.eclipse.m2e.core").stop();
-			Platform.getBundle("org.eclipse.m2e.core").start();
-			
-		} catch (Exception e) {
-			Console.println("Error Syncing Archetype Catalog");
-			Console.printStackTrace(e);
-		}
 	}
 	
 	private boolean isSharedDirPresent() {
