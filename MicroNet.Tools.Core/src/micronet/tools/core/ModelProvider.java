@@ -24,6 +24,8 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.Bundle;
 
@@ -79,6 +81,24 @@ public enum ModelProvider {
 	      | IResourceChangeEvent.PRE_BUILD
 	      | IResourceChangeEvent.POST_BUILD
 	      | IResourceChangeEvent.POST_CHANGE);
+		
+		getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent event) {
+				switch (event.getProperty()) {
+				case PreferenceConstants.PREF_APP_GROUP_ID:
+					SyncPom.updateMetadataInApplicationPom(PreferenceConstants.PREF_APP_GROUP_ID, event.getNewValue().toString());
+					break;
+				case PreferenceConstants.PREF_APP_ARTIFACT_ID:
+					SyncPom.updateMetadataInApplicationPom(PreferenceConstants.PREF_APP_ARTIFACT_ID, event.getNewValue().toString());
+					break;
+				case PreferenceConstants.PREF_APP_VERSION:
+					SyncPom.updateMetadataInApplicationPom(PreferenceConstants.PREF_APP_VERSION, event.getNewValue().toString());
+					break;
+				}
+				
+			}
+		});
 	}
 
 	class DeltaPrinter implements IResourceDeltaVisitor {
@@ -193,7 +213,7 @@ public enum ModelProvider {
 		if (!isSharedDirPresent())
 			new File(getSharedDir()).mkdir();
 		if (!isApplicationPomPresent())
-			SyncPom.updateMetadataInApplicationPom();
+			SyncPom.createApplicationPom();
 		syncArchetypeCatalog();
 	}
 	

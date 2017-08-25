@@ -20,7 +20,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-import micronet.tools.composition.SyncPom;
 import micronet.tools.core.Icons;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.core.PreferenceConstants;
@@ -78,27 +77,21 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 	}
 
 	private void createWorkspacePanel() {
-		Button button;
 		Group workspacePanel = new Group(getFieldEditorParent(), SWT.NONE);
 		workspacePanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		workspacePanel.setText("Application Workspace");
 
-		addField(new StringFieldEditor(PreferenceConstants.PREF_APP_GROUP_ID, "&Application GroupID", workspacePanel));
-		addField(new StringFieldEditor(PreferenceConstants.PREF_APP_ARTIFACT_ID, "&Application ArtifactID", workspacePanel));
-		addField(new StringFieldEditor(PreferenceConstants.PREF_APP_VERSION, "&Application Version", workspacePanel));
-
-		Composite workspaceStatusPanel = new Composite(workspacePanel, SWT.NONE);
-		workspaceStatusPanel.setLayout(new GridLayout(3, false));
-
-		button = new Button(workspaceStatusPanel, SWT.NONE);
-		button.setText("Apply Application Pom Metadata");
-		button.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent arg0) {
-				performApply();
-				SyncPom.updateMetadataInApplicationPom();
-			}
-		});
+		StringFieldEditor groupIdFieldEditor = new StringFieldEditor(PreferenceConstants.PREF_APP_GROUP_ID, "&Application GroupID (required)", workspacePanel);
+		groupIdFieldEditor.setEmptyStringAllowed(false);
+		addField(groupIdFieldEditor);
+		
+		StringFieldEditor atrifactIdFieldEditor = new StringFieldEditor(PreferenceConstants.PREF_APP_ARTIFACT_ID, "&Application ArtifactID (required)", workspacePanel);
+		//atrifactIdFieldEditor.setEmptyStringAllowed(false);
+		addField(atrifactIdFieldEditor);
+		
+		StringFieldEditor versionFieldEditor = new StringFieldEditor(PreferenceConstants.PREF_APP_VERSION, "&Application Version (required)", workspacePanel);
+		//versionFieldEditor.setEmptyStringAllowed(false);
+		addField(versionFieldEditor);
 	}
 
 	private void createDockerNetworkPanel() {

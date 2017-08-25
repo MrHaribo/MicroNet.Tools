@@ -13,9 +13,10 @@ public class PreferenceConstants {
 	public static final String PREF_DOCKER_TOOLBOX_PATH = "dockerToolboxPathPreference";
 	public static final String PREF_USE_DOCKER_TOOLBOX = "useDockerToolboxPreference";
 	public static final String PREF_DOCKER_NETWORK_NAME = "dockerNetworkName";
-	public static final String PREF_APP_GROUP_ID = "appGroupID";
-	public static final String PREF_APP_ARTIFACT_ID = "appArtifactID";
-	public static final String PREF_APP_VERSION = "appVersion";
+	public static final String PREF_APP_GROUP_ID = "groupId";
+	public static final String PREF_APP_ARTIFACT_ID = "artifactId";
+	public static final String PREF_APP_VERSION = "version";
+	public static final String PREF_APP_NAME = "name";
 
 	//Project Specific Settings
 	public static final String PREF_PORTS = "ports";

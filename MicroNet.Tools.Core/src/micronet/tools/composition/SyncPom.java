@@ -20,8 +20,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.osgi.framework.Bundle;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -30,6 +29,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 import micronet.tools.console.Console;
+import micronet.tools.core.ModelProvider;
 import micronet.tools.core.PreferenceConstants;
 import micronet.tools.core.ServiceProject;
 import micronet.tools.core.ServiceProject.Nature;
@@ -90,21 +90,26 @@ public final class SyncPom {
 			OutputStream outStream = new FileOutputStream(pom);
 			outStream.write(buffer);
 			outStream.close();
+			
+			String groupID = getMetadataFromApplicationPom(PreferenceConstants.PREF_APP_GROUP_ID);
+			String artifactID = getMetadataFromApplicationPom(PreferenceConstants.PREF_APP_ARTIFACT_ID);
+			String version = getMetadataFromApplicationPom(PreferenceConstants.PREF_APP_VERSION);
+			
+			IPreferenceStore preferenceStore = ModelProvider.INSTANCE.getPreferenceStore();
+			preferenceStore.setValue(PreferenceConstants.PREF_APP_GROUP_ID, groupID);
+			preferenceStore.setValue(PreferenceConstants.PREF_APP_ARTIFACT_ID, artifactID);
+			preferenceStore.setValue(PreferenceConstants.PREF_APP_VERSION, version);
+			preferenceStore.setDefault(PreferenceConstants.PREF_APP_GROUP_ID, groupID);
+			preferenceStore.setDefault(PreferenceConstants.PREF_APP_ARTIFACT_ID, artifactID);
+			preferenceStore.setDefault(PreferenceConstants.PREF_APP_VERSION, version);
+			
 		} catch (Exception e) {
 			Console.println("Error Creating Application POM");
 			Console.printStackTrace(e);
 		}
 	}
 	
-	public static void updateMetadataInApplicationPom() {
-		ScopedPreferenceStore preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, PreferenceConstants.PREFERENCE_NAME_GLOBAL);
-		String groupID = preferenceStore.getString(PreferenceConstants.PREF_APP_GROUP_ID);
-		String artifactID = preferenceStore.getString(PreferenceConstants.PREF_APP_ARTIFACT_ID);
-		String version = preferenceStore.getString(PreferenceConstants.PREF_APP_VERSION);
-		updateMetadataInApplicationPom(groupID, artifactID, version);
-	}
-	
-	public static String getMetadataFromApplicationPom(String metadataPrefConstant) {
+	public static String getMetadataFromApplicationPom(String key) {
 		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		String pomFilepath = myWorkspaceRoot.getLocation().append("pom.xml").toOSString();
 		File pom = new File(pomFilepath);
@@ -117,19 +122,9 @@ public final class SyncPom {
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 			Document doc = docBuilder.parse(pomFilepath);
 
-			switch (metadataPrefConstant) {
-			case PreferenceConstants.PREF_APP_GROUP_ID:
-				Node groupIDNode = doc.getElementsByTagName("groupId").item(0);
-				return groupIDNode.getFirstChild().getTextContent();
-			case PreferenceConstants.PREF_APP_ARTIFACT_ID:
-				Node artifactIdNode = doc.getElementsByTagName("artifactId").item(0);
-				return artifactIdNode.getFirstChild().getTextContent();
-			case PreferenceConstants.PREF_APP_VERSION:
-				Node versionNode = doc.getElementsByTagName("version").item(0);
-				return versionNode.getFirstChild().getTextContent();
-			default:
-				break;
-			}
+			Node groupIDNode = doc.getElementsByTagName(key).item(0);
+			return groupIDNode.getFirstChild().getTextContent();
+
 		}  catch (Exception e) {
 			Console.println("Error getting Metadata from Application POM");
 			Console.printStackTrace(e);
@@ -137,7 +132,10 @@ public final class SyncPom {
 		return null;
 	}
 	
-	public static void updateMetadataInApplicationPom(String groupID, String artifactID, String version) {
+	public static void updateMetadataInApplicationPom(String key, String value) {
+		if (key == null || value == null || key.equals("") || value.equals(""))
+			return;
+		
 		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		String pomFilepath = myWorkspaceRoot.getLocation().append("pom.xml").toOSString();
 		File pom = new File(pomFilepath);
@@ -149,24 +147,11 @@ public final class SyncPom {
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 			Document doc = docBuilder.parse(pomFilepath);
 			
-			Node groupIDNode = doc.getElementsByTagName("groupId").item(0);
-			Text groupIDNameNode = doc.createTextNode(groupID);
-			groupIDNode.replaceChild(groupIDNameNode, groupIDNode.getFirstChild());
-
-			Node artifactIdNode = doc.getElementsByTagName("artifactId").item(0);
-			Text artifactIdNameNode = doc.createTextNode(artifactID);
-			artifactIdNode.replaceChild(artifactIdNameNode, artifactIdNode.getFirstChild());
-			
-			Node versionNode = doc.getElementsByTagName("version").item(0);
-			Text versionNameNode = doc.createTextNode(version);
-			versionNode.replaceChild(versionNameNode, versionNode.getFirstChild());
-			
-			Node nameNode = doc.getElementsByTagName("name").item(0);
-			Text nameNameNode = doc.createTextNode(artifactID);
-			nameNode.replaceChild(nameNameNode, nameNode.getFirstChild());
+			Node node = doc.getElementsByTagName(key).item(0);
+			Text nameNode = doc.createTextNode(value);
+			node.replaceChild(nameNode, node.getFirstChild());
 			
 			writeToPom(pomFilepath, doc);
-			
 		} catch (Exception e) {
 			Console.println("Error updating Metadata in Application POM");
 			Console.printStackTrace(e);
