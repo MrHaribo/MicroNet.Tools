@@ -393,8 +393,11 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(individualBuildMenu);
 
 		manager.add(new Separator());
-		manager.add(debugService);
-		manager.add(runService);
+		
+		if (selectedProject != null && selectedProject.hasNature(Nature.JAVA)) {
+			manager.add(debugService);
+			manager.add(runService);
+		}
 		manager.add(runServiceContainer);
 		
 		manager.add(new Separator());
