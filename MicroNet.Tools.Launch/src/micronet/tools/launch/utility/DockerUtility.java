@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import micronet.tools.console.Console;
@@ -31,39 +32,49 @@ public class DockerUtility {
 		return useDockerToolbox() ? getDockerToolboxPath() + "/docker-compose" : "docker-compose";
 	}
 	
-	public static void testNetwork(String networkName, Consumer<String> resultCallback) {
+	public static void testNetwork(String networkName, BiConsumer<Boolean, String> resultCallback) {
 		try {
 			String dockerCommand = DockerUtility.getDockerCommand();
 	
 			ProcessBuilder builder = getProcessBuilder();
+			if (builder == null) {
+				resultCallback.accept(false, "Error running docker command: " + dockerCommand);
+				return;
+			}
 			builder.command(dockerCommand, "network", "inspect", networkName);
 			
 			runDockerProcessAsync(builder, result->{
-				resultCallback.accept(result);
+				resultCallback.accept(true, result);
 			});
 		} catch (Exception e) {
 			Console.print("Error testing Docker Network " + networkName);
 			Console.printStackTrace(e);
+			resultCallback.accept(false, "Error testing Docker Network " + networkName);
 		}
 	}
 	
-	public static void createNetwork(String networkName, Consumer<String> resultCallback) {
+	public static void createNetwork(String networkName, BiConsumer<Boolean, String> resultCallback) {
 		try {
 			String dockerCommand = DockerUtility.getDockerCommand();
 	
 			ProcessBuilder builder = getProcessBuilder();
+			if (builder == null) {
+				resultCallback.accept(false, "Error running docker command: " + dockerCommand);
+				return;
+			}
 			builder.command(dockerCommand, "network", "create", "--driver", "bridge", networkName);
 			
 			runDockerProcessAsync(builder, result->{
-				resultCallback.accept(result);
+				resultCallback.accept(true, result);
 			});
 		} catch (Exception e) {
 			Console.print("Error creating Docker Network " + networkName);
 			Console.printStackTrace(e);
+			resultCallback.accept(false, "Error creating Docker Network " + networkName + ":" + e);
 		}
 	}
 
-	public static void testDocker(Consumer<String> resultCallback) {
+	public static void testDocker(BiConsumer<Boolean, String> resultCallback) {
 		try {
 			String dockerCommand = DockerUtility.getDockerCommand();
 	
@@ -72,14 +83,20 @@ public class DockerUtility {
 			argArray.add("info");
 	
 			ProcessBuilder builder = getProcessBuilder();
+			if (builder == null) {
+				resultCallback.accept(false, "Error running docker command: " + dockerCommand);
+				return;
+			}
+			
 			builder.command(argArray);
 			
 			runDockerProcessAsync(builder, result->{
-				resultCallback.accept(result);
+				resultCallback.accept(true, result);
 			});
 		} catch (Exception e) {
 			Console.print("Error testing Docker Installation");
 			Console.printStackTrace(e);
+			resultCallback.accept(false, "Error testing Docker Installation: " + e);
 		}
 	}
 	
@@ -162,8 +179,10 @@ public class DockerUtility {
 
 		if (DockerUtility.useDockerToolbox()) {
 			String dockerToolboxPath = DockerUtility.getDockerToolboxPath();
-			Map<String, String> dockerMachineEnvironmentVariables = DockerUtility
-					.getDockerMachineEnvironmentVariables(dockerToolboxPath);
+			Map<String, String> dockerMachineEnvironmentVariables = DockerUtility.getDockerMachineEnvironmentVariables(dockerToolboxPath);
+			if (dockerMachineEnvironmentVariables == null)
+				return null;
+			
 			for (Map.Entry<String, String> envVar : dockerMachineEnvironmentVariables.entrySet()) {
 				builder.environment().put(envVar.getKey(), envVar.getValue());
 			}

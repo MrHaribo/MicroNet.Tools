@@ -5,6 +5,8 @@ import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.StringFieldEditor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -14,6 +16,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
@@ -37,8 +40,13 @@ import micronet.tools.model.ModelConstants;
 
 public class MicroNetSettings extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
-	Composite dockerStatus;
-	Composite dockerNetworkStatus;
+	private Composite dockerStatus;
+	private Composite dockerNetworkStatus;
+	
+	private Group dockerPanel;
+	private BooleanFieldEditor useToolboxEdit;
+	private Label tolboxInfoLabel;
+	private DirectoryFieldEditor toolboxDirectoryEdit;
 
 	public MicroNetSettings() {
 		super(GRID);
@@ -46,11 +54,7 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		setDescription("The configuration of the MicroNet tools");
 	}
 
-	/**
-	 * Creates the field editors. Field editors are abstractions of the common
-	 * GUI blocks needed to manipulate various types of preferences. Each field
-	 * editor knows how to save and restore itself.
-	 */
+	@Override
 	public void createFieldEditors() {
 
 		createDockerPanel();
@@ -58,6 +62,19 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 		createDockerNetworkPanel();
 
 		createWorkspacePanel();
+	}
+	
+	@Override
+	protected void initialize() {
+		super.initialize();
+		
+		useToolboxEdit.setPropertyChangeListener(new IPropertyChangeListener() {
+			@Override
+			public void propertyChange(PropertyChangeEvent arg0) {
+				tolboxInfoLabel.setEnabled(useToolboxEdit.getBooleanValue());
+				toolboxDirectoryEdit.setEnabled(useToolboxEdit.getBooleanValue(), dockerPanel);
+			}
+		});
 	}
 
 	private void createWorkspacePanel() {
@@ -107,9 +124,9 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 					return;
 				}
 
-				DockerUtility.createNetwork(networkName, result -> {
+				DockerUtility.createNetwork(networkName, (success, result) -> {
 					Display.getDefault().asyncExec(() -> {
-						if (isErrorResult(result)) {
+						if (!success || isErrorResult(result)) {
 							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Creating Network", result);
 							return;
 						}
@@ -129,9 +146,9 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 			public void widgetSelected(SelectionEvent arg0) {
 				String networkName = networkNameEditor.getStringValue();
 
-				DockerUtility.testNetwork(networkName, result -> {
+				DockerUtility.testNetwork(networkName, (success, result) -> {
 					Display.getDefault().asyncExec(() -> {
-						if (isErrorResult(result)) {
+						if (!success || isErrorResult(result)) {
 							dockerNetworkStatus.setBackgroundImage(Icons.IMG_REMOVE.createImage());
 							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Testing Network", result);
 						} else {
@@ -150,22 +167,35 @@ public class MicroNetSettings extends FieldEditorPreferencePage implements IWork
 	}
 
 	private void createDockerPanel() {
-		Group dockerPanel = new Group(getFieldEditorParent(), SWT.NONE);
+		dockerPanel = new Group(getFieldEditorParent(), SWT.NONE);
 		dockerPanel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
 		dockerPanel.setText("Docker Settings");
 
-		addField(new BooleanFieldEditor(PreferenceConstants.PREF_USE_DOCKER_TOOLBOX, "&Use Docker Toolbox", dockerPanel));
-
-		addField(new DirectoryFieldEditor(PreferenceConstants.PREF_DOCKER_TOOLBOX_PATH, "&Docker Toolbox Directory:", dockerPanel));
+		boolean toolboxEnabled = ModelProvider.INSTANCE.getPreferenceStore().getBoolean(PreferenceConstants.PREF_USE_DOCKER_TOOLBOX);
+		
+		useToolboxEdit = new BooleanFieldEditor(PreferenceConstants.PREF_USE_DOCKER_TOOLBOX, "&Use Docker Toolbox", dockerPanel);
+		addField(useToolboxEdit);
+		
+		tolboxInfoLabel = new Label(dockerPanel, SWT.NONE);
+		tolboxInfoLabel.setText("Specify the Docker Toolbox /bin Directory containing the docker, docker-compose executables");
+		tolboxInfoLabel.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 3, 1));
+		tolboxInfoLabel.setEnabled(toolboxEnabled);
+		
+		toolboxDirectoryEdit = new DirectoryFieldEditor(PreferenceConstants.PREF_DOCKER_TOOLBOX_PATH, "&Docker Toolbox Bin", dockerPanel);
+		toolboxDirectoryEdit.setEnabled(toolboxEnabled, dockerPanel);
+		addField(toolboxDirectoryEdit);
+		
+		
 
 		Button button = new Button(dockerPanel, SWT.NONE);
 		button.setText("Test Docker");
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
-				DockerUtility.testDocker(result -> {
+				performApply();
+				DockerUtility.testDocker((success, result) -> {
 					Display.getDefault().asyncExec(() -> {
-						if (isErrorResult(result)) {
+						if (!success || isErrorResult(result)) {
 							dockerStatus.setBackgroundImage(Icons.IMG_REMOVE.createImage());
 							MessageDialog.openError(getFieldEditorParent().getShell(), "Error Testing Docker", result);
 						} else {
