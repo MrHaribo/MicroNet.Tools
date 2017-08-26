@@ -7,6 +7,7 @@ public class PreferenceConstants {
 
 	public static final String SPLIT_STRING = ",";
 	public static final String PREFERENCE_NAME_SERVICE_PROJECT = "com.github.mrharibo.micronet.preferences";
+	public static final String PREFERENCE_NAME_SERVICE_PROJECT_ENV_ARGS = "com.github.mrharibo.micronet.envargs.preferences";
 	public static final String PREFERENCE_NAME_GLOBAL = "MicroNet.Tools.Preferences";
 
 	//Global Settings

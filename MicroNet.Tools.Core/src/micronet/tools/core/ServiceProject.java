@@ -1,12 +1,13 @@
 package micronet.tools.core;
 
-import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_SERVICE_PROJECT;
 import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_GLOBAL;
+import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_SERVICE_PROJECT;
+import static micronet.tools.core.PreferenceConstants.PREFERENCE_NAME_SERVICE_PROJECT_ENV_ARGS;
+import static micronet.tools.core.PreferenceConstants.PREF_ALIAS;
 import static micronet.tools.core.PreferenceConstants.PREF_CONTAINER_NAME;
 import static micronet.tools.core.PreferenceConstants.PREF_CONTRIBUTE_SHARED_DIR;
 import static micronet.tools.core.PreferenceConstants.PREF_ENABLED;
 import static micronet.tools.core.PreferenceConstants.PREF_NETWORK;
-import static micronet.tools.core.PreferenceConstants.PREF_ALIAS;
 import static micronet.tools.core.PreferenceConstants.PREF_PORTS;
 import static micronet.tools.core.PreferenceConstants.SPLIT_STRING;
 
@@ -14,8 +15,10 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 
@@ -171,6 +174,36 @@ public class ServiceProject {
 		return preferences.get(PREF_CONTAINER_NAME, getName().toLowerCase());
     }
 
+	public Map<String, String> getEnvArgs() {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT_ENV_ARGS);
+		Map<String, String> result = new HashMap<>();
+		try {
+			for (String key : preferences.keys()) {
+				result.put(key, preferences.get(key, null));
+			}
+		} catch (Exception e) {
+			Console.println("Error loading Preference of " + getName() + ": Native Environment Variables");
+			Console.printStackTrace(e);
+		}
+		return result;
+	}
+	
+	public void setEnvArgs(Map<String, String> args) {
+		ProjectScope projectScope = new ProjectScope(project);
+		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT_ENV_ARGS);
+		try {
+			preferences.clear();
+			for (Map.Entry<String, String> arg : args.entrySet()) {
+				preferences.put(arg.getKey(), arg.getValue());
+			}
+			preferences.flush();
+		} catch (Exception e) {
+			Console.println("Error saving Preference of " + getName() + ": Native Environment Variables");
+			Console.printStackTrace(e);
+		}
+	}
+    
 	public String getNetwork() {
 		ProjectScope projectScope = new ProjectScope(project);
 		IEclipsePreferences preferences = projectScope.getNode(PREFERENCE_NAME_SERVICE_PROJECT);

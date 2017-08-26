@@ -72,7 +72,6 @@
 		<plugins>
 		
 			<!-- jar-with-dependencies is used to inject MicroNet to Plugins 
-			-->
 		
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -115,6 +114,7 @@
 				</executions>
 			</plugin>
 			
+			-->
 
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

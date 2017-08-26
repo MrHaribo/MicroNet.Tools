@@ -1,6 +1,5 @@
 package micronet.tools.launch.utility;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.debug.core.DebugPlugin;
@@ -9,12 +8,9 @@ import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.JavaCore;
 
 import micronet.tools.console.Console;
 import micronet.tools.core.ServiceProject;
-import micronet.tools.core.ServiceProject.Nature;
 
 public final class LaunchServiceGroupUtility {
 	
@@ -25,45 +21,31 @@ public final class LaunchServiceGroupUtility {
 	
 	public static void launchNativeGroup(List<ServiceProject> projects, String mode) {
 		try {
-			List<IJavaProject> javaProjects = new ArrayList<>();
-			for (ServiceProject serviceProject : projects) {
-				if (!serviceProject.hasNature(Nature.JAVA))
-					continue;
-				IJavaProject javaProject = JavaCore.create(serviceProject.getProject());
-				javaProjects.add(javaProject);
-			}
-			launchNativeJavaGroup(javaProjects, mode);
-		} catch (Exception e) {
-			Console.print("Error launch native Service launch group");
-			Console.printStackTrace(e);
-		}
-	}
-	
-	public static void launchNativeJavaGroup(List<IJavaProject> javaProjects, String mode) {
-		try {
-			if (LaunchUtility.isLaunchRunning(launchName)) {
-				System.out.println("Launch is already there");
-				LaunchUtility.showWarningMessageBox(launchName + " is currently running.", "Multiple Instances concurrent of the complete game not supported;");
-				return;
-			}
-			
-			ILaunchConfiguration launchConfig = getNativeLaunchGroupConfiguration(javaProjects, mode);
-			DebugUITools.launch(launchConfig, mode);
+			ILaunchConfiguration launchConfig = getNativeLaunchGroupConfiguration(projects, mode);
+			if (launchConfig != null)
+				DebugUITools.launch(launchConfig, mode);
 		} catch (Exception e) {
 			Console.print("Error launch native Java launch group");
 			Console.printStackTrace(e);
 		}
 	}
 
-	public static ILaunchConfiguration getNativeLaunchGroupConfiguration(List<IJavaProject> javaProjects, String mode) {
+	private static ILaunchConfiguration getNativeLaunchGroupConfiguration(List<ServiceProject> projects, String mode) {
 		try {
 			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
 			ILaunchConfigurationType type = manager.getLaunchConfigurationType("org.eclipse.debug.core.groups.GroupLaunchConfigurationType");
 			ILaunchConfigurationWorkingCopy workingCopy = type.newInstance(null, launchName);
 			
+			if (workingCopy == null) {
+				Console.print("Eclipse Oxygen is needed to use Launch Groups");
+				return null;
+			}
+			
 			int idx = 0;
-			for (IJavaProject javaProject : javaProjects) {
-				ILaunchConfiguration servicelaunch = LaunchServiceUtility.getNativeLaunchConfiguration(javaProject);
+			for (ServiceProject project : projects) {
+				ILaunchConfiguration servicelaunch = LaunchServiceUtility.getNativeLaunchConfiguration(project);
+				if (servicelaunch == null)
+					continue;
 				
 				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".action", "NONE");
 				workingCopy.setAttribute("org.eclipse.debug.core.launchGroup." + idx + ".adoptIfRunning", false);

@@ -1,54 +1,46 @@
 package micronet.tools.launch;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.ui.IEditorPart;
 
+import micronet.tools.console.Console;
+import micronet.tools.core.ModelProvider;
+import micronet.tools.core.ServiceProject;
 import micronet.tools.launch.utility.LaunchServiceUtility;
 
 public class ServiceLaunchShortcut implements ILaunchShortcut {
 
 	@Override
 	public void launch(ISelection selection, String mode) {
-		System.out.println("Launch selection: " + mode);
 		try {
 			if (selection instanceof TreeSelection) {
 				TreeSelection treeSelection = (TreeSelection) selection;
 				
 				for (Object selectedObject : treeSelection.toList()) {
-					IJavaProject javaProject = null;
-					
-					if (selectedObject instanceof IJavaProject) {
-						javaProject = (IJavaProject) selectedObject;
-					} else if (selectedObject instanceof IProject) {
+					ServiceProject serviceProject = null;
+					if (selectedObject instanceof IProject) {
 						IProject project = (IProject) selectedObject;
-						if (project.hasNature(JavaCore.NATURE_ID))
-							javaProject = JavaCore.create(project);
+						serviceProject = ModelProvider.INSTANCE.getServiceProject(project.getName());
+					} else if (selectedObject instanceof IJavaProject) {
+						IJavaProject project = (IJavaProject) selectedObject;
+						serviceProject = ModelProvider.INSTANCE.getServiceProject(project.getProject().getName());
 					}
-					
-					if (javaProject == null)
-						throw new Exception("Unknown Project Type");
-	
-					String projectName = javaProject.getElementName();
-					System.out.println("Launching: " + projectName);
-					
-					LaunchServiceUtility.launchNative(javaProject, mode);
+					if (serviceProject == null)
+						return;
+					LaunchServiceUtility.launchNative(serviceProject, mode);
 				}
 			}
-		} catch (CoreException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Console.print("Error launching service native");
+			Console.printStackTrace(e);
 		}
 	}
 
 	@Override
 	public void launch(IEditorPart editor, String mode) {
-		System.out.println("Editor: " + mode);
 	}
 }

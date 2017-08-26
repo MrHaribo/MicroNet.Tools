@@ -94,6 +94,7 @@ public class ServiceExplorer extends ViewPart implements Listener {
 
 	private Action setNetwork;
 	private Action addPorts;
+	private Action addEnvArgs;
 	
 	private Action debugService;
 	private Action runService;
@@ -403,6 +404,9 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		manager.add(new Separator());
 		manager.add(setNetwork);
 		manager.add(addPorts);
+		if (selectedProject != null && selectedProject.hasNature(Nature.JAVA)) {
+			manager.add(addEnvArgs);
+		}
 		
 		manager.add(new Separator());
 		manager.add(showServiceConfig);
@@ -546,6 +550,17 @@ public class ServiceExplorer extends ViewPart implements Listener {
 		addPorts.setText("Add Ports...");
 		addPorts.setToolTipText("Specifies exposed ports of the service.");
 		addPorts.setImageDescriptor(Icons.IMG_DOCKER);
+		
+		addEnvArgs = new Action() {
+			public void run() {
+				if (selectedProject != null) {
+					showEnvArgDialog(selectedProject);
+				}
+			}
+		};
+		addEnvArgs.setText("Add Native Env Args...");
+		addEnvArgs.setToolTipText("Add environment arguments for native launches.");
+		addEnvArgs.setImageDescriptor(Icons.IMG_NATIVE_JAVA);
 		
 		showServiceConfig = new Action() {
 			public void run() {
@@ -734,6 +749,14 @@ public class ServiceExplorer extends ViewPart implements Listener {
         // get the new values from the dialog
         if (dialog.open() == Window.OK) {
         	serviceProject.setPorts(dialog.getPorts());
+        }
+	}
+	
+	private void showEnvArgDialog(ServiceProject serviceProject) {
+		AddEnvArgsDialog dialog = new AddEnvArgsDialog(viewer.getControl().getShell(), serviceProject);
+        // get the new values from the dialog
+        if (dialog.open() == Window.OK) {
+        	serviceProject.setEnvArgs(dialog.getEnvArgs());
         }
 	}
 	
