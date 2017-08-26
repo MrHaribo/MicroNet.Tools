@@ -69,7 +69,7 @@ public class AddPortsDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		String[] portArray = portsText.getText().split("\r\n");
+		String[] portArray = portsText.getText().split("\\r?\\n");
 		ports = new ArrayList<>(Arrays.asList(portArray));
 		ports.remove("");
 		super.okPressed();
