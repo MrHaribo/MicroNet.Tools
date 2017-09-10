@@ -53,27 +53,12 @@ public class TemplateNodeDetails extends NodeDetails {
 				addChildVariableAction.run();
 			}
 		});
-
-		Label label = new Label(this, SWT.NONE);
-		label.setText("Default Constructor");
-		
-		Button check = new Button(this, SWT.CHECK);
-		check.setSelection(templateNode.hasDefaultCtor());
-		check.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				templateNode.setHasDefaultCtor(check.getSelection());
-				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
-				SyncTemplateTree.saveTemplateTree(templateNode, sharedDir);
-			}
-		});
-		
 		
 		String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 		Map<String, Set<String>> templateUsage = SyncTemplateTree.getTemplateUsage(sharedDir);
 		
 		if (templateUsage.containsKey(templateNode.getName())) {
-			label = new Label(this, SWT.NONE);
+			Label label = new Label(this, SWT.NONE);
 			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 			label.setText("Used by Templates:");
 

@@ -1,6 +1,5 @@
 package micronet.tools.filesync;
 
-import static micronet.tools.model.ModelConstants.DEFAULT_CTOR_PROP_KEY;
 import static micronet.tools.model.ModelConstants.ENTITY_TEMPLATE_ROOT_KEY;
 import static micronet.tools.model.ModelConstants.NAME_PROP_KEY;
 import static micronet.tools.model.ModelConstants.PARENT_PROP_KEY;
@@ -359,7 +358,6 @@ public class SyncTemplateTree {
 		parentName = parentName != ENTITY_TEMPLATE_ROOT_KEY ? parentName : null;
 		template.addProperty(NAME_PROP_KEY, node.getName());
 		template.addProperty(PARENT_PROP_KEY, parentName);
-		template.addProperty(DEFAULT_CTOR_PROP_KEY, node.hasDefaultCtor());
 
 		JsonArray variables = new JsonArray();
 
@@ -379,11 +377,6 @@ public class SyncTemplateTree {
 		String templateName = templateObject.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
 		EntityTemplateNode templateNode = new EntityTemplateNode(templateName);
 		
-		if (templateObject.getAsJsonObject().get(DEFAULT_CTOR_PROP_KEY) != null) {
-			boolean hasDefaultCtor = templateObject.getAsJsonObject().get(DEFAULT_CTOR_PROP_KEY).getAsBoolean();
-			templateNode.setHasDefaultCtor(hasDefaultCtor);
-		}
-		
 		JsonArray variables = templateObject.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
 		for (JsonElement variable : variables) {
 			EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
@@ -398,11 +391,16 @@ public class SyncTemplateTree {
 	private static EntityVariableNode deserializeVariable(JsonObject variableObject) {
 		String variableName = variableObject.getAsJsonPrimitive(ModelConstants.NAME_PROP_KEY).getAsString();
 		JsonObject variableDetails = variableObject.getAsJsonObject(ModelConstants.TYPE_PROP_KEY);
-
+		
 		EntityVariableNode variableNode = new EntityVariableNode(variableName);
 		VariableDescription variabelDescription = deserializeVariableDescription(variableDetails);
-
 		variableNode.setVariabelDescription(variabelDescription);
+		
+		if (variableObject.getAsJsonPrimitive(ModelConstants.CTOR_ARGUMENT_PROP_KEY) != null) {
+			boolean ctorArg = variableObject.getAsJsonPrimitive(ModelConstants.CTOR_ARGUMENT_PROP_KEY).getAsBoolean();
+			variableNode.setCtorArg(ctorArg);
+		}
+		
 		return variableNode;
 	}
 	
@@ -410,6 +408,7 @@ public class SyncTemplateTree {
 		
 		JsonObject variableObject = new JsonObject();
 		variableObject.addProperty(ModelConstants.NAME_PROP_KEY, variableNode.getName());
+		variableObject.addProperty(ModelConstants.CTOR_ARGUMENT_PROP_KEY, variableNode.isCtorArg());
 		
 		JsonElement variableDetails = new Gson().toJsonTree(variableNode.getVariabelDescription());
 		variableObject.add(ModelConstants.TYPE_PROP_KEY, variableDetails);

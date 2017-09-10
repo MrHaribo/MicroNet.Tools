@@ -11,6 +11,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -131,6 +132,22 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					variableNode.setVariabelDescription(variableDesc);
 				}
 				updateVariableDetails();
+			}
+		});
+		
+		Composite ctorContainer = new Composite(this, SWT.NONE);
+		ctorContainer.setLayout(new GridLayout(2, false));
+		
+		label = new Label(ctorContainer, SWT.NONE);
+		label.setText("Constructor Argument");
+		
+		Button check = new Button(ctorContainer, SWT.CHECK);
+		check.setSelection(variableNode.isCtorArg());
+		check.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				variableNode.setCtorArg(check.getSelection());
+				saveTemplate();
 			}
 		});
 

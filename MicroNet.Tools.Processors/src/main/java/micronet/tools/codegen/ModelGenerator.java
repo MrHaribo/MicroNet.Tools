@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeSpec.Builder;
 
 import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncTemplateTree;
@@ -29,6 +29,7 @@ import micronet.tools.model.nodes.EntityTemplateRootNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumNode;
 import micronet.tools.model.nodes.EnumRootNode;
+import micronet.tools.model.nodes.ModelNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
@@ -92,81 +93,83 @@ public class ModelGenerator {
 			
 			List<MethodSpec> methods = new ArrayList<>();
 			List<FieldSpec> fields = new ArrayList<>();
+			List<FieldSpec> ctorArgs = new ArrayList<>();
 			
 			for (INode node : templateNode.getChildren()) {
 				
-				MethodSpec setter = null;
-				MethodSpec getter = null;
-				FieldSpec field = null;
-				
-				String variableName = node.getName();
-				
 				if (node instanceof EntityVariableNode) {
+					
 					EntityVariableNode variableNode = (EntityVariableNode) node;
 					
-					switch (variableNode.getVariabelDescription().getType()) {
-					case BOOLEAN:
-						field = FieldSpec.builder(boolean.class, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(boolean.class, variableName);
-						getter = generateGetter(boolean.class, variableName);
-						break;
-					case CHAR:
-						field = FieldSpec.builder(boolean.class, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(boolean.class, variableName);
-						getter = generateGetter(boolean.class, variableName);
-						break;
-					case COMPONENT:
-						ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariabelDescription();
-						TypeName componentClassName = ClassName.get(packageName, componentDesc.getComponentType());
-						field = FieldSpec.builder(componentClassName, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(componentClassName, variableName);
-						getter = generateGetter(componentClassName, variableName);
-						break;
-					case ENUM:
-						EnumDescription enumDesc = (EnumDescription) variableNode.getVariabelDescription();
-						TypeName enumTypeName = ClassName.get(packageName, enumDesc.getEnumType());
-						field = FieldSpec.builder(enumTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(enumTypeName, variableName);
-						getter = generateGetter(enumTypeName, variableName);
-						break;
-					case LIST:
-					case SET:
-					case MAP:
-						TypeName entryTypeName = getParametrizedEntryTypeName(variableNode.getVariabelDescription(), packageName);
-						field = FieldSpec.builder(entryTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(entryTypeName, variableName);
-						getter = generateGetter(entryTypeName, variableName);
-						break;
-					case NUMBER:
-						NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
-						Type numberType = getPrimitiveNumberType(numDesc.getNumberType());
-						field = FieldSpec.builder(numberType, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(numberType, variableName);
-						getter = generateGetter(numberType, variableName);
-						break;
-					case STRING:
-						field = FieldSpec.builder(String.class, variableName).addModifiers(Modifier.PRIVATE).build();
-						setter = generateSetter(String.class, variableName);
-						getter = generateGetter(String.class, variableName);
-						break;
-					default:
-						break;
-						
-					}
-				}
+					FieldSpec field = generateField(variableNode);
+					
+					if (field == null)
+						continue;
 				
-				if (field != null) {
+					MethodSpec setter = generateSetter(field.type, variableNode.getName());
+					MethodSpec getter = generateGetter(field.type, variableNode.getName());
+					
 					methods.add(setter);
 					methods.add(getter);
 					fields.add(field);
+					
+					if (variableNode.isCtorArg()) {
+						ctorArgs.add(field);
+					}
 				}
 			}
 
-			Builder entityBuilder = TypeSpec.classBuilder(templateNode.getName())
+			TypeSpec.Builder entityBuilder = TypeSpec.classBuilder(templateNode.getName())
 			    .addModifiers(Modifier.PUBLIC)
 			    .addMethods(methods)
 			    .addFields(fields);
 			
+			INode parentNode = templateNode.getParent();
+			List<FieldSpec> parentCtorArgs = new ArrayList<>();
+			while (parentNode != null) {
+				List<FieldSpec> tempList = new ArrayList<>();
+				for (INode node : ((ModelNode)parentNode).getChildren()) {
+					if (node instanceof EntityVariableNode) {
+						EntityVariableNode potentialCtorArg = (EntityVariableNode)node;
+						if (potentialCtorArg.isCtorArg()) {
+							FieldSpec argSpec = generateField(potentialCtorArg);
+							tempList.add(argSpec);
+						}
+					}
+				}
+				Collections.reverse(tempList);
+				parentCtorArgs.addAll(tempList);
+				parentNode = parentNode.getParent();
+			}
+			
+			if (ctorArgs.size() > 0 || parentCtorArgs.size() > 0) {
+				MethodSpec.Builder ctorBuilder = MethodSpec.constructorBuilder()
+						.addModifiers(Modifier.PUBLIC);
+				
+				if (parentCtorArgs.size() > 0) {
+					
+					Collections.reverse(parentCtorArgs);
+					StringBuilder superCtorArgs = new StringBuilder();
+					for (FieldSpec parentCtorArg : parentCtorArgs) {
+						superCtorArgs.append(parentCtorArg.name);
+						superCtorArgs.append(", ");
+					}
+					
+					ctorBuilder.addStatement("super($L)", superCtorArgs.substring(0, superCtorArgs.toString().lastIndexOf(",")));
+				}
+				
+				for (FieldSpec parentCtorArg : parentCtorArgs) {
+					ctorBuilder.addParameter(parentCtorArg.type, parentCtorArg.name);
+				}
+
+				for (FieldSpec ctorArg : ctorArgs) {
+					ctorBuilder.addParameter(ctorArg.type, ctorArg.name);
+					ctorBuilder.addStatement("this.$N = $N", ctorArg.name, ctorArg.name);
+				}
+				
+				entityBuilder.addMethod(ctorBuilder.build());
+			}
+
 			if (templateNode.getParent() != null) {
 				if (templateNode.getParent() instanceof EntityTemplateNode && !(templateNode.getParent() instanceof EntityTemplateRootNode)) {
 					TypeName superTypename = ClassName.get(packageName, templateNode.getParent().getName());
@@ -274,8 +277,39 @@ public class ModelGenerator {
 			return Object.class;
 		}
 	}
+	
+	private FieldSpec generateField(EntityVariableNode variableNode) {
+		String variableName = variableNode.getName();
+		switch (variableNode.getVariabelDescription().getType()) {
+		case BOOLEAN:
+			return FieldSpec.builder(boolean.class, variableName).addModifiers(Modifier.PRIVATE).build();
+		case CHAR:
+			return FieldSpec.builder(char.class, variableName).addModifiers(Modifier.PRIVATE).build();
+		case COMPONENT:
+			ComponentDescription componentDesc = (ComponentDescription) variableNode.getVariabelDescription();
+			TypeName componentClassName = ClassName.get(packageName, componentDesc.getComponentType());
+			return FieldSpec.builder(componentClassName, variableName).addModifiers(Modifier.PRIVATE).build();
+		case ENUM:
+			EnumDescription enumDesc = (EnumDescription) variableNode.getVariabelDescription();
+			TypeName enumTypeName = ClassName.get(packageName, enumDesc.getEnumType());
+			return FieldSpec.builder(enumTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
+		case LIST:
+		case SET:
+		case MAP:
+			TypeName entryTypeName = getParametrizedEntryTypeName(variableNode.getVariabelDescription(), packageName);
+			return FieldSpec.builder(entryTypeName, variableName).addModifiers(Modifier.PRIVATE).build();
+		case NUMBER:
+			NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
+			Type numberType = getPrimitiveNumberType(numDesc.getNumberType());
+			return FieldSpec.builder(numberType, variableName).addModifiers(Modifier.PRIVATE).build();
+		case STRING:
+			return FieldSpec.builder(String.class, variableName).addModifiers(Modifier.PRIVATE).build();
+		default:
+			return null;
+		}
+	}
 
-	private static MethodSpec generateSetter(TypeName typeName, String variableName) {
+	private MethodSpec generateSetter(TypeName typeName, String variableName) {
 		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
 		return MethodSpec.methodBuilder("set" + nameFirstUpper)
 			    .addModifiers(Modifier.PUBLIC)
@@ -285,16 +319,7 @@ public class ModelGenerator {
 			    .build();
 	}
 	
-	private static MethodSpec generateSetter(Type type, String variableName) {
-		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
-		return MethodSpec.methodBuilder("set" + nameFirstUpper)
-			    .addModifiers(Modifier.PUBLIC)
-			    .returns(void.class)
-			    .addParameter(type, variableName)
-			    .addStatement("this." + variableName + "=" + variableName)
-			    .build();
-	}
-	private static MethodSpec generateGetter(TypeName typeName, String variableName) {
+	private MethodSpec generateGetter(TypeName typeName, String variableName) {
 		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
 		return MethodSpec.methodBuilder("get" + nameFirstUpper)
 			    .addModifiers(Modifier.PUBLIC)
@@ -302,13 +327,4 @@ public class ModelGenerator {
 			    .addStatement("return " + variableName)
 			    .build();
 	}
-	private static MethodSpec generateGetter(Type type, String variableName) {
-		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
-		return MethodSpec.methodBuilder("get" + nameFirstUpper)
-			    .addModifiers(Modifier.PUBLIC)
-			    .returns(type)
-			    .addStatement("return " + variableName)
-			    .build();
-	}
-	
 }

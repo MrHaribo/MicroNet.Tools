@@ -17,7 +17,7 @@ public class ModelConstants {
 	public static final String ENTRY_TYPE_PROP_KEY = "entryType";
 	public static final String KEY_TYPE_PROP_KEY = "keyType";
 	public static final String PARENT_PROP_KEY = "parent";
-	public static final String DEFAULT_CTOR_PROP_KEY = "defaultCtor";
+	public static final String CTOR_ARGUMENT_PROP_KEY = "ctorArg";
 	
 	public static File getModelDir(String sharedDir) {
 		File modelDir = new File(sharedDir + "model/");
