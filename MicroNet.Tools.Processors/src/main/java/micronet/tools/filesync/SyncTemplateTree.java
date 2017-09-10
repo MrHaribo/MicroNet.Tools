@@ -1,5 +1,6 @@
 package micronet.tools.filesync;
 
+import static micronet.tools.model.ModelConstants.DEFAULT_CTOR_PROP_KEY;
 import static micronet.tools.model.ModelConstants.ENTITY_TEMPLATE_ROOT_KEY;
 import static micronet.tools.model.ModelConstants.NAME_PROP_KEY;
 import static micronet.tools.model.ModelConstants.PARENT_PROP_KEY;
@@ -15,7 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.Semaphore;
 
 import com.google.gson.Gson;
@@ -211,21 +211,9 @@ public class SyncTemplateTree {
 		if (templateObject == null)
 			return null;
 		
-		String templateName = templateObject.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
-		EntityTemplateNode templateNode = new EntityTemplateNode(templateName);
-		
-		JsonArray variables = templateObject.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
-		for (JsonElement variable : variables) {
-			EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
-			templateNode.addChild(variableNode);
-		}
-		
-		JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
-		parentName.Obj.Value = parentNameObject == null ? null : parentNameObject.getAsString();
-
-		return templateNode;
+		return deserializeTemplateNode(templateObject, parentName);
 	}
-
+	
 	public static EntityTemplateRootNode loadTemplateTree(String sharedDir) {
 
 		File templateDir = getTemplateDir(sharedDir);
@@ -256,77 +244,47 @@ public class SyncTemplateTree {
 
 		return constructTemplateTree(templateFileObjects);
 	}
-
+	
 	private static EntityTemplateRootNode constructTemplateTree(List<JsonElement> templateFileObjects) {
-
-		Map<String, List<JsonElement>> parentMapping = new HashMap<>();
-		Stack<JsonElement> parentObjects = new Stack<>();
-		Map<String, EntityTemplateNode> processedNodes = new HashMap<>();
-
+		
 		EntityTemplateRootNode templateTreeRoot = new EntityTemplateRootNode(ENTITY_TEMPLATE_ROOT_KEY);
 
-		for (JsonElement templateObject : templateFileObjects) {
-
-			JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
-			String parentName = parentNameObject == null ? null : parentNameObject.getAsString();
-
-			if (parentName == null) {
-				parentObjects.add(templateObject);
+		Map<String, EntityTemplateNode> nodeMapping = new HashMap<>();
+		Map<String, List<String>> parentMapping = new HashMap<>();
+		
+		for (JsonElement templatElement : templateFileObjects) {
+			String templateName = templatElement.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
+			
+			XOUT<String> parentNameOut = new XOUT<>(null);    
+			EntityTemplateNode template = deserializeTemplateNode(templatElement, parentNameOut);
+			
+			nodeMapping.put(templateName, template);
+			
+			if (parentNameOut.Obj.Value != null) {
+				
+				if (!parentMapping.containsKey(parentNameOut.Obj.Value))
+					parentMapping.put(parentNameOut.Obj.Value, new ArrayList<>());
+				parentMapping.get(parentNameOut.Obj.Value).add(templateName);
+				
 			} else {
-				if (!parentMapping.containsKey(parentName))
-					parentMapping.put(parentName, new ArrayList<>());
-				parentMapping.get(parentName).add(templateObject);
+				templateTreeRoot.addChild(template);
 			}
 		}
-
-		while (!parentObjects.isEmpty()) {
-
-			JsonElement parentTemplate = parentObjects.pop();
-			String potentialParentName = parentTemplate.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
-
-			EntityTemplateNode parentNode = null;
-			if (processedNodes.containsKey(potentialParentName)) {
-				// Template was added by a parent before (cannot be a root
-				// element)
-				parentNode = processedNodes.get(potentialParentName);
-			} else {
-				parentNode = new EntityTemplateNode(potentialParentName);
-				processedNodes.put(potentialParentName, parentNode);
-				templateTreeRoot.addChild(parentNode);
+		
+		while (parentMapping.size() > 0) {
+			
+			Map.Entry<String, List<String>> parentEntry = parentMapping.entrySet().iterator().next();
+			String parentName = parentEntry.getKey();
+			
+			EntityTemplateNode parentNode = nodeMapping.get(parentName);
+			
+			for (String childName : parentEntry.getValue()) {
+				EntityTemplateNode childNode = nodeMapping.get(childName);
+				parentNode.addChild(childNode);
 			}
-
-			if (parentMapping.containsKey(potentialParentName)) {
-				List<JsonElement> childTemplateObjects = parentMapping.get(potentialParentName);
-
-				for (JsonElement childTemplate : childTemplateObjects) {
-					String childName = childTemplate.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
-					EntityTemplateNode childNode = new EntityTemplateNode(childName);
-					processedNodes.put(childName, childNode);
-					parentObjects.push(childTemplate);
-					parentNode.addChild(childNode);
-				}
-			}
-
-			JsonArray variables = parentTemplate.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
-			for (JsonElement variable : variables) {
-				EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
-				parentNode.addChild(variableNode);
-			}
+			parentMapping.remove(parentName);
 		}
-
 		return templateTreeRoot;
-	}
-
-	public static boolean templateExists(String name, String sharedDir) {
-		File templateDir = getTemplateDir(sharedDir);
-		File templateFile = new File(templateDir + "/" + name);
-		return templateFile.exists();
-	}
-	
-	public static void removeTemplate(INode node, String sharedDir) {
-		File templateDir = getTemplateDir(sharedDir);
-		File templateFile = new File(templateDir + "/" + node.getName());
-		templateFile.delete();
 	}
 	
 	public static void saveTemplateTree(EntityTemplateNode node, String sharedDir) {
@@ -354,27 +312,13 @@ public class SyncTemplateTree {
 		@Override
 		public void visit(EntityTemplateNode node) {
 
-			JsonObject template = new JsonObject();
-
-			String parentName = node.getParent() != null ? node.getParent().getName() : null;
-			parentName = parentName != ENTITY_TEMPLATE_ROOT_KEY ? parentName : null;
-			template.addProperty(NAME_PROP_KEY, node.getName());
-			template.addProperty(PARENT_PROP_KEY, parentName);
-
-			JsonArray variables = new JsonArray();
-
+			JsonObject template = serializeTemplateNode(node);
+			
 			for (INode childNode : node.getChildren()) {
-
 				if (childNode instanceof EntityTemplateNode) {
 					childNode.accept(this);
-				} else if (childNode instanceof EntityVariableNode) {
-					EntityVariableNode variableNode = (EntityVariableNode)childNode;
-					JsonObject variableObject = serializeVariableDescription(variableNode);
-					variables.add(variableObject);
 				}
 			}
-
-			template.add(VARIABLES_PROP_KEY, variables);
 
 			File templateFile = new File(templateDir + "/" + node.getName());
 			Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -408,6 +352,49 @@ public class SyncTemplateTree {
 		}
 	}
 	
+	private static JsonObject serializeTemplateNode(EntityTemplateNode node) {
+		JsonObject template = new JsonObject();
+
+		String parentName = node.getParent() != null ? node.getParent().getName() : null;
+		parentName = parentName != ENTITY_TEMPLATE_ROOT_KEY ? parentName : null;
+		template.addProperty(NAME_PROP_KEY, node.getName());
+		template.addProperty(PARENT_PROP_KEY, parentName);
+		template.addProperty(DEFAULT_CTOR_PROP_KEY, node.hasDefaultCtor());
+
+		JsonArray variables = new JsonArray();
+
+		for (INode childNode : node.getChildren()) {
+			if (childNode instanceof EntityVariableNode) {
+				EntityVariableNode variableNode = (EntityVariableNode)childNode;
+				JsonObject variableObject = serializeVariable(variableNode);
+				variables.add(variableObject);
+			}
+		}
+
+		template.add(VARIABLES_PROP_KEY, variables);
+		return template;
+	}
+	
+	private static EntityTemplateNode deserializeTemplateNode(JsonElement templateObject, XOUT<String> parentName) {
+		String templateName = templateObject.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
+		EntityTemplateNode templateNode = new EntityTemplateNode(templateName);
+		
+		if (templateObject.getAsJsonObject().get(DEFAULT_CTOR_PROP_KEY) != null) {
+			boolean hasDefaultCtor = templateObject.getAsJsonObject().get(DEFAULT_CTOR_PROP_KEY).getAsBoolean();
+			templateNode.setHasDefaultCtor(hasDefaultCtor);
+		}
+		
+		JsonArray variables = templateObject.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
+		for (JsonElement variable : variables) {
+			EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
+			templateNode.addChild(variableNode);
+		}
+		
+		JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
+		parentName.Obj.Value = parentNameObject == null ? null : parentNameObject.getAsString();
+		return templateNode;
+	}
+	
 	private static EntityVariableNode deserializeVariable(JsonObject variableObject) {
 		String variableName = variableObject.getAsJsonPrimitive(ModelConstants.NAME_PROP_KEY).getAsString();
 		JsonObject variableDetails = variableObject.getAsJsonObject(ModelConstants.TYPE_PROP_KEY);
@@ -417,6 +404,17 @@ public class SyncTemplateTree {
 
 		variableNode.setVariabelDescription(variabelDescription);
 		return variableNode;
+	}
+	
+	private static JsonObject serializeVariable(EntityVariableNode variableNode) {
+		
+		JsonObject variableObject = new JsonObject();
+		variableObject.addProperty(ModelConstants.NAME_PROP_KEY, variableNode.getName());
+		
+		JsonElement variableDetails = new Gson().toJsonTree(variableNode.getVariabelDescription());
+		variableObject.add(ModelConstants.TYPE_PROP_KEY, variableDetails);
+		
+		return variableObject;
 	}
 	
 	private static VariableDescription deserializeVariableDescription(JsonObject variableDetails) {
@@ -454,18 +452,6 @@ public class SyncTemplateTree {
 		default:
 			return new Gson().fromJson(variableDetails, VariableDescription.class);
 		}
-		
-	}
-	
-	private static JsonObject serializeVariableDescription(EntityVariableNode variableNode) {
-		
-		JsonObject variableDesc = new JsonObject();
-		variableDesc.addProperty(ModelConstants.NAME_PROP_KEY, variableNode.getName());
-		
-		JsonElement variableDetails = new Gson().toJsonTree(variableNode.getVariabelDescription());
-		variableDesc.add(ModelConstants.TYPE_PROP_KEY, variableDetails);
-		
-		return variableDesc;
 	}
 
 	private static File getTemplateDir(String sharedDir) {
@@ -491,5 +477,17 @@ public class SyncTemplateTree {
 			semaphore.release();
 		}
 		return null;
+	}
+	
+	public static boolean templateExists(String name, String sharedDir) {
+		File templateDir = getTemplateDir(sharedDir);
+		File templateFile = new File(templateDir + "/" + name);
+		return templateFile.exists();
+	}
+	
+	public static void removeTemplate(INode node, String sharedDir) {
+		File templateDir = getTemplateDir(sharedDir);
+		File templateFile = new File(templateDir + "/" + node.getName());
+		templateFile.delete();
 	}
 }
