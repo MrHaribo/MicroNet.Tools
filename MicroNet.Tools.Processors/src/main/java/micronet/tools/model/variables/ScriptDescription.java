@@ -1,8 +1,16 @@
 package micronet.tools.model.variables;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class ScriptDescription extends VariableDescription {
 
 	private String scriptName;
+	
+	private List<String> memberArgs = new ArrayList<>();
+	private Map<String, VariableDescription> externalArgs = new HashMap<>();
 	
 	public ScriptDescription(String scriptName) {
 		super(VariableType.SCRIPT);
@@ -15,6 +23,14 @@ public class ScriptDescription extends VariableDescription {
 
 	public void setScriptName(String scriptName) {
 		this.scriptName = scriptName;
+	}
+	
+	public List<String> getMemberArgs() {
+		return memberArgs;
+	}
+
+	public Map<String, VariableDescription> getExternalArgs() {
+		return externalArgs;
 	}
 
 	@Override
