@@ -152,7 +152,7 @@ public class SyncPrefabTree {
 		}
 	}
 	
-	private static void deserializePrefabVariable(PrefabVariableNode variableNode, JsonElement element, String sharedDir) {
+	public static void deserializePrefabVariable(PrefabVariableNode variableNode, JsonElement element, String sharedDir) {
 
 		switch (variableNode.getVariableType()) {
 		case BOOLEAN:
@@ -275,9 +275,10 @@ public class SyncPrefabTree {
 		}
 	}
 
-
-
-	private static JsonElement serializePrefabVariable(PrefabVariableNode variableNode) {
+	public static JsonElement serializePrefabVariable(PrefabVariableNode variableNode) {
+		
+		if (variableNode.getVariableValue() == null)
+			return null;
 		
 		//TODO: Barrier for Stack Overflow
 		switch (variableNode.getVariableType()) {

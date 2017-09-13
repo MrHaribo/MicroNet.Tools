@@ -32,11 +32,14 @@ import micronet.tools.model.IVisitor;
 import micronet.tools.model.ModelConstants;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityTemplateRootNode;
+import micronet.tools.model.nodes.EntityVariableConstNode;
+import micronet.tools.model.nodes.EntityVariableDynamicNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumNode;
 import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.model.nodes.PrefabNode;
 import micronet.tools.model.nodes.PrefabRootNode;
+import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
@@ -210,7 +213,7 @@ public class SyncTemplateTree {
 		if (templateObject == null)
 			return null;
 		
-		return deserializeTemplateNode(templateObject, parentName);
+		return deserializeTemplateNode(templateObject, parentName, sharedDir);
 	}
 	
 	public static EntityTemplateRootNode loadTemplateTree(String sharedDir) {
@@ -241,10 +244,10 @@ public class SyncTemplateTree {
 			semaphore.release();
 		}
 
-		return constructTemplateTree(templateFileObjects);
+		return constructTemplateTree(templateFileObjects, sharedDir);
 	}
 	
-	private static EntityTemplateRootNode constructTemplateTree(List<JsonElement> templateFileObjects) {
+	private static EntityTemplateRootNode constructTemplateTree(List<JsonElement> templateFileObjects, String sharedDir) {
 		
 		EntityTemplateRootNode templateTreeRoot = new EntityTemplateRootNode(ENTITY_TEMPLATE_ROOT_KEY);
 
@@ -255,7 +258,7 @@ public class SyncTemplateTree {
 			String templateName = templatElement.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
 			
 			XOUT<String> parentNameOut = new XOUT<>(null);    
-			EntityTemplateNode template = deserializeTemplateNode(templatElement, parentNameOut);
+			EntityTemplateNode template = deserializeTemplateNode(templatElement, parentNameOut, sharedDir);
 			
 			nodeMapping.put(templateName, template);
 			
@@ -292,9 +295,11 @@ public class SyncTemplateTree {
 	}
 
 	private static class SaveTemplateTreeVisitor implements IVisitor {
+		private String sharedDir;
 		private File templateDir;
 
 		public SaveTemplateTreeVisitor(String sharedDir) {
+			this.sharedDir = sharedDir;
 			this.templateDir = getTemplateDir(sharedDir);
 		}
 		
@@ -311,7 +316,7 @@ public class SyncTemplateTree {
 		@Override
 		public void visit(EntityTemplateNode node) {
 
-			JsonObject template = serializeTemplateNode(node);
+			JsonObject template = serializeTemplateNode(node, sharedDir);
 			
 			for (INode childNode : node.getChildren()) {
 				if (childNode instanceof EntityTemplateNode) {
@@ -320,7 +325,7 @@ public class SyncTemplateTree {
 			}
 
 			File templateFile = new File(templateDir + "/" + node.getName());
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 			String data = gson.toJson(template);
 
 			try {
@@ -351,7 +356,7 @@ public class SyncTemplateTree {
 		}
 	}
 	
-	private static JsonObject serializeTemplateNode(EntityTemplateNode node) {
+	private static JsonObject serializeTemplateNode(EntityTemplateNode node, String sharedDir) {
 		JsonObject template = new JsonObject();
 
 		String parentName = node.getParent() != null ? node.getParent().getName() : null;
@@ -364,7 +369,7 @@ public class SyncTemplateTree {
 		for (INode childNode : node.getChildren()) {
 			if (childNode instanceof EntityVariableNode) {
 				EntityVariableNode variableNode = (EntityVariableNode)childNode;
-				JsonObject variableObject = serializeVariable(variableNode);
+				JsonObject variableObject = serializeVariable(variableNode, sharedDir);
 				variables.add(variableObject);
 			}
 		}
@@ -373,45 +378,70 @@ public class SyncTemplateTree {
 		return template;
 	}
 	
-	private static EntityTemplateNode deserializeTemplateNode(JsonElement templateObject, XOUT<String> parentName) {
+	private static EntityTemplateNode deserializeTemplateNode(JsonElement templateObject, XOUT<String> parentName, String sharedDir) {
 		String templateName = templateObject.getAsJsonObject().get(NAME_PROP_KEY).getAsString();
 		EntityTemplateNode templateNode = new EntityTemplateNode(templateName);
 		
 		JsonArray variables = templateObject.getAsJsonObject().getAsJsonArray(VARIABLES_PROP_KEY);
 		for (JsonElement variable : variables) {
-			EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject());
+			EntityVariableNode variableNode =  deserializeVariable(variable.getAsJsonObject(), sharedDir);
 			templateNode.addChild(variableNode);
 		}
 		
-		JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
-		parentName.Obj.Value = parentNameObject == null ? null : parentNameObject.getAsString();
+		if (templateObject.getAsJsonObject().get(PARENT_PROP_KEY) != null && !templateObject.getAsJsonObject().get(PARENT_PROP_KEY).isJsonNull()) {
+			JsonPrimitive parentNameObject = templateObject.getAsJsonObject().getAsJsonPrimitive(PARENT_PROP_KEY);
+			parentName.Obj.Value = parentNameObject == null ? null : parentNameObject.getAsString();
+		}
 		return templateNode;
 	}
 	
-	private static EntityVariableNode deserializeVariable(JsonObject variableObject) {
+	private static EntityVariableNode deserializeVariable(JsonObject variableObject, String sharedDir) {
 		String variableName = variableObject.getAsJsonPrimitive(ModelConstants.NAME_PROP_KEY).getAsString();
 		JsonObject variableDetails = variableObject.getAsJsonObject(ModelConstants.TYPE_PROP_KEY);
 		
-		EntityVariableNode variableNode = new EntityVariableNode(variableName);
+		EntityVariableNode variableNode = null; 
 		VariableDescription variabelDescription = deserializeVariableDescription(variableDetails);
-		variableNode.setVariabelDescription(variabelDescription);
 		
-		if (variableObject.getAsJsonPrimitive(ModelConstants.CTOR_ARGUMENT_PROP_KEY) != null) {
-			boolean ctorArg = variableObject.getAsJsonPrimitive(ModelConstants.CTOR_ARGUMENT_PROP_KEY).getAsBoolean();
-			variableNode.setCtorArg(ctorArg);
+		
+		if (variableObject.get(ModelConstants.CONST_VARIABLE_PROP_KEY) != null) {
+			variableNode = new EntityVariableConstNode(variableName);
+			PrefabVariableNode prefabNode = new PrefabVariableNode(variableName, variabelDescription);
+
+			if (!variableObject.get(ModelConstants.CONST_VARIABLE_PROP_KEY).isJsonNull()) {
+				JsonElement variableElement = variableObject.get(ModelConstants.CONST_VARIABLE_PROP_KEY);
+				SyncPrefabTree.deserializePrefabVariable(prefabNode, variableElement, sharedDir);
+			}
+			variableNode.addChild(prefabNode);
+		} else {
+			EntityVariableDynamicNode dynamicVar = new EntityVariableDynamicNode(variableName);
+			variableNode = dynamicVar;
+			if (variableObject.getAsJsonPrimitive(ModelConstants.CTOR_ARGUMENT_PROP_KEY) != null) {
+				boolean ctorArg = variableObject.getAsJsonPrimitive(ModelConstants.CTOR_ARGUMENT_PROP_KEY).getAsBoolean();
+				dynamicVar.setCtorArg(ctorArg);
+			}
 		}
 		
+		variableNode.setVariabelDescription(variabelDescription);
 		return variableNode;
 	}
 	
-	private static JsonObject serializeVariable(EntityVariableNode variableNode) {
+	private static JsonObject serializeVariable(EntityVariableNode variableNode, String sharedDir) {
 		
 		JsonObject variableObject = new JsonObject();
 		variableObject.addProperty(ModelConstants.NAME_PROP_KEY, variableNode.getName());
-		variableObject.addProperty(ModelConstants.CTOR_ARGUMENT_PROP_KEY, variableNode.isCtorArg());
 		
 		JsonElement variableDetails = new Gson().toJsonTree(variableNode.getVariabelDescription());
 		variableObject.add(ModelConstants.TYPE_PROP_KEY, variableDetails);
+		
+		if (variableNode instanceof EntityVariableConstNode) {
+			PrefabVariableNode prefabNode = (PrefabVariableNode)variableNode.getChildren().get(0);
+			JsonElement prefabElement = SyncPrefabTree.serializePrefabVariable(prefabNode);
+			variableObject.add(ModelConstants.CONST_VARIABLE_PROP_KEY, prefabElement);
+			
+		} else if (variableNode instanceof EntityVariableDynamicNode) {
+			EntityVariableDynamicNode dynamicVariableNode = (EntityVariableDynamicNode)variableNode;
+			variableObject.addProperty(ModelConstants.CTOR_ARGUMENT_PROP_KEY, dynamicVariableNode.isCtorArg());
+		}
 		
 		return variableObject;
 	}

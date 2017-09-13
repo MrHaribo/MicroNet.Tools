@@ -33,6 +33,7 @@ public class Icons {
 	public static final ImageDescriptor IMG_ACTIVEMQ = getImageDescriptor("activemq.png");
 	public static final ImageDescriptor IMG_POSTGRESQL = getImageDescriptor("postgreesql.png");
 	
+	public static final ImageDescriptor IMG_CONST = getImageDescriptor("const.png");
 	public static final ImageDescriptor IMG_PREFAB = getImageDescriptor("prefab.png");
 	public static final ImageDescriptor IMG_VARIABLE = getImageDescriptor("variable.png");
 	public static final ImageDescriptor IMG_TEMPLATE = getImageDescriptor("template.png");

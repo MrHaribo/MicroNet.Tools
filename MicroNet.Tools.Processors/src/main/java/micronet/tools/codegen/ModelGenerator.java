@@ -26,10 +26,13 @@ import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityTemplateRootNode;
+import micronet.tools.model.nodes.EntityVariableConstNode;
+import micronet.tools.model.nodes.EntityVariableDynamicNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumNode;
 import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.model.nodes.ModelNode;
+import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
@@ -101,21 +104,31 @@ public class ModelGenerator {
 					
 					EntityVariableNode variableNode = (EntityVariableNode) node;
 					
-					FieldSpec field = generateField(variableNode);
-					
-					if (field == null)
-						continue;
-				
-					MethodSpec setter = generateSetter(field.type, variableNode.getName());
-					MethodSpec getter = generateGetter(field.type, variableNode.getName());
-					
-					methods.add(setter);
-					methods.add(getter);
-					fields.add(field);
-					
-					if (variableNode.isCtorArg()) {
-						ctorArgs.add(field);
+					if (variableNode instanceof EntityVariableConstNode) {
+						FieldSpec field = generateConstField((EntityVariableConstNode)variableNode);
+						if (field == null)
+							continue;
+						fields.add(field);
+					} else if (variableNode instanceof EntityVariableDynamicNode) {
+						FieldSpec field = generateField(variableNode);
+						if (field == null)
+							continue;
+						
+						MethodSpec setter = generateSetter(field.type, variableNode.getName());
+						MethodSpec getter = generateGetter(field.type, variableNode.getName());
+						methods.add(setter);
+						methods.add(getter);
+						
+						if (node instanceof EntityVariableDynamicNode) {
+							EntityVariableDynamicNode dynamicVariable = (EntityVariableDynamicNode)node;
+							if (dynamicVariable.isCtorArg()) {
+								ctorArgs.add(field);
+							}
+						}
+						fields.add(field);
 					}
+					
+					
 				}
 			}
 
@@ -129,8 +142,8 @@ public class ModelGenerator {
 			while (parentNode != null) {
 				List<FieldSpec> tempList = new ArrayList<>();
 				for (INode node : ((ModelNode)parentNode).getChildren()) {
-					if (node instanceof EntityVariableNode) {
-						EntityVariableNode potentialCtorArg = (EntityVariableNode)node;
+					if (node instanceof EntityVariableDynamicNode) {
+						EntityVariableDynamicNode potentialCtorArg = (EntityVariableDynamicNode)node;
 						if (potentialCtorArg.isCtorArg()) {
 							FieldSpec argSpec = generateField(potentialCtorArg);
 							tempList.add(argSpec);
@@ -189,7 +202,7 @@ public class ModelGenerator {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static TypeName getParametrizedEntryTypeName(VariableDescription variableDesc, String packageName) {
 		
 		switch (variableDesc.getType()) {
@@ -275,6 +288,47 @@ public class ModelGenerator {
 			return short.class;
 		default:
 			return Object.class;
+		}
+	}
+	
+	private FieldSpec generateConstField(EntityVariableConstNode variableNode) {
+		String variableName = variableNode.getName();
+		
+		PrefabVariableNode prefabNode = (PrefabVariableNode) variableNode.getChildren().get(0);
+		
+		
+		switch (variableNode.getVariabelDescription().getType()) {
+		case BOOLEAN:
+			return FieldSpec.builder(boolean.class, variableName)
+				.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+				.initializer("$L", prefabNode.getVariableValue()).build();
+		case CHAR:
+			return FieldSpec.builder(char.class, variableName)
+					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+					.initializer("'$L'", prefabNode.getVariableValue()).build();
+		case ENUM:
+			EnumDescription enumDesc = (EnumDescription) variableNode.getVariabelDescription();
+			TypeName enumTypeName = ClassName.get(packageName, enumDesc.getEnumType());
+			return FieldSpec.builder(enumTypeName, variableName)
+					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+					.initializer("$T.$L", enumTypeName, prefabNode.getVariableValue()).build();
+		case COMPONENT:
+		case LIST:
+		case SET:
+		case MAP:
+			return null;
+		case NUMBER:
+			NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
+			Type numberType = getPrimitiveNumberType(numDesc.getNumberType());
+			return FieldSpec.builder(numberType, variableName)
+					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+					.initializer("$L", prefabNode.getVariableValue()).build();
+		case STRING:
+			return FieldSpec.builder(String.class, variableName)
+					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+					.initializer("$S", prefabNode.getVariableValue()).build();
+		default:
+			return null;
 		}
 	}
 	

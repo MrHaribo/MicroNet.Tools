@@ -22,6 +22,7 @@ import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.nodes.EntityVariableDynamicNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.model.variables.CollectionDescription;
@@ -55,6 +56,8 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 
 	private TemplateVariableRemoveAction removeVariableAction;
 
+	protected void variableDetailsChanged() {}
+	
 	@Override
 	public void setRefreshViewerAction(Action refreshViewerAction) {
 		this.refreshViewerAction = refreshViewerAction;
@@ -66,7 +69,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		removeVariableAction.run();
 	}
 
-	private void refreshViewer() {
+	protected void refreshViewer() {
 		if (refreshViewerAction != null) {
 			Event event = new Event();
 			event.data = true;
@@ -131,25 +134,30 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					VariableDescription variableDesc = createNewVariableDescription(variableType);
 					variableNode.setVariabelDescription(variableDesc);
 				}
+				variableDetailsChanged();
 				updateVariableDetails();
 			}
 		});
 		
-		Composite ctorContainer = new Composite(this, SWT.NONE);
-		ctorContainer.setLayout(new GridLayout(2, false));
+		if (variableNode instanceof EntityVariableDynamicNode) {
+			EntityVariableDynamicNode dynamicVariable = (EntityVariableDynamicNode)variableNode;
 		
-		label = new Label(ctorContainer, SWT.NONE);
-		label.setText("Constructor Argument");
-		
-		Button check = new Button(ctorContainer, SWT.CHECK);
-		check.setSelection(variableNode.isCtorArg());
-		check.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				variableNode.setCtorArg(check.getSelection());
-				saveTemplate();
-			}
-		});
+			Composite ctorContainer = new Composite(this, SWT.NONE);
+			ctorContainer.setLayout(new GridLayout(2, false));
+			
+			label = new Label(ctorContainer, SWT.NONE);
+			label.setText("Constructor Argument");
+			
+			Button check = new Button(ctorContainer, SWT.CHECK);
+			check.setSelection(dynamicVariable.isCtorArg());
+			check.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					dynamicVariable.setCtorArg(check.getSelection());
+					saveTemplate();
+				}
+			});
+		}
 
 		updateVariableDetails();
 	}
@@ -239,6 +247,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 					SyncTemplateTree.saveTemplateTree((EntityTemplateNode) variableNode.getParent(), sharedDir);
 
+					variableDetailsChanged();
 					refreshViewer();
 				}
 			});
@@ -276,6 +285,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					VariableDescription variableDesc = createNewVariableDescription(variableType);
 					mapDesc.setKeyType(variableDesc);
 					
+					variableDetailsChanged();
 					updateKeyDetails(variableDesc);
 				}
 			});
@@ -326,6 +336,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					VariableDescription variableDesc = createNewVariableDescription(variableType);
 					collectionDesc.setEntryType(variableDesc);
 					
+					variableDetailsChanged();
 					updateKeyDetails(variableDesc);
 				}
 			});
@@ -373,6 +384,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					VariableDescription variableDesc = createNewVariableDescription(variableType);
 					collectionDesc.setEntryType(variableDesc);
 					
+					variableDetailsChanged();
 					updateSubEntryDetails(variableDesc);
 				}
 			});
@@ -417,6 +429,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 				public void widgetSelected(SelectionEvent e) {
 					componentDesc.setComponentType(componentTypeSelect.getText());
 					
+					variableDetailsChanged();
 					saveTemplate();
 					refreshViewer();
 				}
@@ -446,6 +459,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					NumberType numberType = Enum.valueOf(NumberType.class, numberTypeSelect.getText());
 					numberDesc.setNumberType(numberType);
 					
+					variableDetailsChanged();
 					saveTemplate();
 					refreshViewer();
 				}

@@ -11,29 +11,27 @@ import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.ModelConstants;
 import micronet.tools.model.nodes.EntityTemplateNode;
-import micronet.tools.model.nodes.EntityVariableDynamicNode;
-import micronet.tools.model.nodes.EntityVariableNode;
-import micronet.tools.model.variables.VariableDescription;
-import micronet.tools.model.variables.VariableType;
+import micronet.tools.model.nodes.EntityVariableConstNode;
+import micronet.tools.model.nodes.PrefabVariableNode;
 
-public class TemplateVariableCreateAction extends ModelAction {
+public class TemplateConstCreateAction extends ModelAction {
 
 	private Shell shell;
 	private EntityTemplateNode entityTemplateNode;
 
-	public TemplateVariableCreateAction(Shell shell, EntityTemplateNode entityTemplateNode) {
+	public TemplateConstCreateAction(Shell shell, EntityTemplateNode entityTemplateNode) {
 		this.shell = shell;
 		this.entityTemplateNode = entityTemplateNode;
 		
-		setText("Add Variable");
-		setToolTipText("Adds a Variable to the selected Template.");
-		setImageDescriptor(Icons.IMG_VARIABLE);
+		setText("Add Constant");
+		setToolTipText("Adds a Constant to the selected Template.");
+		setImageDescriptor(Icons.IMG_CONST);
 	}
 
 	public void run() {
 
-		InputDialog dlg = new InputDialog(shell, "Add Variable",
-				"Add a new Variable to " + entityTemplateNode.getName(), "newVariable", null);
+		InputDialog dlg = new InputDialog(shell, "Add Constant",
+				"Add a new Constant to " + entityTemplateNode.getName(), "newConstant", null);
 		if (dlg.open() == Window.OK) {
 			String name = dlg.getValue();
 			if (name == null)
@@ -52,8 +50,10 @@ public class TemplateVariableCreateAction extends ModelAction {
 				}
 			}
 
-			EntityVariableNode variableNode = new EntityVariableDynamicNode(name);
-			variableNode.setVariabelDescription(new VariableDescription(VariableType.STRING));
+			EntityVariableConstNode variableNode = new EntityVariableConstNode(name);
+			PrefabVariableNode prefabNode = new PrefabVariableNode(name, variableNode.getVariabelDescription());
+			variableNode.addChild(prefabNode);
+			
 			entityTemplateNode.addChild(variableNode);
 
 			String sharedDir = ModelProvider.INSTANCE.getSharedDir();

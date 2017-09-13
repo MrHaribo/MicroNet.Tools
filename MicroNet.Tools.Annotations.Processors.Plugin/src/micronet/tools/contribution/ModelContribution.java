@@ -16,10 +16,13 @@ import micronet.tools.filesync.SyncParameterCodes;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
+import micronet.tools.model.nodes.EntityVariableConstNode;
+import micronet.tools.model.nodes.EntityVariableDynamicNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumNode;
 import micronet.tools.model.nodes.EnumRootNode;
 import micronet.tools.model.nodes.ModelNode;
+import micronet.tools.model.nodes.PrefabVariableNode;
 
 public class ModelContribution {
 
@@ -128,9 +131,20 @@ public class ModelContribution {
 				}
 				
 				if (variableIsNew) {
-					EntityVariableNode newVariable = new EntityVariableNode(contributedVariable.getName());
-					newVariable.setVariabelDescription(contributedVariable.getVariabelDescription());
-					existingTemplate.addChild(newVariable);
+					if (contributedVariable instanceof EntityVariableDynamicNode) {
+						EntityVariableNode newVariable = new EntityVariableDynamicNode(contributedVariable.getName());
+						newVariable.setVariabelDescription(contributedVariable.getVariabelDescription());
+						existingTemplate.addChild(newVariable);
+					} else if (contributedVariable instanceof EntityVariableConstNode) {
+						
+						PrefabVariableNode prefabNode = (PrefabVariableNode)contributedVariable.getChildren().get(0);
+						contributedVariable.removeChild(prefabNode);
+						
+						EntityVariableConstNode newVariable = new EntityVariableConstNode(contributedVariable.getName());
+						newVariable.setVariabelDescription(contributedVariable.getVariabelDescription());
+						existingTemplate.addChild(newVariable);
+						newVariable.addChild(prefabNode);
+					}
 				}
 			}
 		}

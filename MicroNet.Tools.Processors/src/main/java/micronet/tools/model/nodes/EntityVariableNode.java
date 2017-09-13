@@ -4,11 +4,9 @@ import micronet.tools.model.IVisitor;
 import micronet.tools.model.variables.VariableDescription;
 import micronet.tools.model.variables.VariableType;
 
-public class EntityVariableNode extends ModelNode {
+public abstract class EntityVariableNode extends ModelNode {
 
 	private VariableDescription variabelDescription = new VariableDescription(VariableType.STRING);
-	
-	private boolean ctorArg = false;
 	
 	public EntityVariableNode(String name) {
 		super(name);
@@ -22,11 +20,5 @@ public class EntityVariableNode extends ModelNode {
 	}
 	public void setVariabelDescription(VariableDescription variabelDescription) {
 		this.variabelDescription = variabelDescription;
-	}
-	public boolean isCtorArg() {
-		return ctorArg;
-	}
-	public void setCtorArg(boolean ctorArg) {
-		this.ctorArg = ctorArg;
 	}
 }

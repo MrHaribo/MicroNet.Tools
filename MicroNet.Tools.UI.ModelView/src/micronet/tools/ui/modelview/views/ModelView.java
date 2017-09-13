@@ -39,6 +39,7 @@ import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityTemplateRootNode;
+import micronet.tools.model.nodes.EntityVariableConstNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumNode;
 import micronet.tools.model.nodes.EnumRootNode;
@@ -132,10 +133,11 @@ public class ModelView extends ViewPart {
 				return Icons.IMG_PREFAB.createImage();
 			} else if(obj instanceof EnumNode) {
 				return Icons.IMG_ENUM.createImage();
+			} else if(obj instanceof EntityVariableConstNode) {
+				return Icons.IMG_CONST.createImage();
 			} else if(obj instanceof EntityVariableNode || obj instanceof PrefabVariableNode) {
 				return Icons.IMG_VARIABLE.createImage();
 			}
-			
 			
 			return PlatformUI.getWorkbench().getSharedImages().getImage(imageKey);
 		}
@@ -199,6 +201,9 @@ public class ModelView extends ViewPart {
 				} else if (selectedNode instanceof EntityTemplateNode) {
 					TemplateNodeDetails templateDetails = new TemplateNodeDetails((EntityTemplateNode)selectedNode, detailsContainer, SWT.NONE);
 					currentDetailPanel = templateDetails;
+				} else if (selectedNode instanceof EntityVariableConstNode) {
+					TemplateVariableNodeDetails variableDetails = new TemplateVariableConstNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
+					currentDetailPanel = variableDetails;
 				} else if (selectedNode instanceof EntityVariableNode) {
 					TemplateVariableNodeDetails variableDetails = new TemplateVariableNodeDetails((EntityVariableNode)selectedNode, detailsContainer, SWT.NONE);
 					currentDetailPanel = variableDetails;

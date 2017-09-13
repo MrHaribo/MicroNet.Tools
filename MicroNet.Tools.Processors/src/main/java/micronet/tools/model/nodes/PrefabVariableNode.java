@@ -32,6 +32,10 @@ public class PrefabVariableNode extends ModelNode {
 		return variableDescription.getType();
 	}
 
+	public void setVariableDescription(VariableDescription variableDescription) {
+		this.variableDescription = variableDescription;
+	}
+
 	public VariableDescription getVariableDescription() {
 		return variableDescription;
 	}
