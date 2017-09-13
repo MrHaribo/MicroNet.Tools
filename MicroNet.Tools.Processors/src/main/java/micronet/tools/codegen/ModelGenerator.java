@@ -21,6 +21,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import micronet.script.ScriptExecutor;
 import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
@@ -39,6 +40,7 @@ import micronet.tools.model.variables.EnumDescription;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
 import micronet.tools.model.variables.NumberType;
+import micronet.tools.model.variables.ScriptDescription;
 import micronet.tools.model.variables.VariableDescription;
 import micronet.tools.model.variables.VariableType;
 
@@ -110,6 +112,23 @@ public class ModelGenerator {
 							continue;
 						fields.add(field);
 					} else if (variableNode instanceof EntityVariableDynamicNode) {
+						
+						
+						if (variableNode.getVariabelDescription().getType() == VariableType.SCRIPT) {
+							
+							ScriptDescription scriptDesc = (ScriptDescription) variableNode.getVariabelDescription();
+							
+							String nameFirstUpper = variableNode.getName().substring(0, 1).toUpperCase() + variableNode.getName().substring(1);
+							MethodSpec scriptMethod = MethodSpec.methodBuilder("get" + nameFirstUpper)
+								    .addModifiers(Modifier.PUBLIC)
+								    .returns(Object.class)
+								    .addStatement("return $T.INSTANCE.invokeFunction($S)", ScriptExecutor.class, scriptDesc.getScriptName())
+								    .build();
+							methods.add(scriptMethod);
+							continue;
+						}
+						
+						
 						FieldSpec field = generateField(variableNode);
 						if (field == null)
 							continue;
@@ -232,6 +251,7 @@ public class ModelGenerator {
 		case NUMBER:
 		case BOOLEAN:
 		case CHAR:
+		case SCRIPT:
 		default:
 			return getBoxingType(variableDesc);
 		
@@ -266,6 +286,8 @@ public class ModelGenerator {
 				return ClassName.get(Character.class);
 			case STRING:
 				return ClassName.get(String.class);
+			case SCRIPT:
+				return ClassName.get(Object.class);
 			default:
 				return null;
 			}
@@ -327,6 +349,7 @@ public class ModelGenerator {
 			return FieldSpec.builder(String.class, variableName)
 					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
 					.initializer("$S", prefabNode.getVariableValue()).build();
+		case SCRIPT:
 		default:
 			return null;
 		}
@@ -358,6 +381,7 @@ public class ModelGenerator {
 			return FieldSpec.builder(numberType, variableName).addModifiers(Modifier.PRIVATE).build();
 		case STRING:
 			return FieldSpec.builder(String.class, variableName).addModifiers(Modifier.PRIVATE).build();
+		case SCRIPT:
 		default:
 			return null;
 		}

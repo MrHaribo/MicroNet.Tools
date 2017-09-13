@@ -45,6 +45,7 @@ import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
+import micronet.tools.model.variables.ScriptDescription;
 import micronet.tools.model.variables.VariableDescription;
 import micronet.tools.model.variables.VariableType;
 
@@ -475,6 +476,8 @@ public class SyncTemplateTree {
 			return new Gson().fromJson(variableDetails, EnumDescription.class);
 		case COMPONENT:
 			return new Gson().fromJson(variableDetails, ComponentDescription.class);
+		case SCRIPT:
+			return new Gson().fromJson(variableDetails, ScriptDescription.class);
 		case BOOLEAN:
 		case CHAR:
 		case STRING:

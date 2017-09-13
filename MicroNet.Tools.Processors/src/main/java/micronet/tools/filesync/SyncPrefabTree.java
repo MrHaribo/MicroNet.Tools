@@ -272,6 +272,8 @@ public class SyncPrefabTree {
 		case STRING:
 			variableNode.setVariableValue(element.getAsString());
 			break;
+		case SCRIPT:
+			break;
 		}
 	}
 

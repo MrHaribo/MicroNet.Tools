@@ -19,18 +19,21 @@ import org.eclipse.swt.widgets.Label;
 
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncEnumTree;
+import micronet.tools.filesync.SyncScripts;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityVariableDynamicNode;
 import micronet.tools.model.nodes.EntityVariableNode;
 import micronet.tools.model.nodes.EnumRootNode;
+import micronet.tools.model.nodes.ScriptRootNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
 import micronet.tools.model.variables.NumberType;
+import micronet.tools.model.variables.ScriptDescription;
 import micronet.tools.model.variables.VariableDescription;
 import micronet.tools.model.variables.VariableType;
 import micronet.tools.ui.modelview.actions.TemplateVariableRemoveAction;
@@ -189,6 +192,8 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			return new VariableDescription(VariableType.BOOLEAN);
 		case CHAR:
 			return new VariableDescription(VariableType.CHAR);
+		case SCRIPT:
+			return new ScriptDescription(null);
 		case STRING:
 		default:
 			return new VariableDescription(VariableType.STRING);
@@ -210,6 +215,8 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			return new EnumDetails((EnumDescription) variableDesc, parent, style);
 		case COMPONENT:
 			return new ComponentDetails((ComponentDescription) variableDesc, parent, style);
+		case SCRIPT:
+			return new ScriptDetails((ScriptDescription) variableDesc, parent, style);
 		case STRING:
 		case BOOLEAN:
 		case CHAR:
@@ -218,6 +225,43 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 		}
 	}
 
+	private class ScriptDetails extends Composite {
+
+		public ScriptDetails(ScriptDescription scriptDesc, Composite parent, int style) {
+			super(parent, style);
+
+			setLayout(new GridLayout(2, false));
+
+			Label label = new Label(this, SWT.NONE);
+			label.setText("Script Type:");
+
+			String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+			ScriptRootNode scriptRootNode = SyncScripts.loadScripts(sharedDir);
+			List<String> scriptTypes = new ArrayList<>();
+			for (INode enumNode : scriptRootNode.getChildren()) {
+				scriptTypes.add(enumNode.getName());
+			}
+
+			Combo enumTypeSelect = new Combo(this, SWT.READ_ONLY);
+			enumTypeSelect.setItems(scriptTypes.toArray(new String[scriptTypes.size()]));
+			if (scriptDesc.getScriptName() != null)
+				enumTypeSelect.setText(scriptDesc.getScriptName());
+			enumTypeSelect.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent arg0) {
+
+					scriptDesc.setScriptName(enumTypeSelect.getText());
+
+					String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+					SyncTemplateTree.saveTemplateTree((EntityTemplateNode) variableNode.getParent(), sharedDir);
+
+					variableDetailsChanged();
+					refreshViewer();
+				}
+			});
+		}
+	}
+	
 	private class EnumDetails extends Composite {
 
 		public EnumDetails(EnumDescription enumDesc, Composite parent, int style) {
