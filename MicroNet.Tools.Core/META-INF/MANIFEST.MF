@@ -17,6 +17,7 @@ Bundle-ClassPath: .,
  lib/mn-tools-yaml-utility-0.1.0-jar-with-dependencies.jar
 Export-Package: micronet.annotation,
  micronet.args,
+ micronet.datastore,
  micronet.serialization;uses:="com.google.gson.reflect",
  micronet.tools.annotation;uses:="javax.annotation.processing,javax.lang.model,javax.lang.model.element",
  micronet.tools.api,

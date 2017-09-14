@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 
+import micronet.datastore.DataStore;
 import micronet.tools.core.ModelProvider;
 import micronet.tools.filesync.SyncPrefabTree;
 import micronet.tools.model.nodes.PrefabNode;
@@ -60,6 +61,22 @@ public class PrefabNodeDetails extends NodeDetails {
 			public void widgetSelected(SelectionEvent arg0) {
 				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
 				SyncPrefabTree.savePrefab(prefabNode, sharedDir);
+			}
+		});
+		
+		button = new Button(detailsContainer, SWT.PUSH);
+		button.setText("Save and Upload");
+		button.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, false, 2, 1));
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent arg0) {
+				String sharedDir = ModelProvider.INSTANCE.getSharedDir();
+				SyncPrefabTree.savePrefab(prefabNode, sharedDir);
+				
+				String prefabRaw = SyncPrefabTree.loadPrefabRaw(prefabNode.getID(), sharedDir);
+				
+				DataStore store = new DataStore();
+				store.upsertRaw(prefabNode.getID(), prefabRaw);
 			}
 		});
 	}

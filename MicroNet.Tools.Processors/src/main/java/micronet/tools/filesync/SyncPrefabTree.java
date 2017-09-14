@@ -47,6 +47,13 @@ public class SyncPrefabTree {
 	public static void loadPrefab(PrefabNode prefabNode, String sharedDir) {
 	
 	}
+
+	public static String loadPrefabRaw(String prefabId, String sharedDir) {
+		
+		File prefabDataDir = getPrefabDataDir(sharedDir);
+		File file = new File(prefabDataDir + "/" + prefabId);
+		return loadFile(file);
+	}
 	
 	public static void removePrefab(PrefabNode node, String sharedDir) {
 		
@@ -465,8 +472,8 @@ public class SyncPrefabTree {
 			semaphore.release();
 		}
 	}
-
-	private static String loadFile(File file) {
+	
+	public static String loadFile(File file) {
 		String data = null;
 		try {
 			semaphore.acquire();
