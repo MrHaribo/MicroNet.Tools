@@ -113,106 +113,30 @@ public class ModelGenerator {
 						fields.add(field);
 					} else if (variableNode instanceof EntityVariableDynamicNode) {
 						
+						EntityVariableDynamicNode dynamicVariable = (EntityVariableDynamicNode)node;
 						
 						if (variableNode.getVariabelDescription().getType() == VariableType.SCRIPT) {
-							
 							ScriptDescription scriptDesc = (ScriptDescription) variableNode.getVariabelDescription();
-							
-							String nameFirstUpper = variableNode.getName().substring(0, 1).toUpperCase() + variableNode.getName().substring(1);
-							MethodSpec scriptMethod = MethodSpec.methodBuilder("get" + nameFirstUpper)
-								    .addModifiers(Modifier.PUBLIC)
-								    .returns(Object.class)
-								    .addStatement("return $T.INSTANCE.invokeFunction($S)", ScriptExecutor.class, scriptDesc.getScriptName())
-								    .build();
+							MethodSpec scriptMethod = generateScriptMethod(variableNode, scriptDesc);
 							methods.add(scriptMethod);
 							continue;
-						}
-						
-						
-						FieldSpec field = generateField(variableNode);
-						if (field == null)
-							continue;
-						
-						MethodSpec setter = generateSetter(field.type, variableNode.getName());
-						MethodSpec getter = generateGetter(field.type, variableNode.getName());
-						methods.add(setter);
-						methods.add(getter);
-						
-						if (node instanceof EntityVariableDynamicNode) {
-							EntityVariableDynamicNode dynamicVariable = (EntityVariableDynamicNode)node;
-							if (dynamicVariable.isCtorArg()) {
+						} else {
+							FieldSpec field = generateField(variableNode);
+							MethodSpec setter = generateSetter(field.type, variableNode.getName());
+							MethodSpec getter = generateGetter(field.type, variableNode.getName());
+							methods.add(setter);
+							methods.add(getter);
+							
+							if (dynamicVariable.isCtorArg())
 								ctorArgs.add(field);
-							}
-						}
-						fields.add(field);
-					}
-					
-					
-				}
-			}
-
-			TypeSpec.Builder entityBuilder = TypeSpec.classBuilder(templateNode.getName())
-			    .addModifiers(Modifier.PUBLIC)
-			    .addMethods(methods)
-			    .addFields(fields);
-			
-			INode parentNode = templateNode.getParent();
-			List<FieldSpec> parentCtorArgs = new ArrayList<>();
-			while (parentNode != null) {
-				List<FieldSpec> tempList = new ArrayList<>();
-				for (INode node : ((ModelNode)parentNode).getChildren()) {
-					if (node instanceof EntityVariableDynamicNode) {
-						EntityVariableDynamicNode potentialCtorArg = (EntityVariableDynamicNode)node;
-						if (potentialCtorArg.isCtorArg()) {
-							FieldSpec argSpec = generateField(potentialCtorArg);
-							tempList.add(argSpec);
+							fields.add(field);
 						}
 					}
 				}
-				Collections.reverse(tempList);
-				parentCtorArgs.addAll(tempList);
-				parentNode = parentNode.getParent();
-			}
-			
-			if (ctorArgs.size() > 0 || parentCtorArgs.size() > 0) {
-				MethodSpec.Builder ctorBuilder = MethodSpec.constructorBuilder()
-						.addModifiers(Modifier.PUBLIC);
-				
-				if (parentCtorArgs.size() > 0) {
-					
-					Collections.reverse(parentCtorArgs);
-					StringBuilder superCtorArgs = new StringBuilder();
-					for (FieldSpec parentCtorArg : parentCtorArgs) {
-						superCtorArgs.append(parentCtorArg.name);
-						superCtorArgs.append(", ");
-					}
-					
-					ctorBuilder.addStatement("super($L)", superCtorArgs.substring(0, superCtorArgs.toString().lastIndexOf(",")));
-				}
-				
-				for (FieldSpec parentCtorArg : parentCtorArgs) {
-					ctorBuilder.addParameter(parentCtorArg.type, parentCtorArg.name);
-				}
-
-				for (FieldSpec ctorArg : ctorArgs) {
-					ctorBuilder.addParameter(ctorArg.type, ctorArg.name);
-					ctorBuilder.addStatement("this.$N = $N", ctorArg.name, ctorArg.name);
-				}
-				
-				entityBuilder.addMethod(ctorBuilder.build());
 			}
 
-			if (templateNode.getParent() != null) {
-				if (templateNode.getParent() instanceof EntityTemplateNode && !(templateNode.getParent() instanceof EntityTemplateRootNode)) {
-					TypeName superTypename = ClassName.get(packageName, templateNode.getParent().getName());
-					entityBuilder.superclass(superTypename);
-				}
-			}
-
-			TypeSpec entityClass = entityBuilder.build();
-			
+			TypeSpec entityClass = generateModelType(templateNode, methods, fields, ctorArgs);
 			JavaFile javaFile = JavaFile.builder(packageName, entityClass).build();
-			
 			JavaFileObject file = filer.createSourceFile(packageName + "." + templateNode.getName());
 			Writer writer = file.openWriter();
 			javaFile.writeTo(writer);
@@ -220,6 +144,88 @@ public class ModelGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private MethodSpec generateScriptMethod(EntityVariableNode variableNode, ScriptDescription scriptDesc) {
+		
+		StringBuilder parametersCalls = new StringBuilder();
+		for (String memberArg : scriptDesc.getMemberArgs()) {
+
+			parametersCalls.append(",");
+			parametersCalls.append(getGetterName(memberArg));
+			parametersCalls.append("()");
+		}
+		
+		MethodSpec scriptMethod = MethodSpec.methodBuilder(getGetterName(variableNode.getName()))
+			    .addModifiers(Modifier.PUBLIC)
+			    .returns(Object.class)
+			    .addStatement("return $T.INSTANCE.invokeFunction($S$L)", ScriptExecutor.class, scriptDesc.getScriptName(), parametersCalls)
+			    .build();
+		return scriptMethod;
+	}
+
+	private TypeSpec generateModelType(EntityTemplateNode templateNode, List<MethodSpec> methods,
+			List<FieldSpec> fields, List<FieldSpec> ctorArgs) {
+		TypeSpec.Builder entityBuilder = TypeSpec.classBuilder(templateNode.getName())
+		    .addModifiers(Modifier.PUBLIC)
+		    .addMethods(methods)
+		    .addFields(fields);
+		
+		INode parentNode = templateNode.getParent();
+		List<FieldSpec> parentCtorArgs = new ArrayList<>();
+		while (parentNode != null) {
+			List<FieldSpec> tempList = new ArrayList<>();
+			for (INode node : ((ModelNode)parentNode).getChildren()) {
+				if (node instanceof EntityVariableDynamicNode) {
+					EntityVariableDynamicNode potentialCtorArg = (EntityVariableDynamicNode)node;
+					if (potentialCtorArg.isCtorArg()) {
+						FieldSpec argSpec = generateField(potentialCtorArg);
+						tempList.add(argSpec);
+					}
+				}
+			}
+			Collections.reverse(tempList);
+			parentCtorArgs.addAll(tempList);
+			parentNode = parentNode.getParent();
+		}
+		
+		if (ctorArgs.size() > 0 || parentCtorArgs.size() > 0) {
+			MethodSpec.Builder ctorBuilder = MethodSpec.constructorBuilder()
+					.addModifiers(Modifier.PUBLIC);
+			
+			if (parentCtorArgs.size() > 0) {
+				
+				Collections.reverse(parentCtorArgs);
+				StringBuilder superCtorArgs = new StringBuilder();
+				for (FieldSpec parentCtorArg : parentCtorArgs) {
+					superCtorArgs.append(parentCtorArg.name);
+					superCtorArgs.append(", ");
+				}
+				
+				ctorBuilder.addStatement("super($L)", superCtorArgs.substring(0, superCtorArgs.toString().lastIndexOf(",")));
+			}
+			
+			for (FieldSpec parentCtorArg : parentCtorArgs) {
+				ctorBuilder.addParameter(parentCtorArg.type, parentCtorArg.name);
+			}
+
+			for (FieldSpec ctorArg : ctorArgs) {
+				ctorBuilder.addParameter(ctorArg.type, ctorArg.name);
+				ctorBuilder.addStatement("this.$N = $N", ctorArg.name, ctorArg.name);
+			}
+			
+			entityBuilder.addMethod(ctorBuilder.build());
+		}
+
+		if (templateNode.getParent() != null) {
+			if (templateNode.getParent() instanceof EntityTemplateNode && !(templateNode.getParent() instanceof EntityTemplateRootNode)) {
+				TypeName superTypename = ClassName.get(packageName, templateNode.getParent().getName());
+				entityBuilder.superclass(superTypename);
+			}
+		}
+
+		TypeSpec entityClass = entityBuilder.build();
+		return entityClass;
 	}
 
 	private static TypeName getParametrizedEntryTypeName(VariableDescription variableDesc, String packageName) {
@@ -388,8 +394,7 @@ public class ModelGenerator {
 	}
 
 	private MethodSpec generateSetter(TypeName typeName, String variableName) {
-		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
-		return MethodSpec.methodBuilder("set" + nameFirstUpper)
+		return MethodSpec.methodBuilder(getSetterName(variableName))
 			    .addModifiers(Modifier.PUBLIC)
 			    .returns(void.class)
 			    .addParameter(typeName, variableName)
@@ -398,11 +403,20 @@ public class ModelGenerator {
 	}
 	
 	private MethodSpec generateGetter(TypeName typeName, String variableName) {
-		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
-		return MethodSpec.methodBuilder("get" + nameFirstUpper)
+		return MethodSpec.methodBuilder(getGetterName(variableName))
 			    .addModifiers(Modifier.PUBLIC)
 			    .returns(typeName)
 			    .addStatement("return " + variableName)
 			    .build();
+	}
+	
+	private String getSetterName(String variableName) {
+		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
+		return "set" + nameFirstUpper;
+	}
+	
+	private String getGetterName(String variableName) {
+		String nameFirstUpper = variableName.substring(0, 1).toUpperCase() + variableName.substring(1);
+		return "get" + nameFirstUpper;	
 	}
 }
