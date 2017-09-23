@@ -35,10 +35,13 @@ import micronet.tools.model.nodes.PrefabVariableKeyNode;
 import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
+import micronet.tools.model.variables.GeometryDescription;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
 import micronet.tools.model.variables.VariableDescription;
 import micronet.tools.model.variables.VariableType;
+import micronet.type.Vector2;
+import micronet.type.Vector3;
 
 public class SyncPrefabTree {
 	
@@ -279,6 +282,19 @@ public class SyncPrefabTree {
 		case STRING:
 			variableNode.setVariableValue(element.getAsString());
 			break;
+		case GEOMETRY:
+			GeometryDescription geometryDescription = (GeometryDescription) variableNode.getVariableDescription();
+			switch(geometryDescription.getGeometryType()) {
+			case VECTOR2:
+				variableNode.setVariableValue(Vector2.parseVector2(element.getAsString()));
+				break;
+			case VECTOR3:
+				variableNode.setVariableValue(Vector3.parseVector3(element.getAsString()));
+				break;
+			default:
+				break;
+			
+			}
 		case SCRIPT:
 			break;
 		}
@@ -372,6 +388,15 @@ public class SyncPrefabTree {
 				}
 			}
 			return mapObject;
+		case GEOMETRY:
+			GeometryDescription geometryDescription = (GeometryDescription) variableNode.getVariableDescription();
+			switch(geometryDescription.getGeometryType()) {
+			case VECTOR2:
+			case VECTOR3:
+				return new JsonPrimitive(variableNode.getVariableValue().toString());
+			default:
+				return null;
+			}
 		default:
 			return null;
 		}

@@ -32,6 +32,10 @@ public class ScriptDescription extends VariableDescription {
 	public Map<String, VariableDescription> getExternalArgs() {
 		return externalArgs;
 	}
+	
+	public void setExternalArgs(Map<String, VariableDescription> externalArgs) {
+		this.externalArgs = externalArgs;
+	}
 
 	@Override
 	public String toString() {

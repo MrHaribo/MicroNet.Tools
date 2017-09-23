@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +44,7 @@ import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
+import micronet.tools.model.variables.GeometryDescription;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
 import micronet.tools.model.variables.ScriptDescription;
@@ -124,7 +126,7 @@ public class SyncTemplateTree {
 						usedKey = entryComponentDesc.getComponentType();
 					}
 					break;
-				case ENUM: case SET: case BOOLEAN: case CHAR: case STRING: case NUMBER: default:
+				default:
 					break;
 				}
 				
@@ -477,7 +479,17 @@ public class SyncTemplateTree {
 		case COMPONENT:
 			return new Gson().fromJson(variableDetails, ComponentDescription.class);
 		case SCRIPT:
-			return new Gson().fromJson(variableDetails, ScriptDescription.class);
+			ScriptDescription scriptDesc = new Gson().fromJson(variableDetails, ScriptDescription.class);
+			JsonObject externalArgsDescriptions = variableDetails.getAsJsonObject(ModelConstants.EXTERNAL_ARGS_PROP_KEY);
+			Map<String, VariableDescription> externalArgs = new HashMap<>();
+			for (Map.Entry<String, VariableDescription> arg : scriptDesc.getExternalArgs().entrySet()) {
+				VariableDescription argDesc = deserializeVariableDescription(externalArgsDescriptions.getAsJsonObject(arg.getKey()));
+				externalArgs.put(arg.getKey(), argDesc);
+			}
+			scriptDesc.setExternalArgs(externalArgs);
+			return scriptDesc;
+		case GEOMETRY:
+			return new Gson().fromJson(variableDetails, GeometryDescription.class);
 		case BOOLEAN:
 		case CHAR:
 		case STRING:

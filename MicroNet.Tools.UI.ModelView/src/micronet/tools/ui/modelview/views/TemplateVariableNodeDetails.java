@@ -3,10 +3,13 @@ package micronet.tools.ui.modelview.views;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -26,6 +29,7 @@ import micronet.tools.filesync.SyncEnumTree;
 import micronet.tools.filesync.SyncScripts;
 import micronet.tools.filesync.SyncTemplateTree;
 import micronet.tools.model.INode;
+import micronet.tools.model.ModelConstants;
 import micronet.tools.model.nodes.EntityTemplateNode;
 import micronet.tools.model.nodes.EntityVariableDynamicNode;
 import micronet.tools.model.nodes.EntityVariableNode;
@@ -35,6 +39,8 @@ import micronet.tools.model.nodes.ScriptRootNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
+import micronet.tools.model.variables.GeometryDescription;
+import micronet.tools.model.variables.GeometryType;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
 import micronet.tools.model.variables.NumberType;
@@ -196,6 +202,8 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			return new VariableDescription(VariableType.CHAR);
 		case SCRIPT:
 			return new ScriptDescription(null);
+		case GEOMETRY:
+			return new GeometryDescription(GeometryType.VECTOR3);
 		case STRING:
 		default:
 			return new VariableDescription(VariableType.STRING);
@@ -219,6 +227,8 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			return new ComponentDetails((ComponentDescription) variableDesc, parent, style);
 		case SCRIPT:
 			return new ScriptDetails((ScriptDescription) variableDesc, parent, style);
+		case GEOMETRY:
+			return new GeometryDetails((GeometryDescription) variableDesc, parent, style);
 		case STRING:
 		case BOOLEAN:
 		case CHAR:
@@ -226,10 +236,40 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			return null;
 		}
 	}
+	
+	private class GeometryDetails extends Composite {
+
+		public GeometryDetails(GeometryDescription geometryDesc, Composite parent, int style) {
+			super(parent, style);
+		
+			setLayout(new GridLayout(2, false));
+	
+			Label label = new Label(this, SWT.NONE);
+			label.setText("Geometry Type:");
+	
+			String[] numberTypes = Arrays.stream(GeometryType.class.getEnumConstants()).map(Enum::name)
+					.toArray(String[]::new);
+	
+			Combo numberTypeSelect = new Combo(this, SWT.READ_ONLY);
+			numberTypeSelect.setItems(numberTypes);
+			numberTypeSelect.setText(geometryDesc.getGeometryType().toString());
+			numberTypeSelect.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent arg0) {
+					GeometryType geometryType = Enum.valueOf(GeometryType.class, numberTypeSelect.getText());
+					geometryDesc.setGeometryType(geometryType);
+	
+					variableDetailsChanged();
+					saveTemplate();
+					refreshViewer();
+				}
+			});
+		}
+	}
 
 	private class ScriptDetails extends Composite {
 
-		private Composite memberArgContainer;
+		private Composite argContainer;
 		
 		public ScriptDetails(ScriptDescription scriptDesc, Composite parent, int style) {
 			super(parent, style);
@@ -268,9 +308,10 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			label.setText("Arguments:\n");
 			label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 			
-			memberArgContainer = new Composite(this, SWT.NONE);
-			memberArgContainer.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
-			memberArgContainer.setLayout(new GridLayout(1, false));
+			argContainer = new Composite(this, SWT.NONE);
+			argContainer.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
+			argContainer.setLayout(new GridLayout(1, false));
+			
 			
 			Button button = new Button(this, SWT.NONE);
 			button.setText("Add Member Arg");
@@ -292,6 +333,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 					dialog.setTitle("Add Member Arguments");
 					dialog.setMessage("Add Member Arguments to Script: " + variableNode.getName());
 					dialog.setElements(variables.toArray());
+					dialog.setMultipleSelection(true);
 					dialog.open();
 					
 					if (dialog.getReturnCode() == ListSelectionDialog.OK) {
@@ -299,7 +341,8 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 						for (Object resultEntry : dialog.getResult()) {
 							scriptDesc.getMemberArgs().add(resultEntry.toString());
 						}
-						refreshMemberArguments(scriptDesc);
+						refreshArguments(scriptDesc);
+						refreshDetailsPanel();
 					}
 				}
 			});
@@ -310,20 +353,67 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 				@Override
 				public void widgetSelected(SelectionEvent arg0) {
 
+					InputDialog dlg = new InputDialog(getShell(), "Add External Arg",
+							"Add an External new Variable to " + scriptDesc.getScriptName(), "newVariable", null);
+					if (dlg.open() == Window.OK) {
+						String name = dlg.getValue();
+						if (name == null)
+							return;
+
+						if (!ModelConstants.isValidJavaIdentifier(name)) {
+							MessageDialog.openInformation(getShell(), "Invalid Name", "\"" + name + "\" is an invalid name.");
+							return;
+						}
+						
+						if (scriptDesc.getExternalArgs().containsKey(name)) {
+							MessageDialog.openInformation(getShell(), "Duplicate Name", "\"" + name + "\" is an invalid name.");
+							return;
+						}
+						
+						List<VariableDescription> availableArgumentTypes = new ArrayList<>();
+						availableArgumentTypes.add(new VariableDescription(VariableType.STRING));
+						availableArgumentTypes.add(new NumberDescription(NumberType.BYTE));
+						availableArgumentTypes.add(new NumberDescription(NumberType.DOUBLE));
+						availableArgumentTypes.add(new NumberDescription(NumberType.FLOAT));
+						availableArgumentTypes.add(new NumberDescription(NumberType.INT));
+						availableArgumentTypes.add(new NumberDescription(NumberType.LONG));
+						availableArgumentTypes.add(new NumberDescription(NumberType.SHORT));
+						
+						ElementListSelectionDialog dialog = new ElementListSelectionDialog(getShell(), new LabelProvider());
+						dialog.setTitle("External Argument Type");
+						dialog.setMessage("Select a Type for: " + name);
+						dialog.setElements(availableArgumentTypes.toArray());
+						dialog.setMultipleSelection(false);
+						dialog.open();
+						
+						if (dialog.getReturnCode() == ListSelectionDialog.OK) {
+							for (Object resultEntry : dialog.getResult()) {
+								
+								if (resultEntry instanceof NumberDescription)
+									scriptDesc.getExternalArgs().put(name, (NumberDescription) resultEntry);
+								else
+									scriptDesc.getExternalArgs().put(name, (VariableDescription) resultEntry);
+								break;
+							}
+							refreshArguments(scriptDesc);
+							refreshDetailsPanel();
+						}
+					}
 				}
 			});
 			
-			refreshMemberArguments(scriptDesc);
+			refreshArguments(scriptDesc);
+			refreshDetailsPanel();
 		}
 		
-		private void refreshMemberArguments(ScriptDescription scriptDesc) {
+		private void refreshArguments(ScriptDescription scriptDesc) {
 
-			for (Control c : memberArgContainer.getChildren()) {
+			for (Control c : argContainer.getChildren()) {
 				c.dispose();
 			}
 			
 			for (String memberArg : scriptDesc.getMemberArgs()) {
-				Composite argEntry = new Composite(memberArgContainer, SWT.NONE);
+				Composite argEntry = new Composite(argContainer, SWT.NONE);
 				argEntry.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 				argEntry.setLayout(new GridLayout(2, false));
 
@@ -337,9 +427,27 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 				button.addSelectionListener(new SelectionAdapter() {
 					public void widgetSelected(SelectionEvent e) {
 						scriptDesc.getMemberArgs().remove(memberArg);
-						refreshMemberArguments(scriptDesc);
-						
-						memberArgContainer.getParent().getParent().layout();
+						refreshArguments(scriptDesc);
+					};
+				});
+			}
+			
+			for (Map.Entry<String, VariableDescription> externalArg : scriptDesc.getExternalArgs().entrySet()) {
+				Composite argEntry = new Composite(argContainer, SWT.NONE);
+				argEntry.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+				argEntry.setLayout(new GridLayout(2, false));
+
+				Label label = new Label(argEntry, SWT.NONE);
+				label.setText(externalArg.getKey() + "(" + externalArg.getValue() + ")");
+				label.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+				Button button = new Button(argEntry, SWT.NONE);
+				button.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+				button.setText("Remove");
+				button.addSelectionListener(new SelectionAdapter() {
+					public void widgetSelected(SelectionEvent e) {
+						scriptDesc.getExternalArgs().remove(externalArg.getKey());
+						refreshArguments(scriptDesc);
 					};
 				});
 			}
@@ -348,7 +456,7 @@ public class TemplateVariableNodeDetails extends NodeDetails {
 			saveTemplate();
 			refreshViewer();
 			
-			memberArgContainer.getParent().getParent().layout();
+			refreshDetailsPanel();
 		}
 	}
 

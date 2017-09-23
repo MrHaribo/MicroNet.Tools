@@ -17,6 +17,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
@@ -37,12 +38,15 @@ import micronet.tools.model.nodes.PrefabVariableNode;
 import micronet.tools.model.variables.CollectionDescription;
 import micronet.tools.model.variables.ComponentDescription;
 import micronet.tools.model.variables.EnumDescription;
+import micronet.tools.model.variables.GeometryDescription;
 import micronet.tools.model.variables.MapDescription;
 import micronet.tools.model.variables.NumberDescription;
 import micronet.tools.model.variables.NumberType;
 import micronet.tools.model.variables.ScriptDescription;
 import micronet.tools.model.variables.VariableDescription;
 import micronet.tools.model.variables.VariableType;
+import micronet.type.Vector2;
+import micronet.type.Vector3;
 
 public class ModelGenerator {
 	
@@ -151,15 +155,47 @@ public class ModelGenerator {
 		StringBuilder parametersCalls = new StringBuilder();
 		for (String memberArg : scriptDesc.getMemberArgs()) {
 
-			parametersCalls.append(",");
-			parametersCalls.append(getGetterName(memberArg));
-			parametersCalls.append("()");
+			for (INode variable : ((ModelNode)variableNode.getParent()).getChildren()) {
+				if (variable.getName().equals(memberArg)) {
+					EntityVariableNode variableMirror = (EntityVariableNode) variable;
+					if (variableMirror instanceof EntityVariableConstNode) {
+						parametersCalls.append(",");
+						parametersCalls.append(memberArg);
+					} else if (variableMirror.getVariabelDescription().getType() == VariableType.SCRIPT) {
+						parametersCalls.append(",");
+						parametersCalls.append(memberArg);
+						parametersCalls.append("()");
+					} else {
+						parametersCalls.append(",");
+						parametersCalls.append(getGetterName(memberArg));
+						parametersCalls.append("()");
+					}
+				}
+			}
 		}
 		
-		MethodSpec scriptMethod = MethodSpec.methodBuilder(getGetterName(variableNode.getName()))
+		StringBuilder externalParams = new StringBuilder();
+		List<ParameterSpec> externalParametersArray = new ArrayList<>();
+		for (Map.Entry<String, VariableDescription> externalArg : scriptDesc.getExternalArgs().entrySet()) {
+			ParameterSpec argTypeSpec;
+			if (externalArg.getValue().getType() == VariableType.NUMBER) {
+				Type argType = getPrimitiveNumberType(((NumberDescription)externalArg.getValue()).getNumberType());
+				argTypeSpec = ParameterSpec.builder(argType, externalArg.getKey()).build();
+			} else {
+				TypeName argType = getBoxingType(externalArg.getValue());
+				argTypeSpec = ParameterSpec.builder(argType, externalArg.getKey()).build();
+			}
+			externalParametersArray.add(argTypeSpec);
+			
+			externalParams.append(",");
+			externalParams.append(externalArg.getKey());
+		}
+		
+		MethodSpec scriptMethod = MethodSpec.methodBuilder(variableNode.getName())
 			    .addModifiers(Modifier.PUBLIC)
+			    .addParameters(externalParametersArray)
 			    .returns(Object.class)
-			    .addStatement("return $T.INSTANCE.invokeFunction($S$L)", ScriptExecutor.class, scriptDesc.getScriptName(), parametersCalls)
+			    .addStatement("return $T.INSTANCE.invokeFunction($S$L$L)", ScriptExecutor.class, scriptDesc.getScriptName(), parametersCalls, externalParams)
 			    .build();
 		return scriptMethod;
 	}
@@ -258,6 +294,7 @@ public class ModelGenerator {
 		case BOOLEAN:
 		case CHAR:
 		case SCRIPT:
+		case GEOMETRY:
 		default:
 			return getBoxingType(variableDesc);
 		
@@ -281,6 +318,16 @@ public class ModelGenerator {
 				return ClassName.get(Long.class);
 			case SHORT:
 				return ClassName.get(Short.class);
+			default:
+				return null;
+			}
+		} else if(variableDesc.getType() == VariableType.GEOMETRY) {
+			GeometryDescription geometryDesc = (GeometryDescription) variableDesc;
+			switch (geometryDesc.getGeometryType()) {
+			case VECTOR2:
+				return ClassName.get(Vector2.class);
+			case VECTOR3:
+				return ClassName.get(Vector3.class);
 			default:
 				return null;
 			}
@@ -348,13 +395,24 @@ public class ModelGenerator {
 		case NUMBER:
 			NumberDescription numDesc = (NumberDescription) variableNode.getVariabelDescription();
 			Type numberType = getPrimitiveNumberType(numDesc.getNumberType());
-			return FieldSpec.builder(numberType, variableName)
-					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-					.initializer("$L", prefabNode.getVariableValue()).build();
+			FieldSpec.Builder fieldSpecBuilder = FieldSpec.builder(numberType, variableName)
+					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL);
+			if (numDesc.getNumberType() == NumberType.FLOAT) {
+				fieldSpecBuilder.initializer("$Lf", prefabNode.getVariableValue());
+			} else if (numDesc.getNumberType() == NumberType.LONG) {
+				fieldSpecBuilder.initializer("$LL", prefabNode.getVariableValue());
+			} else {
+				fieldSpecBuilder.initializer("$L", prefabNode.getVariableValue());
+			}
+			return fieldSpecBuilder.build();
 		case STRING:
 			return FieldSpec.builder(String.class, variableName)
 					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
 					.initializer("$S", prefabNode.getVariableValue()).build();
+		case GEOMETRY:
+			return FieldSpec.builder(getBoxingType(variableNode.getVariabelDescription()), variableName)
+					.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+					.initializer("new $T()", getBoxingType(variableNode.getVariabelDescription()), prefabNode.getVariableValue()).build();
 		case SCRIPT:
 		default:
 			return null;
@@ -387,6 +445,8 @@ public class ModelGenerator {
 			return FieldSpec.builder(numberType, variableName).addModifiers(Modifier.PRIVATE).build();
 		case STRING:
 			return FieldSpec.builder(String.class, variableName).addModifiers(Modifier.PRIVATE).build();
+		case GEOMETRY:
+			return FieldSpec.builder(getBoxingType(variableNode.getVariabelDescription()), variableName).addModifiers(Modifier.PRIVATE).build();
 		case SCRIPT:
 		default:
 			return null;

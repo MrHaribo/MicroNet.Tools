@@ -10,7 +10,8 @@ public enum VariableType {
 	SET,
 	MAP,
 	COMPONENT,
-	SCRIPT;
+	SCRIPT,
+	GEOMETRY;
 	
 	public static boolean isVariableTypeName(String typeName) {
 		try {
